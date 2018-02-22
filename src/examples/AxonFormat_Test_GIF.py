@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 """
-This file shows how to fit a GIF to some experimental data.
+This file shows how to fit a GIF to some experimental data stored in Axon Binary Format files.
 More instructions are provided on the website. 
 """
 
@@ -23,43 +23,16 @@ myExp = Experiment('Experiment 1', 0.1)
 PATH = '../../data/gif_test/'
 
 # Load AEC data
-myExp.setAECTrace(V = PATH + 'Cell3_Ger1Elec_ch2_1007.ibw', V_units = 1.0, 
-                  I = PATH + 'Cell3_Ger1Elec_ch3_1007.ibw', I_units = 1.0, 
-                  T = 10000.0, FILETYPE='Igor')
+myExp.setAECTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_AEC.abf',
+                  V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Load training set data
-myExp.addTrainingSetTrace(V = PATH + 'Cell3_Ger1Training_ch2_1008.ibw', V_units = 1.0,
-                          I = PATH + 'Cell3_Ger1Training_ch3_1008.ibw', I_units = 1.0, 
-                          T = 120000.0, FILETYPE='Igor')
+myExp.addTrainingSetTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_train.abf',
+                          V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Load test set data
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1009.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1009.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1010.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1010.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1011.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1011.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1012.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1012.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1013.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1013.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1014.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1014.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1015.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1015.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1016.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1016.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
-myExp.addTestSetTrace(V = PATH + 'Cell3_Ger1Test_ch2_1017.ibw', V_units = 1.0, 
-                      I = PATH + 'Cell3_Ger1Test_ch3_1017.ibw', I_units = 1.0, 
-                      T = 20000.0, FILETYPE='Igor')
+myExp.addTestSetTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_test.abf',
+                      V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Plot data
 #myExp.plotTrainingSet()
