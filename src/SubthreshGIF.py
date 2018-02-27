@@ -48,6 +48,11 @@ class SubthreshGIF(GIF) :
         self.var_explained_dV = 0
         self.var_explained_V = 0
         
+        # Define attributes to store data used during fitting
+        self.I_data = 0
+        
+        self.V_data = 0
+        self.V_sim = 0
         
         self.I_data = 0
         
@@ -311,11 +316,13 @@ class SubthreshGIF(GIF) :
                 # Simulate subthreshold dynamics 
                 (time, V_est) = self.simulate(tr.I, tr.V[0])
                 
+
+                # Store data used for simulation along with simulated points
                 self.I_data.append(tr.I)
                 self.V_data.append(tr.V)
-                self.V_sim.append(V_est)
+                self.V_fitted.append(V_est)
                 
-
+                # Compute SSE on points in ROI
                 indices_tmp = tr.getROI()
                 
                 SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
