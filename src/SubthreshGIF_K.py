@@ -615,7 +615,8 @@ class SubthreshGIF_K(GIF) :
                              'the same or power spectrum may not make '
                              'sense!'.format(dt, self.dt))
         
-        t, V_sim = self.simulate(I, V0)
+        t, V_sim, m_sim, h_sim, n_sim = self.simulate(I, V0)
+        del m_sim, h_sim, n_sim
         
         GIF_PSD = Trace(V_sim, 
                         I, 
