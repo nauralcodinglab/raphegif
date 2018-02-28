@@ -54,7 +54,15 @@ class SubthreshGIF_K(GIF) :
         self.V_data = 0
         self.V_sim = 0
         
+        # Define attributes related to K_conductance gating parameters
+        self.m_Vhalf = None
+        self.m_k = None
         
+        self.h_Vhalf = None
+        self.h_k = None
+        
+        self.n_Vhalf = None
+        self.n_k = None
     
 
     
@@ -86,6 +94,34 @@ class SubthreshGIF_K(GIF) :
         return (spks_times, V, V_T)
 
 
+    ########################################################################################################
+    # METHODS FOR K_CONDUCTANCE GATES
+    ########################################################################################################
+    
+    def mInf(self, V):
+    
+        """Compute the equilibrium activation gate state of the potassium conductance.
+        """
+        
+        return 1/(1 + np.exp(self.m_k * (V - self.m_Vhalf)))
+    
+
+    def hInf(self, V):
+        
+        """Compute the equilibrium state of the inactivation gate of the potassium conductance.
+        """
+        
+        return 1/(1 + np.exp(self.h_k * (V - self.h_Vhalf)))
+    
+    
+    def nInf(self, V):
+        
+        """Compute the equilibrium state of the non-inactivating conductance.
+        """
+        
+        return 1/(1 + np.exp(self.n_k * (V - self.n_Vhalf)))
+    
+    
     ########################################################################################################
     # METHODS FOR NUMERICAL SIMULATIONS
     ########################################################################################################  
