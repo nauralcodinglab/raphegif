@@ -380,7 +380,7 @@ class Trace :
         Returns tuple of vectors: frequency (Hz) and corresponding power spectrum density.
         """
         
-        f, PSD = signal.welch(self.V, 1. / self.dt, window = 'hanning', 
+        f, PSD = signal.welch(self.V, 1000. / self.dt, window = 'hanning', 
                        nperseg = 2**(np.round(np.log2(len(self.V)))))
 
         if do_plot:
@@ -388,9 +388,9 @@ class Trace :
             plt.figure(figsize = (10, 4))
             
             ax = plt.subplot(111)
-            ax.set_yscale('log')
+            ax.set_xscale('log')
             
-            ax.plot(f, PSD * 1000., 'b-', linewidth = 0.5)
+            ax.plot(f, PSD, 'b-', linewidth = 0.5)
             
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('PSD')

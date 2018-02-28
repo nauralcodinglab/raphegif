@@ -142,7 +142,7 @@ GIF_PSD = myGIF.extractPowerSpectrumDensity(myExp.trainingset_traces[0].I,
 plt.figure(figsize = (10, 4))
 
 ax = plt.subplot(111)
-ax.set_yscale('log')
+ax.set_xscale('log')
 
 ax.plot(experimental_PSD[0], experimental_PSD[1],
         'k-', linewidth = 0.5, label = 'Data')
