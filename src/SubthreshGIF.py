@@ -416,29 +416,6 @@ class SubthreshGIF(GIF) :
         """
         
         raise RuntimeError('Subthreshold models do not spike.')
- 
- 
-    
-    ########################################################################################################
-    # EXTRACT POWER SPECTRUM DENSITY
-    ########################################################################################################     
-        
-    def extractPowerSpectrumDensity(self, I, V0, dt, do_plot = False) :
-        
-        # Check that timestep of current and GIF are not different
-        if dt != self.dt:
-            raise ValueError('Timestep of I ({}ms) and GIF ({}ms) must be '
-                             'the same or power spectrum may not make '
-                             'sense!'.format(dt, self.dt))
-        
-        t, V_sim = self.simulate(I, V0)
-        
-        GIF_PSD = Trace(V_sim, 
-                        I, 
-                        len(I) * self.dt,
-                        self.dt).extractPowerSpectrumDensity(do_plot)
-        
-        return GIF_PSD
     
     
     
@@ -491,6 +468,40 @@ class SubthreshGIF(GIF) :
         plt.tight_layout()
         plt.show()
 
+    
+    def plotPowerSpectrumDensity(self):
+        
+        """
+        Compare power spectrum densities of model and real neuron in training data.
+        
+        Only uses first training sweep.
+        """
+        
+        GIF_f, GIF_PSD = Trace(self.V_sim[0],
+                               self.I_data[0],
+                               len(self.V_sim[0])*self.dt,
+                               self.dt).extractPowerSpectrumDensity()
+        
+        Data_f, Data_PSD = Trace(self.V_data[0],
+                                 self.I_data[0],
+                                 len(self.V_data[0])*self.dt,
+                                 self.dt).extractPowerSpectrumDensity()
+        
+        plt.figure(figsize = (10, 4))
+        
+        ax = plt.subplot(111)
+        ax.set_xscale('log')
+        
+        ax.plot(Data_f, Data_PSD, 'k-', linewidth = 0.5, label = 'Real')
+        ax.plot(GIF_f, GIF_PSD, 'r-', linewidth = 0.5, label = 'Simulated')
+        
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('PSD')
+        ax.legend()
+        
+        plt.tight_layout()
+        plt.show()
+        
     
     def plotParameters(self) :
         
