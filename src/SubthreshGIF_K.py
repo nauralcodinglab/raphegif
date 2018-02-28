@@ -191,16 +191,45 @@ class SubthreshGIF_K(GIF) :
         p_gl        = self.gl
         p_C         = self.C 
         p_El        = self.El
+        
+        p_m_Vhalf   = self.m_Vhalf
+        p_m_k       = self.m_k
+        p_m_tau     = self.m_tau
+        
+        p_h_Vhalf   = self.h_Vhalf
+        p_h_k       = self.h_k
+        p_h_tau     = self.h_tau
+        
+        p_n_Vhalf   = self.n_Vhalf
+        p_n_k       = self.n_k
+        p_n_tau     = self.n_tau
+        
+        p_E_K       = self.E_K
+        
+        p_gbar_K1   = self.gbar_K1
+        p_gbar_K2   = self.gbar_K2
+        
       
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
+        
+        m = np.zeros_like(V, dtype = "double")
+        h = np.zeros_like(V, dtype = "double")
+        n = np.zeros_like(V, dtype = "double")
  
         # Set initial condition
         V[0] = V0
+        
+        m[0] = self.mInf(V0)
+        h[0] = self.hInf(V0)
+        n[0] = self.nInf(V0)
          
         code =  """
                 #include <math.h>
+                
+                
+                // DECLARE IMPORTED PARAMETERS
                 
                 int   T_ind      = int(p_T);                
                 float dt         = float(p_dt); 
@@ -209,19 +238,67 @@ class SubthreshGIF_K(GIF) :
                 float C          = float(p_C);
                 float El         = float(p_El);
                 
+                float m_Vhalf    = float(p_m_Vhalf);
+                float m_k        = float(p_m_k);
+                float m_tau      = float(p_m_tau);
+                
+                float h_Vhalf    = float(p_h_Vhalf);
+                float h_k        = float(p_h_k);
+                float h_tau      = float(p_h_tau);
+                
+                float n_Vhalf    = float(p_n_Vhalf);
+                float n_k        = float(p_n_k);
+                float n_tau      = float(p_n_tau);
+                
+                float E_K        = float(p_E_K);
+                
+                float gbar_K1    = float(p_gbar_K1);
+                float gbar_K2    = float(p_gbar_K2);
+                
+                
+                // DECLARE ADDITIONAL VARIABLES
+                
+                float m_inf_t;
+                float h_inf_t;
+                float n_inf_t;
+                
+                float DF_K_t;
+                float gk_1_term;
+                float gk_2_term;
                                                 
-                for (int t=0; t<T_ind-1; t++) {
+                for (int t=1; t<T_ind; t++) {
     
-    
+                    // INTEGRATE m GATE
+                    m_inf_t = 1/(1 + exp(-m_k * (V[t] - m_Vhalf)));
+                    m[t] = m[t-1] + dt/m_tau*(m_inf_t - m[t-1]);
+                    
+                    // INTEGRATE h GATE
+                    h_inf_t = 1/(1 + exp(-h_k * (V[t] - h_Vhalf)));
+                    h[t] = h[t-1] + dt/h_tau*(h_inf_t - h[t-1]);
+                    
+                    // INTEGRATE n GATE
+                    n_inf_t = 1/(1 + exp(-n_k * (V[t] - n_Vhalf)));
+                    m[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+                    
+                    // COMPUTE K CONDUCTANCES
+                    DF_K_t = V[t-1] - E_K;
+                    gk_1_term = -DF_K_t * m[t] * h[t] * gbar_K1;
+                    gk_2_term = -DF_K_t * n[t] * gbar_K2;
+                    
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] );
+                    V[t] = V[t-1] + dt/C*( -gl*(V[t-1] - El) + I[t-1] + gk_1_term + gk_2_term);
                
                
                 }
                 
                 """
  
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El','V','I' ]
+        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+                'p_m_Vhalf', 'p_m_k', 'p_m_tau',
+                'p_h_Vhalf', 'p_h_k', 'p_h_tau',
+                'p_n_Vhalf', 'p_n_k', 'p_n_tau',
+                'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
+                'V','I','m','n','h' ]
         
         v = weave.inline(code, vars)
 
