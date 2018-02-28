@@ -56,7 +56,7 @@ class SubthreshGIF(GIF) :
         self.V_sim = 0
         
         self.dV_data = 0
-        self.dV_sim = 0
+        self.dV_fitted = 0
         
         
     
@@ -303,7 +303,7 @@ class SubthreshGIF(GIF) :
         
         self.I_data = []
         self.V_data = []
-        self.V_fitted = []
+        self.V_sim = []
         
         for tr in experiment.trainingset_traces :
         
@@ -316,7 +316,7 @@ class SubthreshGIF(GIF) :
                 # Store data used for simulation along with simulated points
                 self.I_data.append(tr.I)
                 self.V_data.append(tr.V)
-                self.V_fitted.append(V_est)
+                self.V_sim.append(V_est)
                 
                 # Compute SSE on points in ROI
                 indices_tmp = tr.getROI()
