@@ -175,6 +175,9 @@ myGIF.plotParameters()
 # Plot the model fit on the training data.
 myGIF.plotFit()
 
+# Plot simulated gating parameters.
+myGIF.plotGating()
+
 ## Save the model
 #myGIF.save('./myGIF.pck')
 

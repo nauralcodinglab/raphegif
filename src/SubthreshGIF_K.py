@@ -52,6 +52,9 @@ class SubthreshGIF_K(GIF) :
         # Define attributes to store data used during fitting
         self.I_data = 0
         
+        self.dV_data = 0
+        self.dV_fitted = 0
+        
         self.V_data = 0
         self.V_sim = 0
         self.m_sim = 0
@@ -443,7 +446,10 @@ class SubthreshGIF_K(GIF) :
         
         # Compute percentage of variance explained on dV/dt
         ####################################################################################################
-
+        
+        self.dV_data = Y.flatten()
+        self.dV_fitted = np.dot(X, b).flatten()
+        
         var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
         
         self.var_explained_dV = var_explained_dV
@@ -645,40 +651,71 @@ class SubthreshGIF_K(GIF) :
         plt.ylabel('V (mV)')
         plt.xlabel('Time (ms)')
         
-        g_p = plt.subplot(212, sharex = V_p)
-        plt.title('Simulated gating parameters')
-        plt.ylabel('g')
+        dV_p = plt.subplot(212)
+        plt.title('dV traces')
+        plt.ylabel('dV/dt (mV/ms)')
         plt.xlabel('Time (ms)')
         
-        t = np.arange(0, int(np.round(len(self.V_data[0])*self.dt)), self.dt)
+        t_V = np.arange(0, int(np.round(len(self.V_data[0])*self.dt)), self.dt)
+        t_dV = np.arange(0, int(np.round(len(self.dV_data)*self.dt)), self.dt)
         
-        assert len(t) == len(self.V_data[0]), 'time and V_vectors not of equal lengths'
+        assert len(t_V) == len(self.V_data[0]), 'time and V_vectors not of equal lengths'
+        assert len(t_dV) == len(self.dV_data), 'time and dV_vectors not of equal lengths'
         
         for i in range(len(self.V_data)):
             
             # Only label the first line.
             if i == 0:
-                V_p.plot(t, self.V_data[i], 'k-', linewidth = 0.5, label = 'Real')
-                V_p.plot(t, self.V_sim[i], 'r-', linewidth = 0.5, label = 'Simulated')
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5, label = 'Real')
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5, alpha = 0.7, label = 'Simulated')
+                
+            else:
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5)
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5)    
+                
+                
+        dV_p.plot(t_dV, self.dV_data, 'k-', label = 'Real')
+        dV_p.plot(t_dV, self.dV_fitted, 'r-', alpha = 0.7, label = 'Fitted')
+                
+        V_p.legend()
+        dV_p.legend()
+        
+        plt.tight_layout()
+        plt.show()
+        
+        
+    def plotGating(self):
+        
+        plt.figure()
+        g_p = plt.subplot(111)
+        plt.title('Simulated gating parameters')
+        plt.ylabel('g')
+        plt.xlabel('Time (ms)')
+        
+        t = np.arange(0, int(np.round(len(self.m_sim[0])*self.dt)), self.dt)
+        
+        assert len(t) == len(self.m_sim[0]), 'time and simulated gating vectors not of equal lengths'
+        
+        for i in range(len(self.m_sim)):
+            
+            # Only label the first line.
+            if i == 0:
                 
                 g_p.plot(t, self.m_sim[i], label = 'm')
                 g_p.plot(t, self.h_sim[i], label = 'h')
                 g_p.plot(t, self.n_sim[i], label = 'n')
+                
             else:
-                V_p.plot(t, self.V_data[i], 'k-', linewidth = 0.5)
-                V_p.plot(t, self.V_sim[i], 'r-', linewidth = 0.5)
                 
                 g_p.plot(t, self.m_sim[i])
                 g_p.plot(t, self.h_sim[i])
                 g_p.plot(t, self.n_sim[i])
                 
-        V_p.legend()
         g_p.legend()
         
         plt.tight_layout()
         plt.show()
-        
-            
+                
         
     
     def plotParameters(self) :
