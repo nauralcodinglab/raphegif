@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
+import numba as nb
 
 import weave
 from numpy.linalg import inv
@@ -57,12 +58,15 @@ class SubthreshGIF_K(GIF) :
         # Define attributes related to K_conductance gating parameters
         self.m_Vhalf = None
         self.m_k = None
+        self.m_tau = None
         
         self.h_Vhalf = None
         self.h_k = None
+        self.h_tau = None
         
         self.n_Vhalf = None
         self.n_k = None
+        self.n_tau = None
     
 
     
@@ -120,6 +124,35 @@ class SubthreshGIF_K(GIF) :
         """
         
         return 1/(1 + np.exp(self.n_k * (V - self.n_Vhalf)))
+    
+    
+    def computeGating(self, V, inf_vec, tau):
+        
+        """
+        Compute the state of a gate over time.
+        
+        Wrapper for _computeGatingInternal, which is a nb.jit-accelerated static method.
+        """
+        
+        return self._computeGatingInternal(V, inf_vec, tau, self.dt)
+    
+    
+    @staticmethod
+    @nb.jit(nb.float64[:](nb.float64[:], nb.float64[:], nb.float64, nb.float64))
+    def _computeGatingInternal(V, inf_vec, tau, dt):
+        
+        """
+        Internal method called by computeGating.
+        """
+        
+        output = np.empty_like(V, dtype = np.float64)
+        output[0] = inf_vec[0]
+        
+        for i in range(1, len(V)):
+            
+            output[i] = output[i - 1] + (inf_vec[i - 1] - output[i - 1])/tau * dt
+            
+        return output
     
     
     ########################################################################################################
