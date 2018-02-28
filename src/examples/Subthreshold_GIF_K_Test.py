@@ -106,6 +106,8 @@ myGIF.n_Vhalf = -16.9
 myGIF.n_k = 0.114
 myGIF.n_tau = 100.
 
+myGIF.E_K = -101.
+
 # Test activation curves.
 V_vec = np.arange(-100, 0, 0.1)
 

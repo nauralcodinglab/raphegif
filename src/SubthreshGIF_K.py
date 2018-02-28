@@ -67,6 +67,8 @@ class SubthreshGIF_K(GIF) :
         self.n_Vhalf = None
         self.n_k = None
         self.n_tau = None
+        
+        self.E_K = None
     
 
     
@@ -153,6 +155,15 @@ class SubthreshGIF_K(GIF) :
             output[i] = output[i - 1] + (inf_vec[i - 1] - output[i - 1])/tau * dt
             
         return output
+    
+    
+    def getDF_K(self, V):
+        
+        """
+        Compute driving force on K based on SubthreshGIF_K.E_K and V.
+        """
+        
+        return V - self.E_K
     
     
     ########################################################################################################
@@ -396,7 +407,6 @@ class SubthreshGIF_K(GIF) :
         The input parameter trace is an ojbect of class Trace.
         """
         
-        
         # Select region where to perform linear regression (specified in the ROI of individual taces)
         ####################################################################################################
         selection = trace.getROI()
@@ -405,12 +415,33 @@ class SubthreshGIF_K(GIF) :
         
         # Build X matrix for linear regression (see Eq. 18 in Pozzorini et al. PLOS Comp. Biol. 2015)
         ####################################################################################################
-        X = np.zeros( (selection_l, 3) )
+        X = np.zeros( (selection_l, 5) )
         
-        # Fill first two columns of X matrix        
+        # Compute equilibrium state of each gate
+        m_inf_vec = self.mInf(trace.V)
+        h_inf_vec = self.hInf(trace.V)
+        n_inf_vec = self.nInf(trace.V)
+        
+        # Compute time-dependent state of each gate over whole trace
+        m_vec = self.computeGating(trace.V, m_inf_vec, self.m_tau, self.dt)
+        h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau, self.dt)
+        n_vec = self.computeGating(trace.V, n_inf_vec, self.n_tau, self.dt)
+        
+        # Compute gating state of each conductance over whole trace
+        gating_vec_1 = m_vec * h_vec
+        gating_vec_2 = n_vec
+        
+        # Compute K driving force over whole trace
+        DF_K = self.getDF_K(trace.V)
+        
+        # Fill first three columns of X matrix        
         X[:,0] = trace.V[selection]
         X[:,1] = trace.I[selection]
-        X[:,2] = np.ones(selection_l) 
+        X[:,2] = np.ones(selection_l)
+        
+        # Fill K-conductance columns
+        X[:,3] = -(gating_vec_1 * DF_K)[selection]
+        X[:,4] = -(gating_vec_2 * DF_K)[selection]
         
 
         # Build Y vector (voltage derivative \dot_V_data)    
