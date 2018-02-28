@@ -107,7 +107,7 @@ class SubthreshGIF_K(GIF) :
         """Compute the equilibrium activation gate state of the potassium conductance.
         """
         
-        return 1/(1 + np.exp(self.m_k * (V - self.m_Vhalf)))
+        return 1/(1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
     
 
     def hInf(self, V):
@@ -115,7 +115,7 @@ class SubthreshGIF_K(GIF) :
         """Compute the equilibrium state of the inactivation gate of the potassium conductance.
         """
         
-        return 1/(1 + np.exp(self.h_k * (V - self.h_Vhalf)))
+        return 1/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
     
     
     def nInf(self, V):
@@ -123,7 +123,7 @@ class SubthreshGIF_K(GIF) :
         """Compute the equilibrium state of the non-inactivating conductance.
         """
         
-        return 1/(1 + np.exp(self.n_k * (V - self.n_Vhalf)))
+        return 1/(1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
     
     
     def computeGating(self, V, inf_vec, tau):
