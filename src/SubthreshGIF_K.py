@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
+import numba as nb
 
 import weave
 from numpy.linalg import inv
@@ -15,7 +16,7 @@ from numpy import nan, NaN
 import math
 
 
-class SubthreshGIF(GIF) :
+class SubthreshGIF_K(GIF) :
 
     """
     Generalized Integrate and Fire model defined in Pozzorini et al. PLOS Comp. Biol. 2015
@@ -48,16 +49,35 @@ class SubthreshGIF(GIF) :
         self.var_explained_dV = 0
         self.var_explained_V = 0
         
-        
+        # Define attributes to store data used during fitting
         self.I_data = 0
+        
+        self.dV_data = 0
+        self.dV_fitted = 0
         
         self.V_data = 0
         self.V_sim = 0
+        self.m_sim = 0
+        self.h_sim = 0
+        self.n_sim = 0
         
-        self.dV_data = 0
-        self.dV_sim = 0
+        # Define attributes related to K_conductance gating parameters
+        self.m_Vhalf = None
+        self.m_k = None
+        self.m_tau = None
         
+        self.h_Vhalf = None
+        self.h_k = None
+        self.h_tau = None
         
+        self.n_Vhalf = None
+        self.n_k = None
+        self.n_tau = None
+        
+        self.E_K = None
+        
+        self.gbar_K1 = 0
+        self.gbar_K2 = 0
     
 
     
@@ -90,6 +110,72 @@ class SubthreshGIF(GIF) :
 
 
     ########################################################################################################
+    # METHODS FOR K_CONDUCTANCE GATES
+    ########################################################################################################
+    
+    def mInf(self, V):
+    
+        """Compute the equilibrium activation gate state of the potassium conductance.
+        """
+        
+        return 1/(1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
+    
+
+    def hInf(self, V):
+        
+        """Compute the equilibrium state of the inactivation gate of the potassium conductance.
+        """
+        
+        return 1/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
+    
+    
+    def nInf(self, V):
+        
+        """Compute the equilibrium state of the non-inactivating conductance.
+        """
+        
+        return 1/(1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
+    
+    
+    def computeGating(self, V, inf_vec, tau):
+        
+        """
+        Compute the state of a gate over time.
+        
+        Wrapper for _computeGatingInternal, which is a nb.jit-accelerated static method.
+        """
+        
+        return self._computeGatingInternal(V, inf_vec, tau, self.dt)
+    
+    
+    @staticmethod
+    @nb.jit(nb.float64[:](nb.float64[:], nb.float64[:], nb.float64, nb.float64))
+    def _computeGatingInternal(V, inf_vec, tau, dt):
+        
+        """
+        Internal method called by computeGating.
+        """
+        
+        output = np.empty_like(V, dtype = np.float64)
+        output[0] = inf_vec[0]
+        
+        for i in range(1, len(V)):
+            
+            output[i] = output[i - 1] + (inf_vec[i - 1] - output[i - 1])/tau * dt
+            
+        return output
+    
+    
+    def getDF_K(self, V):
+        
+        """
+        Compute driving force on K based on SubthreshGIF_K.E_K and V.
+        """
+        
+        return V - self.E_K
+    
+    
+    ########################################################################################################
     # METHODS FOR NUMERICAL SIMULATIONS
     ########################################################################################################  
       
@@ -111,16 +197,45 @@ class SubthreshGIF(GIF) :
         p_gl        = self.gl
         p_C         = self.C 
         p_El        = self.El
+        
+        p_m_Vhalf   = self.m_Vhalf
+        p_m_k       = self.m_k
+        p_m_tau     = self.m_tau
+        
+        p_h_Vhalf   = self.h_Vhalf
+        p_h_k       = self.h_k
+        p_h_tau     = self.h_tau
+        
+        p_n_Vhalf   = self.n_Vhalf
+        p_n_k       = self.n_k
+        p_n_tau     = self.n_tau
+        
+        p_E_K       = self.E_K
+        
+        p_gbar_K1   = self.gbar_K1
+        p_gbar_K2   = self.gbar_K2
+        
       
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
+        
+        m = np.zeros_like(V, dtype = "double")
+        h = np.zeros_like(V, dtype = "double")
+        n = np.zeros_like(V, dtype = "double")
  
         # Set initial condition
         V[0] = V0
+        
+        m[0] = self.mInf(V0)
+        h[0] = self.hInf(V0)
+        n[0] = self.nInf(V0)
          
         code =  """
                 #include <math.h>
+                
+                
+                // DECLARE IMPORTED PARAMETERS
                 
                 int   T_ind      = int(p_T);                
                 float dt         = float(p_dt); 
@@ -129,25 +244,73 @@ class SubthreshGIF(GIF) :
                 float C          = float(p_C);
                 float El         = float(p_El);
                 
+                float m_Vhalf    = float(p_m_Vhalf);
+                float m_k        = float(p_m_k);
+                float m_tau      = float(p_m_tau);
+                
+                float h_Vhalf    = float(p_h_Vhalf);
+                float h_k        = float(p_h_k);
+                float h_tau      = float(p_h_tau);
+                
+                float n_Vhalf    = float(p_n_Vhalf);
+                float n_k        = float(p_n_k);
+                float n_tau      = float(p_n_tau);
+                
+                float E_K        = float(p_E_K);
+                
+                float gbar_K1    = float(p_gbar_K1);
+                float gbar_K2    = float(p_gbar_K2);
+                
+                
+                // DECLARE ADDITIONAL VARIABLES
+                
+                float m_inf_t;
+                float h_inf_t;
+                float n_inf_t;
+                
+                float DF_K_t;
+                float gk_1_term;
+                float gk_2_term;
                                                 
-                for (int t=0; t<T_ind-1; t++) {
+                for (int t=1; t<T_ind; t++) {
     
-    
+                    // INTEGRATE m GATE
+                    m_inf_t = 1/(1 + exp(-m_k * (V[t] - m_Vhalf)));
+                    m[t] = m[t-1] + dt/m_tau*(m_inf_t - m[t-1]);
+                    
+                    // INTEGRATE h GATE
+                    h_inf_t = 1/(1 + exp(-h_k * (V[t] - h_Vhalf)));
+                    h[t] = h[t-1] + dt/h_tau*(h_inf_t - h[t-1]);
+                    
+                    // INTEGRATE n GATE
+                    n_inf_t = 1/(1 + exp(-n_k * (V[t] - n_Vhalf)));
+                    m[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+                    
+                    // COMPUTE K CONDUCTANCES
+                    DF_K_t = V[t-1] - E_K;
+                    gk_1_term = -DF_K_t * m[t] * h[t] * gbar_K1;
+                    gk_2_term = -DF_K_t * n[t] * gbar_K2;
+                    
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] );
+                    V[t] = V[t-1] + dt/C*( -gl*(V[t-1] - El) + I[t-1] + gk_1_term + gk_2_term);
                
                
                 }
                 
                 """
  
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El','V','I' ]
+        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+                'p_m_Vhalf', 'p_m_k', 'p_m_tau',
+                'p_h_Vhalf', 'p_h_k', 'p_h_tau',
+                'p_n_Vhalf', 'p_n_k', 'p_n_tau',
+                'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
+                'V','I','m','h','n' ]
         
         v = weave.inline(code, vars)
 
         time = np.arange(p_T)*self.dt
         
-        return (time, V)
+        return (time, V, m, h, n)
 
         
     def simulateDeterministic_forceSpikes(self, *args):
@@ -274,18 +437,20 @@ class SubthreshGIF(GIF) :
         self.C  = 1./b[1]
         self.gl = -b[0]*self.C
         self.El = b[2]*self.C/self.gl
-    
+        
+        self.gbar_K1 = b[3] * self.C
+        self.gbar_K2 = b[4] * self.C
     
         self.printParameters()   
         
         
         # Compute percentage of variance explained on dV/dt
         ####################################################################################################
-
-        var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
         
         self.dV_data = Y.flatten()
         self.dV_fitted = np.dot(X, b).flatten()
+        
+        var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
         
         self.var_explained_dV = var_explained_dV
         print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
@@ -294,28 +459,32 @@ class SubthreshGIF(GIF) :
         # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
         ####################################################################################################
 
-        self.V_data = []
-        self.V_sim = []
-        
         SSE = 0     # sum of squared errors
         VAR = 0     # variance of data
         
         self.I_data = []
         self.V_data = []
-        self.V_fitted = []
+        self.V_sim = []
+        self.m_sim = []
+        self.h_sim = []
+        self.n_sim = []
         
         for tr in experiment.trainingset_traces :
         
             if tr.useTrace :
 
                 # Simulate subthreshold dynamics 
-                (time, V_est) = self.simulate(tr.I, tr.V[0])
+                (time, V_est, m_est, h_est, n_est) = self.simulate(tr.I, tr.V[0])
                 
+                # Store data used for simulation along with simulated points
                 self.I_data.append(tr.I)
                 self.V_data.append(tr.V)
                 self.V_sim.append(V_est)
+                self.m_sim.append(m_est)
+                self.h_sim.append(h_est)
+                self.n_sim.append(n_est)
                 
-
+                # Compute SSE on points in ROI
                 indices_tmp = tr.getROI()
                 
                 SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
@@ -343,12 +512,33 @@ class SubthreshGIF(GIF) :
         
         # Build X matrix for linear regression (see Eq. 18 in Pozzorini et al. PLOS Comp. Biol. 2015)
         ####################################################################################################
-        X = np.zeros( (selection_l, 3) )
+        X = np.zeros( (selection_l, 5) )
         
-        # Fill first two columns of X matrix        
+        # Compute equilibrium state of each gate
+        m_inf_vec = self.mInf(trace.V)
+        h_inf_vec = self.hInf(trace.V)
+        n_inf_vec = self.nInf(trace.V)
+        
+        # Compute time-dependent state of each gate over whole trace
+        m_vec = self.computeGating(trace.V, m_inf_vec, self.m_tau)
+        h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau)
+        n_vec = self.computeGating(trace.V, n_inf_vec, self.n_tau)
+        
+        # Compute gating state of each conductance over whole trace
+        gating_vec_1 = m_vec * h_vec
+        gating_vec_2 = n_vec
+        
+        # Compute K driving force over whole trace
+        DF_K = self.getDF_K(trace.V)
+        
+        # Fill first three columns of X matrix        
         X[:,0] = trace.V[selection]
         X[:,1] = trace.I[selection]
-        X[:,2] = np.ones(selection_l) 
+        X[:,2] = np.ones(selection_l)
+        
+        # Fill K-conductance columns
+        X[:,3] = -(gating_vec_1 * DF_K)[selection]
+        X[:,4] = -(gating_vec_2 * DF_K)[selection]
         
 
         # Build Y vector (voltage derivative \dot_V_data)    
@@ -431,7 +621,8 @@ class SubthreshGIF(GIF) :
                              'the same or power spectrum may not make '
                              'sense!'.format(dt, self.dt))
         
-        t, V_sim = self.simulate(I, V0)
+        t, V_sim, m_sim, h_sim, n_sim = self.simulate(I, V0)
+        del m_sim, h_sim, n_sim
         
         GIF_PSD = Trace(V_sim, 
                         I, 
@@ -446,6 +637,7 @@ class SubthreshGIF(GIF) :
     # PLOT AND PRINT FUNCTIONS
     ########################################################################################################     
         
+    
     def plotFit(self):
         
         """
@@ -490,7 +682,41 @@ class SubthreshGIF(GIF) :
         
         plt.tight_layout()
         plt.show()
-
+        
+        
+    def plotGating(self):
+        
+        plt.figure()
+        g_p = plt.subplot(111)
+        plt.title('Simulated gating parameters')
+        plt.ylabel('g')
+        plt.xlabel('Time (ms)')
+        
+        t = np.arange(0, int(np.round(len(self.m_sim[0])*self.dt)), self.dt)
+        
+        assert len(t) == len(self.m_sim[0]), 'time and simulated gating vectors not of equal lengths'
+        
+        for i in range(len(self.m_sim)):
+            
+            # Only label the first line.
+            if i == 0:
+                
+                g_p.plot(t, self.m_sim[i], label = 'm')
+                g_p.plot(t, self.h_sim[i], label = 'h')
+                g_p.plot(t, self.n_sim[i], label = 'n')
+                
+            else:
+                
+                g_p.plot(t, self.m_sim[i])
+                g_p.plot(t, self.h_sim[i])
+                g_p.plot(t, self.n_sim[i])
+                
+        g_p.legend()
+        
+        plt.tight_layout()
+        plt.show()
+                
+        
     
     def plotParameters(self) :
         
@@ -531,7 +757,9 @@ class SubthreshGIF(GIF) :
         print "R (MOhm):\t%0.3f"    % (1.0/self.gl)
         print "C (nF):\t\t%0.3f"    % (self.C)
         print "gl (nS):\t%0.6f"     % (self.gl)
-        print "El (mV):\t%0.3f"     % (self.El)         
+        print "El (mV):\t%0.3f"     % (self.El) 
+        print "gbar_K1:\t%0.6f"     % (self.gbar_K1)
+        print "gbar_K2:\t%0.6f"     % (self.gbar_K2)        
         print "-------------------------\n"
                   
 
