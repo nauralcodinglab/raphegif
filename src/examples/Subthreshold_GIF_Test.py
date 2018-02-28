@@ -113,6 +113,9 @@ print '\nSuccessful model fit!\n'
 myGIF.printParameters()
 myGIF.plotParameters()   
 
+# Plot fit.
+myGIF.plotFit()
+
 ## Save the model
 #myGIF.save('./myGIF.pck')
 

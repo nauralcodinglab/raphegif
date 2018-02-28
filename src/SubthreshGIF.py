@@ -48,6 +48,12 @@ class SubthreshGIF(GIF) :
         self.var_explained_dV = 0
         self.var_explained_V = 0
         
+        self.V_data = 0
+        self.V_sim = 0
+        
+        self.dV_data = 0
+        self.dV_sim = 0
+        
         
     
     
@@ -276,6 +282,9 @@ class SubthreshGIF(GIF) :
 
         var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
         
+        self.dV_data = Y.flatten()
+        self.dV_fitted = np.dot(X, b).flatten()
+        
         self.var_explained_dV = var_explained_dV
         print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
 
@@ -283,6 +292,9 @@ class SubthreshGIF(GIF) :
         # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
         ####################################################################################################
 
+        self.V_data = []
+        self.V_sim = []
+        
         SSE = 0     # sum of squared errors
         VAR = 0     # variance of data
         
@@ -292,6 +304,9 @@ class SubthreshGIF(GIF) :
 
                 # Simulate subthreshold dynamics 
                 (time, V_est) = self.simulate(tr.I, tr.V[0])
+                
+                self.V_data.append(tr.V)
+                self.V_sim.append(V_est)
                 
                 indices_tmp = tr.getROI()
                 
@@ -423,7 +438,52 @@ class SubthreshGIF(GIF) :
     # PLOT AND PRINT FUNCTIONS
     ########################################################################################################     
         
+    def plotFit(self):
         
+        """
+        Compare the real and simulated training sets.
+        """
+        
+        plt.figure(figsize = (10, 5))
+        
+        V_p = plt.subplot(211)
+        plt.title('Voltage traces')
+        plt.ylabel('V (mV)')
+        plt.xlabel('Time (ms)')
+        
+        dV_p = plt.subplot(212)
+        plt.title('dV traces')
+        plt.ylabel('dV/dt (mV/ms)')
+        plt.xlabel('Time (ms)')
+        
+        t_V = np.arange(0, int(np.round(len(self.V_data[0])*self.dt)), self.dt)
+        t_dV = np.arange(0, int(np.round(len(self.dV_data)*self.dt)), self.dt)
+        
+        assert len(t_V) == len(self.V_data[0]), 'time and V_vectors not of equal lengths'
+        assert len(t_dV) == len(self.dV_data), 'time and dV_vectors not of equal lengths'
+        
+        for i in range(len(self.V_data)):
+            
+            # Only label the first line.
+            if i == 0:
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5, label = 'Real')
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5, alpha = 0.7, label = 'Simulated')
+                
+            else:
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5)
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5)    
+                
+                
+        dV_p.plot(t_dV, self.dV_data, 'k-', label = 'Real')
+        dV_p.plot(t_dV, self.dV_fitted, 'r-', alpha = 0.7, label = 'Fitted')
+                
+        V_p.legend()
+        dV_p.legend()
+        
+        plt.tight_layout()
+        plt.show()
+
+    
     def plotParameters(self) :
         
         """
