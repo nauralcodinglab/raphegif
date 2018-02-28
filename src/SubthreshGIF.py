@@ -48,12 +48,8 @@ class SubthreshGIF(GIF) :
         self.var_explained_dV = 0
         self.var_explained_V = 0
         
+
         # Define attributes to store data used during fitting
-        self.I_data = 0
-        
-        self.V_data = 0
-        self.V_sim = 0
-        
         self.I_data = 0
         
         self.V_data = 0
