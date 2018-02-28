@@ -92,10 +92,7 @@ print('Success!\n')
 ############################################################################################################
 
 # Create a new object GIF 
-myGIF = SubthreshGIF(0.1)
-
-# Define parameters
-myGIF.Tref = 4.0  
+myGIF = SubthreshGIF(0.1) 
 
 # Define the ROI of the training set to be used for the fit (in this example we will use only the first 100 s)
 myExp.trainingset_traces[0].setROI([[2000,58000]])
