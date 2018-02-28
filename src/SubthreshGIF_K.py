@@ -428,9 +428,9 @@ class SubthreshGIF_K(GIF) :
         n_inf_vec = self.nInf(trace.V)
         
         # Compute time-dependent state of each gate over whole trace
-        m_vec = self.computeGating(trace.V, m_inf_vec, self.m_tau, self.dt)
-        h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau, self.dt)
-        n_vec = self.computeGating(trace.V, n_inf_vec, self.n_tau, self.dt)
+        m_vec = self.computeGating(trace.V, m_inf_vec, self.m_tau)
+        h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau)
+        n_vec = self.computeGating(trace.V, n_inf_vec, self.n_tau)
         
         # Compute gating state of each conductance over whole trace
         gating_vec_1 = m_vec * h_vec
