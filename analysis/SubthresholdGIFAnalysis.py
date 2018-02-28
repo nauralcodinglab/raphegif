@@ -16,6 +16,7 @@ sys.path.append('../src')
 
 from Experiment import Experiment
 from SubthreshGIF import SubthreshGIF
+from SubthreshGIF_K import SubthreshGIF_K
 from AEC_Badel import AEC_Badel
 
 
@@ -110,10 +111,11 @@ print '\nDone!\n'
 
 #%% FIT GIF
 
-GIFs = []
+Base_GIFs = []
+KCond_GIFs = []
 
 print 'FITTING GIFs'
-print '\nCell no.{:>20}{:>25}'.format('var expl dV', 'var expl V')
+print '\nCell no.{:>10}{:>10}{:>10}{:>10}'.format('Base dV', 'Base V', 'K dV', 'K V')
 print '_________________________________________________________'
 for i in range(len(experiments)):
     
@@ -122,17 +124,43 @@ for i in range(len(experiments)):
         # Initialize GIF.
         GIF_tmp = SubthreshGIF(experiments[i].dt)
         
-        # Set parameters.
-        GIF_tmp.Tref = 4.0
-        
         # Perform fit.
         GIF_tmp.fit(experiments[i])
         
-    print '{:>3}{:>20}%{:>25}%'.format(
+        
+        # Initialize KGIF.
+        KGIF_tmp = SubthreshGIF_K(experiments[i].dt)
+        
+        KGIF_tmp = SubthreshGIF_K(0.1)
+
+        # Define parameters
+        KGIF_tmp.m_Vhalf = -27
+        KGIF_tmp.m_k = 0.113
+        KGIF_tmp.m_tau = 1.
+        
+        KGIF_tmp.h_Vhalf = -59.9
+        KGIF_tmp.h_k = -0.166
+        KGIF_tmp.h_tau = 50.
+        
+        KGIF_tmp.n_Vhalf = -16.9
+        KGIF_tmp.n_k = 0.114
+        KGIF_tmp.n_tau = 100.
+        
+        KGIF_tmp.E_K = -101.
+        
+        # Fit KGIF.
+        KGIF_tmp.fit(experiments[i])
+        
+        
+    print '{:>3}{:>10}%{:>10}%{:>10}%{:>10}%'.format(
             i,
             100. * np.round(GIF_tmp.var_explained_dV, 3),
-            100. * np.round(GIF_tmp.var_explained_V, 3))
+            100. * np.round(GIF_tmp.var_explained_V, 3),
+            100. * np.round(KGIF_tmp.var_explained_dV, 3),
+            100. * np.round(KGIF_tmp.var_explained_V, 3))
     
-    GIFs.append(GIF_tmp)
+    Base_GIFs.append(GIF_tmp)
+    KCond_GIFs.append(KGIF_tmp)
+    
     
 print '\nDone!\n'
