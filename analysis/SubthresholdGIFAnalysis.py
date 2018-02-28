@@ -114,6 +114,19 @@ print '\nDone!\n'
 Base_GIFs = []
 KCond_GIFs = []
 
+
+plt.figure()
+dV_p = plt.subplot(121)
+plt.title('Var explained on dV')
+plt.ylabel('Var explained (%)')
+plt.xticks([0, 1], ['Base model', 'Cond model'])
+
+V_p = plt.subplot(122)
+plt.title('Var explained on V')
+plt.ylabel('Var explained (%)')
+plt.xticks([0, 1], ['Base model', 'Cond model'])
+
+
 print 'FITTING GIFs'
 print '\nCell no.{:>10}{:>10}{:>10}{:>10}'.format('Base dV', 'Base V', 'K dV', 'K V')
 print '_________________________________________________________'
@@ -151,16 +164,47 @@ for i in range(len(experiments)):
         # Fit KGIF.
         KGIF_tmp.fit(experiments[i])
         
-        
+    
+    base_vexp_dV    = 100. * np.round(GIF_tmp.var_explained_dV, 3)
+    base_vexp_V     = 100. * np.round(GIF_tmp.var_explained_V, 3)
+    K_vexp_dV   = 100. * np.round(KGIF_tmp.var_explained_dV, 3)
+    K_vexp_V    = 100. * np.round(KGIF_tmp.var_explained_V, 3)
+    
+    dV_p.plot([0, 1], [base_vexp_dV, K_vexp_dV], 'k-')
+    V_p.plot([0, 1], [base_vexp_V, K_vexp_V], 'k-')
+    
     print '{:>3}{:>10}%{:>10}%{:>10}%{:>10}%'.format(
             i,
-            100. * np.round(GIF_tmp.var_explained_dV, 3),
-            100. * np.round(GIF_tmp.var_explained_V, 3),
-            100. * np.round(KGIF_tmp.var_explained_dV, 3),
-            100. * np.round(KGIF_tmp.var_explained_V, 3))
+            base_vexp_dV,
+            base_vexp_V,
+            K_vexp_dV,
+            K_vexp_V)
     
     Base_GIFs.append(GIF_tmp)
     KCond_GIFs.append(KGIF_tmp)
     
+dV_p.set_ylim(-5, 105)
+dV_p.set_xlim(-0.5, 1.5)
+V_p.set_ylim(-5, 105)
+V_p.set_xlim(-0.5, 1.5)
+
+plt.tight_layout()
+plt.show()
     
 print '\nDone!\n'
+
+
+#%%
+
+print 'EXTRACTING/PLOTTING POWER SPECTRUM DENSITY'
+for i in range(len(experiments)):
+    
+    print '\rExtracting cell {}'.format(i),
+    
+    Base_GIFs[i].plotPowerSpectrumDensity()
+    plt.title('Base GIF {}'.format(i))
+    plt.tight_layout()
+    
+    KCond_GIFs[i].plotPowerSpectrumDensity()
+    plt.title('KCond GIF {}'.format(i))
+    plt.tight_layout()
