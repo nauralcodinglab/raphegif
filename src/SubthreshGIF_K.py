@@ -54,6 +54,9 @@ class SubthreshGIF_K(GIF) :
         
         self.V_data = 0
         self.V_sim = 0
+        self.m_sim = 0
+        self.h_sim = 0
+        self.n_sim = 0
         
         # Define attributes related to K_conductance gating parameters
         self.m_Vhalf = None
@@ -298,13 +301,13 @@ class SubthreshGIF_K(GIF) :
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau',
                 'p_n_Vhalf', 'p_n_k', 'p_n_tau',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V','I','m','n','h' ]
+                'V','I','m','h','n' ]
         
         v = weave.inline(code, vars)
 
         time = np.arange(p_T)*self.dt
         
-        return (time, V)
+        return (time, V, m, h, n)
 
         
     def simulateDeterministic_forceSpikes(self, *args):
@@ -455,19 +458,25 @@ class SubthreshGIF_K(GIF) :
         
         self.I_data = []
         self.V_data = []
-        self.V_fitted = []
+        self.V_sim = []
+        self.m_sim = []
+        self.h_sim = []
+        self.n_sim = []
         
         for tr in experiment.trainingset_traces :
         
             if tr.useTrace :
 
                 # Simulate subthreshold dynamics 
-                (time, V_est) = self.simulate(tr.I, tr.V[0])
+                (time, V_est, m_est, h_est, n_est) = self.simulate(tr.I, tr.V[0])
                 
                 # Store data used for simulation along with simulated points
                 self.I_data.append(tr.I)
                 self.V_data.append(tr.V)
-                self.V_fitted.append(V_est)
+                self.V_sim.append(V_est)
+                self.m_sim.append(m_est)
+                self.h_sim.append(h_est)
+                self.n_sim.append(n_est)
                 
                 # Compute SSE on points in ROI
                 indices_tmp = tr.getROI()
