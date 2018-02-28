@@ -395,9 +395,6 @@ class SubthreshGIF_K(GIF) :
         defined in Eq. 17-18 of Pozzorini et al. 2015 for an individual experimental trace provided as parameter.
         The input parameter trace is an ojbect of class Trace.
         """
-                
-        # Length of the voltage trace       
-        Tref_ind = int(self.Tref/trace.dt)
         
         
         # Select region where to perform linear regression (specified in the ROI of individual taces)
