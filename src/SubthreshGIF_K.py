@@ -69,6 +69,9 @@ class SubthreshGIF_K(GIF) :
         self.n_tau = None
         
         self.E_K = None
+        
+        self.gbar_K1 = 0
+        self.gbar_K2 = 0
     
 
     
@@ -351,7 +354,9 @@ class SubthreshGIF_K(GIF) :
         self.C  = 1./b[1]
         self.gl = -b[0]*self.C
         self.El = b[2]*self.C/self.gl
-    
+        
+        self.gbar_K1 = b[3] * self.C
+        self.gbar_K2 = b[4] * self.C
     
         self.printParameters()   
         
@@ -579,7 +584,9 @@ class SubthreshGIF_K(GIF) :
         print "R (MOhm):\t%0.3f"    % (1.0/self.gl)
         print "C (nF):\t\t%0.3f"    % (self.C)
         print "gl (nS):\t%0.6f"     % (self.gl)
-        print "El (mV):\t%0.3f"     % (self.El)         
+        print "El (mV):\t%0.3f"     % (self.El) 
+        print "gbar_K1:\t%0.6f"     % (self.gbar_K1)
+        print "gbar_K2:\t%0.6f"     % (self.gbar_K2)        
         print "-------------------------\n"
                   
 
