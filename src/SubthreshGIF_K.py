@@ -631,7 +631,56 @@ class SubthreshGIF_K(GIF) :
     # PLOT AND PRINT FUNCTIONS
     ########################################################################################################     
         
+    
+    def plotFit(self):
         
+        """
+        Compare the real and simulated training sets.
+        """
+        
+        plt.figure(figsize = (10, 5))
+        
+        V_p = plt.subplot(211)
+        plt.title('Voltage traces')
+        plt.ylabel('V (mV)')
+        plt.xlabel('Time (ms)')
+        
+        g_p = plt.subplot(212, sharex = V_p)
+        plt.title('Simulated gating parameters')
+        plt.ylabel('g')
+        plt.xlabel('Time (ms)')
+        
+        t = np.arange(0, int(np.round(len(self.V_data[0])*self.dt)), self.dt)
+        
+        assert len(t) == len(self.V_data[0]), 'time and V_vectors not of equal lengths'
+        
+        for i in range(len(self.V_data)):
+            
+            # Only label the first line.
+            if i == 0:
+                V_p.plot(t, self.V_data[i], 'k-', linewidth = 0.5, label = 'Real')
+                V_p.plot(t, self.V_sim[i], 'r-', linewidth = 0.5, label = 'Simulated')
+                
+                g_p.plot(t, self.m_sim[i], label = 'm')
+                g_p.plot(t, self.h_sim[i], label = 'h')
+                g_p.plot(t, self.n_sim[i], label = 'n')
+            else:
+                V_p.plot(t, self.V_data[i], 'k-', linewidth = 0.5)
+                V_p.plot(t, self.V_sim[i], 'r-', linewidth = 0.5)
+                
+                g_p.plot(t, self.m_sim[i])
+                g_p.plot(t, self.h_sim[i])
+                g_p.plot(t, self.n_sim[i])
+                
+        V_p.legend()
+        g_p.legend()
+        
+        plt.tight_layout()
+        plt.show()
+        
+            
+        
+    
     def plotParameters(self) :
         
         """
