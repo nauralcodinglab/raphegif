@@ -194,17 +194,24 @@ plt.show()
 print '\nDone!\n'
 
 
-#%%
+#%% PLOT FIT
+
+print 'PLOTTING FIT ON TRAINING SET'
+for i in range(len(experiments)):
+    
+    Base_GIFs[i].plotFit('Base GIF {}'.format(i))
+    
+    KCond_GIFs[i].plotFit('KCond GIF {}'.format(i))
+
+
+#%% PLOT POWER SPECTRUM DENSITY
 
 print 'EXTRACTING/PLOTTING POWER SPECTRUM DENSITY'
 for i in range(len(experiments)):
     
     print '\rExtracting cell {}'.format(i),
     
-    Base_GIFs[i].plotPowerSpectrumDensity()
-    plt.title('Base GIF {}'.format(i))
-    plt.tight_layout()
+    Base_GIFs[i].plotPowerSpectrumDensity('Base GIF {}'.format(i))
     
-    KCond_GIFs[i].plotPowerSpectrumDensity()
-    plt.title('KCond GIF {}'.format(i))
-    plt.tight_layout()
+    KCond_GIFs[i].plotPowerSpectrumDensity('KCond GIF {}'.format(i))
+    

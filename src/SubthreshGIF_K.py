@@ -615,7 +615,7 @@ class SubthreshGIF_K(GIF) :
     ########################################################################################################     
         
     
-    def plotFit(self):
+    def plotFit(self, title = None):
         
         """
         Compare the real and simulated training sets.
@@ -658,11 +658,16 @@ class SubthreshGIF_K(GIF) :
         dV_p.legend()
         
         plt.tight_layout()
+        
+        if title is not None:
+            plt.suptitle(title)
+            plt.subplots_adjust(top = 0.85)
+        
         plt.show()
      
         
-    def plotPowerSpectrumDensity(self):
-    
+    def plotPowerSpectrumDensity(self, title = None):
+        
         """
         Compare power spectrum densities of model and real neuron in training data.
         
@@ -692,6 +697,11 @@ class SubthreshGIF_K(GIF) :
         ax.legend()
         
         plt.tight_layout()
+        
+        if title is not None:
+            plt.suptitle(title)
+            plt.subplots_adjust(top = 0.85)
+        
         plt.show()        
 
 
