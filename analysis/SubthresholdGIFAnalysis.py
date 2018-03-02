@@ -230,6 +230,67 @@ for i in range(len(experiments)):
 print 'Done!\n'
 
 
+#%% COMPARE FITS OF BOTH MODELS ON TRAINING SET
+
+for i in range(len(experiments)):
+    
+    plt.figure(figsize = (10, 5))
+        
+    V_p = plt.subplot(211)
+    plt.title('Voltage traces')
+    plt.ylabel('V (mV)')
+    plt.xlabel('Time (ms)')
+    
+    dV_p = plt.subplot(212)
+    plt.title('dV traces')
+    plt.ylabel('dV/dt (mV/ms)')
+    plt.xlabel('Time (ms)')
+    
+    t_V = np.arange(0,
+                    int(np.round(len(Base_GIFs[i].V_data[0])*Base_GIFs[i].dt)),
+                    Base_GIFs[i].dt)
+    t_dV = np.arange(0, 
+                     int(np.round(len(Base_GIFs[i].dV_data)*Base_GIFs[i].dt)), 
+                     Base_GIFs[i].dt)
+    
+    assert len(t_V) == len(Base_GIFs[i].V_data[0]), 'time and V_vectors not of equal lengths'
+    assert len(t_dV) == len(Base_GIFs[i].dV_data), 'time and dV_vectors not of equal lengths'
+    
+    for j in range(len(Base_GIFs[i].V_data)):
+        
+        # Only label the first line.
+        if j == 0:
+            V_p.plot(t_V, Base_GIFs[i].V_data[j], 
+                     'k-', linewidth = 0.5, label = 'Real')
+            V_p.plot(t_V, Base_GIFs[i].V_sim[j], 
+                     'r-', linewidth = 0.5, alpha = 0.7, label = 'Base GIF')
+            V_p.plot(t_V, KCond_GIFs[i].V_sim[j],
+                     'b-', linewidth = 0.5, alpha = 0.7, label = 'KCond GIF')
+            
+        else:
+            V_p.plot(t_V, Base_GIFs[i].V_data[j], 
+                     'k-', linewidth = 0.5)
+            V_p.plot(t_V, Base_GIFs[i].V_sim[j], 
+                     'r-', linewidth = 0.5)   
+            V_p.plot(t_V, KCond_GIFs[i].V_sim[j],
+                     'b-', linewidth = 0.5, alpha = 0.7)
+            
+            
+    dV_p.plot(t_dV, Base_GIFs[i].dV_data, 'k-', label = 'Real')
+    dV_p.plot(t_dV, Base_GIFs[i].dV_fitted, 'r-', alpha = 0.7, label = 'Base GIF')
+    dV_p.plot(t_dV, KCond_GIFs[i].dV_fitted, 'b-', alpha = 0.7, label = 'KCond GIF')
+            
+    V_p.legend()
+    dV_p.legend()
+    
+    plt.tight_layout()
+    
+    plt.suptitle('Cell {}'.format(i))
+    plt.subplots_adjust(top = 0.85)
+    
+    plt.show()
+
+
 #%% PLOT GBAR ESTIMATES
 
 gk1_pdata = []
