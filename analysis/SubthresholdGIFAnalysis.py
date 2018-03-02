@@ -76,6 +76,30 @@ for i in range(len(cells)):
 print '\nDone!\n'
 
 
+#%% LOWPASS FILTER V AND I DATA
+
+butter_filter_cutoff = 2000.
+butter_filter_order = 3
+
+print 'FILTERING TRACES & SETTING ROI'
+for i in range(len(experiments)):
+    
+    print '\rFiltering and selecting for cell {}'.format(i),
+    
+    # Filter training data.
+    for tr in experiments[i].trainingset_traces:
+        tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
+        tr.setROI([[1000, 59000]])
+        
+    
+    # Filter test data.
+    for tr in experiments[i].testset_traces:
+        tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
+        tr.setROI([[1000, 9000]])
+        
+print '\nDone!\n'
+
+
 #%% PERFORM AEC
 
 AEC_objs = []
