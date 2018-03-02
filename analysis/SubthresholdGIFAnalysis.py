@@ -78,8 +78,10 @@ print '\nDone!\n'
 
 #%% LOWPASS FILTER V AND I DATA
 
-butter_filter_cutoff = 2000.
+butter_filter_cutoff = 500.
 butter_filter_order = 3
+
+v_reject_thresh = -80.
 
 print 'FILTERING TRACES & SETTING ROI'
 for i in range(len(experiments)):
@@ -91,11 +93,15 @@ for i in range(len(experiments)):
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 59000]])
         
+        tr.setROI_Bool(tr.V > v_reject_thresh)
+        
     
     # Filter test data.
     for tr in experiments[i].testset_traces:
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 9000]])
+        
+        tr.setROI_Bool(tr.V > v_reject_thresh)
         
 print '\nDone!\n'
 
@@ -115,13 +121,13 @@ for i in range(len(experiments)):
         AEC_tmp = AEC_Badel(experiments[i].dt)
         
         # Define metaparameters.
-        AEC_tmp.K_opt.setMetaParameters(length = 150.0, 
+        AEC_tmp.K_opt.setMetaParameters(length = 500, 
                                         binsize_lb = experiments[i].dt, 
-                                        binsize_ub = 2.0, 
-                                        slope = 30.0, 
-                                        clamp_period = 1.0)
-        AEC_tmp.p_expFitRange = [3.0, 150.0]  
-        AEC_tmp.p_nbRep = 10
+                                        binsize_ub = 100., 
+                                        slope = 5.0, 
+                                        clamp_period = 0.1)
+        AEC_tmp.p_expFitRange = [1., 500.]  
+        AEC_tmp.p_nbRep = 30
         
         # Perform AEC.
         experiments[i].setAEC(AEC_tmp)
@@ -249,10 +255,10 @@ for i in range(len(experiments)):
     plt.xlabel('Time (ms)')
     
     t_V = np.arange(0,
-                    int(np.round(len(Base_GIFs[i].V_data[0])*Base_GIFs[i].dt)),
+                    np.round(len(Base_GIFs[i].V_data[0])*Base_GIFs[i].dt, 1),
                     Base_GIFs[i].dt)
     t_dV = np.arange(0, 
-                     int(np.round(len(Base_GIFs[i].dV_data)*Base_GIFs[i].dt)), 
+                     np.round(len(Base_GIFs[i].dV_data)*Base_GIFs[i].dt, 1), 
                      Base_GIFs[i].dt)
     
     assert len(t_V) == len(Base_GIFs[i].V_data[0]), 'time and V_vectors not of equal lengths'
