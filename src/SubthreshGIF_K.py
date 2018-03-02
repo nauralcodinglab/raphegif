@@ -543,7 +543,8 @@ class SubthreshGIF_K(GIF) :
 
         # Build Y vector (voltage derivative \dot_V_data)    
         ####################################################################################################
-        Y = np.array( np.concatenate( (np.diff(trace.V)/trace.dt, [0]) ) )[selection]      
+        Y = ( np.gradient(trace.V) / trace.dt )[selection]
+        #Y = np.array( np.concatenate( (np.diff(trace.V)/trace.dt, [0]) ) )[selection]      
 
         return (X, Y)
         

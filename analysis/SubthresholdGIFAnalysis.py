@@ -220,6 +220,7 @@ print '\nDone!\n'
 
 #%% PLOT FIT
 
+"""
 print 'PLOTTING FIT ON TRAINING SET'
 for i in range(len(experiments)):
     
@@ -228,6 +229,7 @@ for i in range(len(experiments)):
     KCond_GIFs[i].plotFit('KCond GIF {}'.format(i))
     
 print 'Done!\n'
+"""
 
 
 #%% COMPARE FITS OF BOTH MODELS ON TRAINING SET
