@@ -226,6 +226,41 @@ for i in range(len(experiments)):
     Base_GIFs[i].plotFit('Base GIF {}'.format(i))
     
     KCond_GIFs[i].plotFit('KCond GIF {}'.format(i))
+    
+print 'Done!\n'
+
+
+#%% PLOT GBAR ESTIMATES
+
+gk1_pdata = []
+gk2_pdata = []
+
+print 'PLOTTING GBAR ESTIMATES'
+for KGIF in KCond_GIFs:
+    
+    gk1_pdata.append(KGIF.gbar_K1)
+    gk2_pdata.append(KGIF.gbar_K2)
+    
+
+plt.figure()
+
+plt.subplot(111)
+plt.title('Estimated maximal conductances')
+plt.plot([0] * len(gk1_pdata),
+         gk1_pdata,
+         'ko', markersize = 20, markerfacecolor = 'gray', 
+         markeredgecolor = 'k', alpha = 0.5)
+plt.plot([1] * len(gk2_pdata),
+         gk2_pdata,
+         'ko', markersize = 20, markerfacecolor = 'gray', 
+         markeredgecolor = 'k', alpha = 0.5)
+
+plt.ylabel('gbar')
+plt.xticks([0, 1], ['Conductance 1', 'Conductance 2'], rotation = 45)
+plt.xlim(-0.5, 1.5)
+
+plt.tight_layout()
+plt.show()
 
 
 #%% PLOT POWER SPECTRUM DENSITY
