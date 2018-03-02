@@ -2,6 +2,7 @@ from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numba as nb
 from scipy import signal
 
 import weave
@@ -123,8 +124,64 @@ class Trace :
         Use this function the specify which parts of the trace have to be used for fitting.
         """
         self.useTrace = True
-        self.ROI = ROI_intervals   
+        self.ROI = ROI_intervals  
         
+    
+    def setROI_Bool(self, vector):
+        
+        prev_ROI_vec = np.zeros_like(self.V, dtype = np.bool)
+        prev_ROI_vec[self.getROI()] = True
+        
+        assert prev_ROI_vec.shape == vector.shape, 'ROI vectors do not have same shape.'
+        
+        new_ROI_vec = np.logical_and(prev_ROI_vec, vector)
+        
+        rising_edges, falling_edges = self._getBoolEdges(new_ROI_vec, self.dt)
+        
+        
+        ROI_intervals = []
+        
+        if rising_edges[0] > falling_edges[0]:
+            rising_edges = np.concatenate(([0.], rising_edges))
+                
+        for i in range(min((len(rising_edges), len(falling_edges)))):
+                ROI_intervals.append( [rising_edges[i], falling_edges[i]] )
+                
+        self.ROI = ROI_intervals
+        
+    
+    @staticmethod
+    @nb.jit
+    def _getBoolEdges(vector, dt):
+        
+        """
+        Get timestamps of rising/falling edges of boolean vector.
+        """
+        
+        rising_edges = np.zeros(len(vector)/2, dtype = np.float64)
+        re_cnt = 0
+        
+        falling_edges = np.zeros(len(vector)/2, dtype = np.float64)
+        fe_cnt = 0
+        
+        for t_step in range(1, len(vector)):
+            
+            if vector[t_step] != vector[t_step - 1]:
+                # Check whether edge is rising or falling only if
+                # there is an edge.
+            
+                if vector[t_step]:
+                    # Rising edge.
+                    rising_edges[re_cnt] = float(t_step) * dt
+                    re_cnt += 1
+                    
+                else:
+                    # Falling edge.
+                    falling_edges[fe_cnt] = float(t_step) * dt
+                    fe_cnt += 1
+        
+        return (rising_edges[:re_cnt], falling_edges[:fe_cnt])
+
 
     def getROI(self):
         

@@ -102,6 +102,14 @@ except:
 print('Success!\n')
 
 
+# Test boolean ROI selection.
+myExp.trainingset_traces[0].setROI([[1000, 50000]])
+
+above_m70 = myExp.trainingset_traces[0].V > -70.
+
+myExp.trainingset_traces[0].setROI_Bool(above_m70)
+myExp.trainingset_traces[0].plot()
+
 ############################################################################################################
 # STEP 5: FIT GIF MODEL TO DATA
 ############################################################################################################
@@ -109,8 +117,6 @@ print('Success!\n')
 # Create a new object GIF 
 myGIF = SubthreshGIF(0.1) 
 
-# Define the ROI of the training set to be used for the fit (in this example we will use only the first 100 s)
-myExp.trainingset_traces[0].setROI([[2000,58000]])
 
 # To visualize the training set and the ROI call again
 myExp.plotTrainingSet()
