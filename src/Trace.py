@@ -42,12 +42,53 @@ class Trace :
         # Initialize flags
         self.AEC_flag    = False                                           # Has the trace been preprocessed with AEC?
         
+        self.filter_flag = False
+        
         self.spks_flag   = False               # Do spikes have been detected?
         self.spks        = 0                   # spike indices stored in indices (and not in ms!)  
                 
         self.useTrace    = True                # if false this trace will be neglected while fitting spiking models to data        
         self.ROI   = [ [0, len(self.V_rec)*self.dt] ] # List of intervals to be used for fitting; includes the whole trace by default
     
+    
+    #################################################################################################
+    # FUNCTIONS ASSOCIATED WITH FILTERING
+    #################################################################################################
+    
+    def butterLowpassFilter(self, cutoff, order=3):
+    
+        """
+        Apply a Butterworth lowpass filter to V_rec and I.
+        
+        Inputs:
+            cutoff      --  (Hz) critical frequency of the filter
+            order       --  filter order
+        
+        
+        Modifies Trace.V_rec and Trace.I inplace. Raises an error if signals have already been filtered.
+        
+        Note: because this method affects Trace.V_rec and not Trace.V it must be called before performing AEC!
+        """
+        
+        if self.filter_flag:
+            raise RuntimeError('Trace already filtered!')
+        
+        # Convert frequencies to radians.
+        cutoff *= 2. * np.pi
+        sampling_rate = 2. * np.pi / (self.dt / 1000.)
+        
+        # Define cutoff frequency.
+        nyq = 0.5 * sampling_rate
+        normal_cutoff = cutoff / nyq
+        
+        # Get filter coefficients.
+        b, a = signal.butter(order, normal_cutoff, btype = 'low', analog = False)
+        
+        # Filter data.
+        self.V_rec = signal.lfilter(b, a, self.V_rec)
+        self.I = signal.lfilter(b, a, self.I)
+        
+        self.filter_flag = True
     
     
     #################################################################################################

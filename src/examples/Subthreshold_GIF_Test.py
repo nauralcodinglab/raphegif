@@ -40,7 +40,22 @@ myExp.addTestSetTrace(FILETYPE = 'Axon',
 
 
 ############################################################################################################
-# STEP 2: ACTIVE ELECTRODE COMPENSATION
+# STEP 2: LOWPASS FILTER VOLTAGE TRACES
+############################################################################################################
+
+for tr in myExp.trainingset_traces:
+    
+    tr.butterLowpassFilter(cutoff = 3000.)
+    
+
+"""    
+for tr in myExp.testset_traces:
+    
+    tr.butterLowpassFilter(cutoff = 3000.)
+"""
+
+############################################################################################################
+# STEP 3: ACTIVE ELECTRODE COMPENSATION
 ############################################################################################################
 
 # Create new object to perform AEC
@@ -65,7 +80,7 @@ myExp.plotTestSet()
 
 
 ############################################################################################################
-# STEP 3: TEST SPIKE DETECTION AND ROI SELECTION IN Trace
+# STEP 4: TEST SPIKE DETECTION AND ROI SELECTION IN Trace
 ############################################################################################################
 
 # Test spike detection
@@ -88,7 +103,7 @@ print('Success!\n')
 
 
 ############################################################################################################
-# STEP 4: FIT GIF MODEL TO DATA
+# STEP 5: FIT GIF MODEL TO DATA
 ############################################################################################################
 
 # Create a new object GIF 
@@ -121,7 +136,7 @@ myGIF.plotFit()
 
 
 ############################################################################################################
-# STEP 5: EXTRACT POWER SPECTRUM DENSITY AND COMPARE BETWEEN MODEL AND DATA
+# STEP 6: EXTRACT POWER SPECTRUM DENSITY AND COMPARE BETWEEN MODEL AND DATA
 ############################################################################################################
 
 # Test PSD extraction from data Trace
