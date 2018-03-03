@@ -233,6 +233,7 @@ class SubthreshGIF_K(GIF) :
          
         code =  """
                 #include <math.h>
+                #include <stdio.h>
                 
                 
                 // DECLARE IMPORTED PARAMETERS
@@ -275,16 +276,16 @@ class SubthreshGIF_K(GIF) :
                 for (int t=1; t<T_ind; t++) {
     
                     // INTEGRATE m GATE
-                    m_inf_t = 1/(1 + exp(-m_k * (V[t] - m_Vhalf)));
+                    m_inf_t = 1/(1 + exp(-m_k * (V[t-1] - m_Vhalf)));
                     m[t] = m[t-1] + dt/m_tau*(m_inf_t - m[t-1]);
                     
                     // INTEGRATE h GATE
-                    h_inf_t = 1/(1 + exp(-h_k * (V[t] - h_Vhalf)));
+                    h_inf_t = 1/(1 + exp(-h_k * (V[t-1] - h_Vhalf)));
                     h[t] = h[t-1] + dt/h_tau*(h_inf_t - h[t-1]);
                     
                     // INTEGRATE n GATE
-                    n_inf_t = 1/(1 + exp(-n_k * (V[t] - n_Vhalf)));
-                    m[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+                    n_inf_t = 1/(1 + exp(-n_k * (V[t-1] - n_Vhalf)));
+                    n[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
                     
                     // COMPUTE K CONDUCTANCES
                     DF_K_t = V[t-1] - E_K;
