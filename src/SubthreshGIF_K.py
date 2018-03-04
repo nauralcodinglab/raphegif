@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
 import numba as nb
+from scipy.stats import binned_statistic
 
 import weave
 from numpy.linalg import inv
@@ -610,7 +611,35 @@ class SubthreshGIF_K(GIF) :
         raise RuntimeError('Subthreshold models do not spike.')
  
     
+    ########################################################################################################
+    # METHODS FOR ASSESSING RESIDUALS
+    ########################################################################################################     
     
+    def getResiduals_V(self, bins = None):
+        
+        """
+        Bins can be None, an intger number of bins, or a vector with specifc points to use for binning.
+        
+        Returns a tupple of the form (values_V, residuals_V) for plotting.
+        """
+        
+        residuals_V = self.V_sim - self.V_data
+        
+        # Bin.
+        if bins is None:
+            values_V = self.V_data
+        else:
+            residuals_V, bin_edges, bin_no = binned_statistic(self.V_data,
+                                                              residuals_V,
+                                                              statistic = 'mean',
+                                                              bins = bins)
+            
+            bin_centres = (bin_edges[1:] + bin_edges[:-1])/2.
+            values_V = bin_centres
+        
+        return values_V, residuals_V
+            
+        
     
     ########################################################################################################
     # PLOT AND PRINT FUNCTIONS
