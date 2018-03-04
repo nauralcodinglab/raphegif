@@ -107,7 +107,7 @@ myExp.trainingset_traces[0].setROI([[1000, 50000]])
 
 above_m70 = myExp.trainingset_traces[0].V > -70.
 
-myExp.trainingset_traces[0].setROI_Bool(above_m70)
+#myExp.trainingset_traces[0].setROI_Bool(above_m70)
 myExp.trainingset_traces[0].plot()
 
 ############################################################################################################
