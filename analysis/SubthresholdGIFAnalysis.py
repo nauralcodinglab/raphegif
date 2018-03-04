@@ -299,6 +299,50 @@ for i in range(len(experiments)):
     plt.show()
 
 
+#%% PLOT RESIDUALS OF BASE MODEL
+
+# Bin residuals according to V and populate a pair of arrays with this info
+# to use for plotting.
+
+bins = np.linspace(-120, -30, 20)
+bin_centres = (bins[1:] + bins[:-1]) / 2.
+
+V_arr = np.tile(bin_centres[:, np.newaxis], len(Base_GIFs))
+err_arr = np.empty_like(V_arr, dtype = np.float64)
+err_arr[:, :] = np.NAN
+
+del bin_centres
+
+
+for i in range(len(Base_GIFs)):
+    
+    V, err = Base_GIFs[i].getResiduals_V(bins)
+    
+    assert len(V) == len(err), 'V and err are not the same length!'
+    
+    inds = np.digitize(V, bins) - 1
+    
+    err_arr[inds, i] = err
+    
+
+plt.figure()
+
+plt.subplot(111)
+plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
+plt.plot(V_arr, err_arr, 'ko', markerfacecolor = 'none', alpha = 0.5)
+plt.plot(np.nanmean(V_arr, axis = 1), np.nanmean(err_arr, axis = 1), '-', 
+         color = (0.1, 0.9, 0.1), label = 'Mean')
+plt.legend()
+
+plt.xlabel('Vm (mV)')
+plt.ylabel('Model error (mV)')
+
+plt.tight_layout()
+plt.show()
+
+    
+    
+
 #%% PLOT GBAR ESTIMATES
 
 gk1_pdata = []
