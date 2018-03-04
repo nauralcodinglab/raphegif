@@ -435,19 +435,33 @@ class SubthreshGIF(GIF) :
         Returns a tupple of the form (values_V, residuals_V) for plotting.
         """
         
-        residuals_V = self.V_sim - self.V_data
+        residuals_V_tmp = []
+        for i in range(len(self.V_data)):
+            
+            residuals_V_tmp.append(self.V_sim[i] - self.V_data[i])
+        
+        
         
         # Bin.
         if bins is None:
-            values_V = self.V_data
+            values_V = [sw for sw in self.V_data]
         else:
-            residuals_V, bin_edges, bin_no = binned_statistic(self.V_data,
-                                                              residuals_V,
-                                                              statistic = 'mean',
-                                                              bins = bins)
             
-            bin_centres = (bin_edges[1:] + bin_edges[:-1])/2.
-            values_V = bin_centres
+            values_V = []
+            residuals_V = []
+            for i in range(len(self.V_data)):
+                residuals_i, bin_edges, bin_no = binned_statistic(self.V_data[i],
+                                                                residuals_V_tmp[i],
+                                                                statistic = 'mean',
+                                                                bins = bins)
+                
+                residuals_V.append(residuals_i)
+                
+                bin_centres = (bin_edges[1:] + bin_edges[:-1])/2.
+                values_V.append(bin_centres)
+            
+        residuals_V = np.concatenate(residuals_V, axis = -1)
+        values_V = np.concatenate(values_V, axis = -1)
         
         return values_V, residuals_V
     

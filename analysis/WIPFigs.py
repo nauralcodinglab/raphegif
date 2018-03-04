@@ -54,6 +54,7 @@ real.get_xaxis().set_visible(False)
 plt.tight_layout()
 plt.show()
 
+
 #%% SHOW SPIKELESS RECORDINGS
 
 # Get V_traces
