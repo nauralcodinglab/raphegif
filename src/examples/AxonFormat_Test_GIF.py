@@ -23,15 +23,15 @@ myExp = Experiment('Experiment 1', 0.1)
 PATH = '../../data/gif_test/'
 
 # Load AEC data
-myExp.setAECTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_AEC.abf',
+myExp.setAECTrace(FILETYPE = 'Axon', fname = PATH + 'eDRN278_AEC_18220005.abf',
                   V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Load training set data
-myExp.addTrainingSetTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_train.abf',
+myExp.addTrainingSetTrace(FILETYPE = 'Axon', fname = PATH + 'eDRN278_Train_18220006.abf',
                           V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Load test set data
-myExp.addTestSetTrace(FILETYPE = 'Axon', fname = PATH + 'DRN656_test.abf',
+myExp.addTestSetTrace(FILETYPE = 'Axon', fname = PATH + 'eDRN278_Test_18220007.abf',
                       V_channel = 0, I_channel = 1, dt = 0.1)
 
 # Plot data
