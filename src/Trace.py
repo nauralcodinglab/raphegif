@@ -86,8 +86,8 @@ class Trace :
         b, a = signal.butter(order, normal_cutoff, btype = 'low', analog = False)
         
         # Filter data.
-        self.V_rec = signal.lfilter(b, a, self.V_rec)
-        self.I = signal.lfilter(b, a, self.I)
+        self.V_rec[100:] = signal.lfilter(b, a, self.V_rec)[100:]
+        self.I[100:] = signal.lfilter(b, a, self.I)[100:]
         
         self.filter_flag = True
     
