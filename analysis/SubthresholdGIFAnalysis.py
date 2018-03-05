@@ -78,7 +78,7 @@ print '\nDone!\n'
 
 #%% LOWPASS FILTER V AND I DATA
 
-butter_filter_cutoff = 500.
+butter_filter_cutoff = 1000.
 butter_filter_order = 3
 
 v_reject_thresh = -80.
@@ -93,7 +93,10 @@ for i in range(len(experiments)):
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 59000]])
         
-        tr.setROI_Bool(tr.V > v_reject_thresh)
+        boolvec = tr.V > v_reject_thresh
+        boolvec[:10000] = False
+        
+        tr.setROI_Bool(boolvec)
         
     
     # Filter test data.
@@ -101,7 +104,10 @@ for i in range(len(experiments)):
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 9000]])
         
-        tr.setROI_Bool(tr.V > v_reject_thresh)
+        boolvec = tr.V > v_reject_thresh
+        boolvec[:10000] = False
+        
+        tr.setROI_Bool(boolvec)
         
 print '\nDone!\n'
 
@@ -307,31 +313,50 @@ for i in range(len(experiments)):
 bins = np.linspace(-120, -30, 20)
 bin_centres = (bins[1:] + bins[:-1]) / 2.
 
-V_arr = np.tile(bin_centres[:, np.newaxis], len(Base_GIFs))
-err_arr = np.empty_like(V_arr, dtype = np.float64)
-err_arr[:, :] = np.NAN
+V_arr_base = np.tile(bin_centres[:, np.newaxis], len(Base_GIFs))
+err_arr_base = np.empty_like(V_arr_base, dtype = np.float64)
+err_arr_base[:, :] = np.NAN
+
+V_arr_K = np.tile(bin_centres[:, np.newaxis], len(KCond_GIFs))
+err_arr_K = np.empty_like(V_arr_K, dtype = np.float64)
+err_arr_K[:, :] = np.NAN
 
 del bin_centres
 
 
 for i in range(len(Base_GIFs)):
     
+    if i in [3, 5]:
+        continue
+    
+    # Collect residuals of KCond GIF
     V, err = Base_GIFs[i].getResiduals_V(bins)
     
     assert len(V) == len(err), 'V and err are not the same length!'
     
     inds = np.digitize(V, bins) - 1
+    err_arr_base[inds, i] = err
     
-    err_arr[inds, i] = err
+    
+    # Collect residuals of KCond GIF
+    V, err = KCond_GIFs[i].getResiduals_V(bins)
+    
+    assert len(V) == len(err), 'V and err are not the same length!'
+    
+    inds = np.digitize(V, bins) - 1
+    err_arr_K[inds, i] = err
     
 
-plt.figure()
+plt.figure(figsize = (4, 3.5))
 
 plt.subplot(111)
 plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
-plt.plot(V_arr, err_arr, 'ko', markerfacecolor = 'none', alpha = 0.5)
-plt.plot(np.nanmean(V_arr, axis = 1), np.nanmean(err_arr, axis = 1), '-', 
-         color = (0.1, 0.9, 0.1), label = 'Mean')
+plt.plot(V_arr_base, err_arr_base, 'ro', markerfacecolor = 'none', alpha = 0.5)
+plt.plot(V_arr_K, err_arr_K, 'bo', markerfacecolor = 'none', alpha = 0.5)
+plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1), '-', 
+         color = 'r', label = 'Linear model')
+plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1), '-', 
+         color = (0.1, 0.1, 0.9), label = 'Linear model + gK')
 plt.legend()
 
 plt.xlabel('Vm (mV)')
