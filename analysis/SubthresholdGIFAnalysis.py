@@ -277,9 +277,9 @@ for i in range(len(experiments)):
             V_p.plot(t_V, Base_GIFs[i].V_data[j], 
                      'k-', linewidth = 0.5, label = 'Real')
             V_p.plot(t_V, Base_GIFs[i].V_sim[j], 
-                     'r-', linewidth = 0.5, alpha = 0.7, label = 'Base GIF')
+                     'r-', linewidth = 0.5, alpha = 0.7, label = 'Linear model')
             V_p.plot(t_V, KCond_GIFs[i].V_sim[j],
-                     'b-', linewidth = 0.5, alpha = 0.7, label = 'KCond GIF')
+                     'b-', linewidth = 0.5, alpha = 0.7, label = 'Linear model + K')
             
         else:
             V_p.plot(t_V, Base_GIFs[i].V_data[j], 
@@ -370,12 +370,14 @@ plt.show()
 
 #%% PLOT GBAR ESTIMATES
 
+g_leak_pdata = []
 gk1_pdata = []
 gk2_pdata = []
 
 print 'PLOTTING GBAR ESTIMATES'
 for KGIF in KCond_GIFs:
     
+    g_leak_pdata.append(KGIF.gl)
     gk1_pdata.append(KGIF.gbar_K1)
     gk2_pdata.append(KGIF.gbar_K2)
     
@@ -384,21 +386,54 @@ plt.figure()
 
 plt.subplot(111)
 plt.title('Estimated maximal conductances')
-plt.plot([0] * len(gk1_pdata),
+plt.plot([0] * len(g_leak_pdata),
+         g_leak_pdata,
+         'ko', markersize = 20, markerfacecolor = 'gray', 
+         markeredgecolor = 'k', alpha = 0.5)
+plt.plot([1] * len(gk1_pdata),
          gk1_pdata,
          'ko', markersize = 20, markerfacecolor = 'gray', 
          markeredgecolor = 'k', alpha = 0.5)
-plt.plot([1] * len(gk2_pdata),
+plt.plot([2] * len(gk2_pdata),
          gk2_pdata,
          'ko', markersize = 20, markerfacecolor = 'gray', 
          markeredgecolor = 'k', alpha = 0.5)
 
 plt.ylabel('gbar')
-plt.xticks([0, 1], ['Conductance 1', 'Conductance 2'], rotation = 45)
-plt.xlim(-0.5, 1.5)
+plt.xticks([0, 1, 2], ['Leak conductance', 'Conductance 1', 'Conductance 2'], rotation = 45)
+plt.xlim(-0.5, 2.5)
 
 plt.tight_layout()
 plt.show()
+
+
+
+plt.figure(figsize = (3, 4))
+
+plt.subplot(111)
+plt.errorbar([0],
+         np.mean(g_leak_pdata),
+         np.std(g_leak_pdata)/np.sqrt(len(g_leak_pdata)),
+         fmt = 'ko', markersize = 10)
+plt.errorbar([1],
+         np.mean(gk1_pdata),
+         np.std(gk1_pdata)/np.sqrt(len(gk1_pdata)),
+         fmt = 'ko', markersize = 10)
+plt.errorbar([2],
+         np.mean(gk2_pdata),
+         np.std(gk2_pdata)/np.sqrt(len(gk2_pdata)),
+         fmt = 'ko', markersize = 10)
+
+plt.ylabel('Maximal conductance (nS)')
+plt.xlabel('Conductance')
+plt.xticks([0, 1, 2], ['gl', 'gk1', 'gk2'])
+plt.xlim(-0.5, 2.5)
+plt.ylim(0, 0.015)
+
+plt.tight_layout()
+plt.show()
+
+
 
 
 #%% PLOT POWER SPECTRUM DENSITY
