@@ -200,6 +200,31 @@ myGIF.plotPowerSpectrumDensity()
 
 
 ############################################################################################################
+# STEP 6: TEST SIMULATED VOLTAGE CLAMP
+############################################################################################################
+
+#%%
+print '\nTesting simulated voltage clamp...'
+try:
+    myGIF.simulateVClamp(1000, -40, -90, False)
+except:
+    print 'Voltage clamp test failed.\n'
+    raise
+print '\nSuccessful simulated voltage clamp!'
+
+plt.figure()
+plt.subplot(111)
+plt.title('Simulated voltage clamp test')
+plt.ylabel('Holding current (nA)')
+plt.xlabel('Time (timesteps)')
+
+for V in np.arange(-60, -20, 10):
+    plt.plot(myGIF.simulateVClamp(500, V, -90, False)[1], label = str(V) + 'mV')
+    
+plt.legend()
+    
+
+############################################################################################################
 # STEP 4A (OPTIONAL): PLAY A BIT WITH THE FITTED MODEL
 ############################################################################################################
 
