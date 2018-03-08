@@ -323,7 +323,7 @@ class SubthreshGIF_K(GIF) :
         raise RuntimeError('Subthreshold model does not spike.')
         
         
-    def simulateVClamp(self, duration, V_const, V_pre, do_plot = False):
+    def simulateVClamp(self, duration, V_const, V_pre, incl_gl = True, do_plot = False):
         
         """
         Compute the holding current elicited by a voltage step from V_pre to V_const
@@ -359,7 +359,10 @@ class SubthreshGIF_K(GIF) :
         DF_K = V_vec - self.E_K
         
         # Compute clamping current.
-        I_vec = self.gl * DF_leak + (gk1_vec + gk2_vec) * DF_K
+        if incl_gl:
+            I_vec = self.gl * DF_leak + (gk1_vec + gk2_vec) * DF_K
+        else:
+            I_vec = 0. * DF_leak + (gk1_vec + gk2_vec) * DF_K
         
         # Optionally, plot the resulting current.
         if do_plot:
