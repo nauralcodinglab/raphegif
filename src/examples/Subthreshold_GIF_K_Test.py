@@ -1,3 +1,5 @@
+import numpy as np
+
 import sys
 sys.path.append('../')
 
@@ -212,14 +214,18 @@ except:
     raise
 print '\nSuccessful simulated voltage clamp!'
 
-plt.figure()
+plt.figure(figsize = (6, 4))
 plt.subplot(111)
 plt.title('Simulated voltage clamp test')
 plt.ylabel('Holding current (nA)')
-plt.xlabel('Time (timesteps)')
+plt.xlabel('Time (ms)')
 
 for V in np.arange(-60, -20, 10):
-    plt.plot(myGIF.simulateVClamp(500, V, -90, False)[1], label = str(V) + 'mV')
+    
+    I_vec = myGIF.simulateVClamp(500, V, -90, True)[1]
+    t_vec = np.arange(0, int(np.round(len(I_vec) * myGIF.dt)), myGIF.dt)
+    
+    plt.plot(t_vec, I_vec, label = str(V) + 'mV')
     
 plt.legend()
     
