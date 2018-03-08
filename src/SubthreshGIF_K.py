@@ -322,7 +322,51 @@ class SubthreshGIF_K(GIF) :
  
         raise RuntimeError('Subthreshold model does not spike.')
         
-
+        
+    def simulateVClamp(self, duration, V_const, V_pre, do_plot = False):
+        
+        """
+        Compute the holding current elicited by a voltage step from V_pre to V_const
+        """
+        
+        if V_pre is None:
+            V_pre = V_const
+        
+        V_vec = np.ones(int(duration / self.dt), dtype = np.float64)
+        V_vec *= V_const
+        
+        # Initialize vectors with equilibrium gating states.
+        mInf_vec = self.mInf(V_vec)
+        hInf_vec = self.hInf(V_vec)
+        nInf_vec = self.nInf(V_vec)
+        
+        # Set initial condition to equilibrium state at V_pre.
+        mInf_vec[0] = self.mInf(V_pre)
+        hInf_vec[0] = self.hInf(V_pre)
+        nInf_vec[0] = self.nInf(V_pre)
+        
+        # Compute gating state as a function of time.
+        m_vec = self.computeGating(V_vec, mInf_vec, self.m_tau)
+        h_vec = self.computeGating(V_vec, hInf_vec, self.h_tau)
+        n_vec = self.computeGating(V_vec, nInf_vec, self.n_tau)
+        
+        # Compute active conductance vectors.
+        gk1_vec = self.gbar_K1 * m_vec * h_vec
+        gk2_vec = self.gbar_K2 * n_vec
+        
+        # Compute driving force vectors.
+        DF_leak = V_vec - self.El
+        DF_K = V_vec - self.E_K
+        
+        # Compute clamping current.
+        I_vec = self.gl * DF_leak + (gk1_vec + gk2_vec) * DF_K
+        
+        # Optionally, plot the resulting current.
+        if do_plot:
+            NotImplemented
+            
+        return (V_vec, I_vec)
+    
            
     ########################################################################################################
     # METHODS FOR MODEL FITTING
