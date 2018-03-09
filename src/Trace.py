@@ -478,25 +478,39 @@ class Trace :
         Returns tuple of vectors: frequency (Hz) and corresponding power spectrum density.
         """
         
-        f, PSD = signal.welch(self.V, 1000. / self.dt, window = 'hanning', 
+        f_V, PSD_V = signal.welch(self.V, 1000. / self.dt, window = 'hanning', 
                        nperseg = 2**(np.round(np.log2(len(self.V)))))
+        
+        f_I, PSD_I = signal.welch(self.I, 1000. / self.dt, window = 'hanning',
+                       nperseg = 2**(np.round(np.log2(len(self.I)))))
 
         if do_plot:
             
-            plt.figure(figsize = (10, 4))
+            plt.figure(figsize = (8, 6))
             
-            ax = plt.subplot(111)
+            ax = plt.subplot(211)
             ax.set_xscale('log')
             
-            ax.plot(f, PSD, 'b-', linewidth = 0.5)
+            ax.plot(f_V, PSD_V, 'k-', linewidth = 0.5, label = 'V')
+            ax.plot(f_I, PSD_I, 'b-', linewidth = 0.5, label = 'I')
             
+            ax.legend()
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel('PSD')
+            
+            ax2 = plt.subplot(212, sharex = ax)
+            ax2.set_xscale('log')
+            
+            ax2.plot(f_V, PSD_V/PSD_I, 'k-', linewidth = 0.5, label = 'V (norm.)')
+            
+            ax2.legend()
+            ax2.set_xlabel('Frequency (Hz)')
+            ax2.set_ylabel('PSD')
             
             plt.tight_layout()
             plt.show()
             
-        return f, PSD
+        return f_V, PSD_V, f_I, PSD_I
     
 
     #################################################################################################

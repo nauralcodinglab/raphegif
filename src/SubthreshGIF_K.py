@@ -766,27 +766,43 @@ class SubthreshGIF_K(GIF) :
         Only uses first training sweep.
         """
         
-        GIF_f, GIF_PSD = Trace(self.V_sim[0],
+        GIF_f, GIF_PSD, _, _ = Trace(self.V_sim[0],
                                self.I_data[0],
                                len(self.V_sim[0])*self.dt,
                                self.dt).extractPowerSpectrumDensity()
         
-        Data_f, Data_PSD = Trace(self.V_data[0],
+        Data_f, Data_PSD, _, _ = Trace(self.V_data[0],
                                  self.I_data[0],
                                  len(self.V_data[0])*self.dt,
                                  self.dt).extractPowerSpectrumDensity()
         
+        _, _, f_I, PSD_I = Trace(self.V_sim[0],
+                               self.I_data[0],
+                               len(self.V_sim[0])*self.dt,
+                               self.dt).extractPowerSpectrumDensity()
+        
         plt.figure(figsize = (10, 4))
         
-        ax = plt.subplot(111)
+        ax = plt.subplot(211)
         ax.set_xscale('log')
         
         ax.plot(Data_f, Data_PSD, 'k-', linewidth = 0.5, label = 'Real')
         ax.plot(GIF_f, GIF_PSD, 'r-', linewidth = 0.5, label = 'Simulated')
+        ax.plot(f_I, PSD_I, 'b-', linewidth = 0.5, label = 'Input')
         
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('PSD')
         ax.legend()
+        
+        ax2 = plt.subplot(212, sharex = ax)
+        ax2.set_xscale('log')
+        
+        ax2.plot(Data_f, Data_PSD / PSD_I, 'k-', linewidth = 0.5, label = 'Real (norm.)')
+        ax2.plot(GIF_f, GIF_PSD / PSD_I, 'r-', linewidth = 0.5, label = 'Simulated (norm.)')
+        
+        ax2.set_xlabel('Frequency (Hz)')
+        ax2.set_ylabel('PSD (norm.)')
+        ax2.legend()
         
         plt.tight_layout()
         
