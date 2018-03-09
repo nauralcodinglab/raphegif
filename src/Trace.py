@@ -479,10 +479,10 @@ class Trace :
         """
         
         f_V, PSD_V = signal.welch(self.V, 1000. / self.dt, window = 'hanning', 
-                       nperseg = 2**(np.round(np.log2(len(self.V)))))
+                       nperseg = 100000)
         
         f_I, PSD_I = signal.welch(self.I, 1000. / self.dt, window = 'hanning',
-                       nperseg = 2**(np.round(np.log2(len(self.I)))))
+                       nperseg = 100000)
 
         if do_plot:
             
