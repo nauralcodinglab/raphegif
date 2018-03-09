@@ -305,7 +305,7 @@ for i in range(len(experiments)):
     plt.show()
 
 
-#%% PLOT RESIDUALS OF BASE MODEL
+#%% COMPARE MODEL RESIDUALS
 
 # Bin residuals according to V and populate a pair of arrays with this info
 # to use for plotting.
@@ -351,8 +351,8 @@ plt.figure(figsize = (4, 3.5))
 
 plt.subplot(111)
 plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
-plt.plot(V_arr_base, err_arr_base, 'ro', markerfacecolor = 'none', alpha = 0.5)
-plt.plot(V_arr_K, err_arr_K, 'bo', markerfacecolor = 'none', alpha = 0.5)
+plt.plot(V_arr_base, err_arr_base, 'r-', markerfacecolor = 'none', alpha = 0.5)
+plt.plot(V_arr_K, err_arr_K, 'b-', markerfacecolor = 'none', alpha = 0.5)
 plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1), '-', 
          color = 'r', label = 'Linear model')
 plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1), '-', 
@@ -434,6 +434,29 @@ plt.tight_layout()
 plt.show()
 
 
+
+#%% SHOW SIMULATED V-CLAMP
+
+for i in range(len(KCond_GIFs)):
+    
+    KGIF = KCond_GIFs[i]
+    
+    plt.figure(figsize = (6, 4))
+    plt.subplot(111)
+    plt.title('Simulated voltage clamp test - {}'.format(i))
+    plt.ylabel('Holding current (nA)')
+    plt.xlabel('Time (ms)')
+    
+    for V in np.arange(-60, -20, 10):
+        
+        I_vec = KGIF.simulateVClamp(500, V, -90, True)[1]
+        t_vec = np.arange(0, int(np.round(len(I_vec) * KGIF.dt)), KGIF.dt)
+        
+        plt.plot(t_vec, I_vec, label = str(V) + 'mV')
+        
+    plt.legend()
+    
+    plt.tight_layout()
 
 
 #%% PLOT POWER SPECTRUM DENSITY
