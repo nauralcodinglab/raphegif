@@ -1,3 +1,5 @@
+import numpy as np
+
 import sys
 sys.path.append('../')
 
@@ -198,6 +200,35 @@ print '\nSuccessful PSD extraction!\n'
 # Compare PSD of data and GIF model
 myGIF.plotPowerSpectrumDensity()
 
+
+############################################################################################################
+# STEP 6: TEST SIMULATED VOLTAGE CLAMP
+############################################################################################################
+
+#%%
+print '\nTesting simulated voltage clamp...'
+try:
+    myGIF.simulateVClamp(1000, -40, -90, False)
+except:
+    print 'Voltage clamp test failed.\n'
+    raise
+print '\nSuccessful simulated voltage clamp!'
+
+plt.figure(figsize = (6, 4))
+plt.subplot(111)
+plt.title('Simulated voltage clamp test')
+plt.ylabel('Holding current (nA)')
+plt.xlabel('Time (ms)')
+
+for V in np.arange(-60, -20, 10):
+    
+    I_vec = myGIF.simulateVClamp(500, V, -90, True)[1]
+    t_vec = np.arange(0, int(np.round(len(I_vec) * myGIF.dt)), myGIF.dt)
+    
+    plt.plot(t_vec, I_vec, label = str(V) + 'mV')
+    
+plt.legend()
+    
 
 ############################################################################################################
 # STEP 4A (OPTIONAL): PLAY A BIT WITH THE FITTED MODEL
