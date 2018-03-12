@@ -380,7 +380,6 @@ print('{1:>13}{0:>10}'.format('K', 'Base'))
 print('_________________________')
 for i in range(len(experiments)):
     
-    
     ### Get raw residuals
     
     # Allocate arrays to hold test data.
@@ -407,14 +406,14 @@ for i in range(len(experiments)):
     del (j, tr, time, V_sim_K_ij, m, h, n, V_sim_base_ij)
     
     # Get residuals.
-    residuals_K.append(V_sim_K - V_test)
-    residuals_base.append(V_sim_base - V_test)
+    residuals_K.append((V_sim_K - V_test)**2)
+    residuals_base.append((V_sim_base - V_test)**2)
     
     # Get voltage along which to bin residuals.
     V_test_ls.append(V_test)
     
-    print('{0:>3}{2:>10.1f}{1:>10.1f}'.format(
-            i, residuals_K[i].mean(), residuals_base[i].mean()))
+    #print('{0:>3}{2:>10.1f}{1:>10.1f}'.format(
+    #        i, residuals_K[i].mean(), residuals_base[i].mean()))
     
     
     
@@ -453,7 +452,7 @@ for i in range(len(residuals_K)):
 
 ### Make figure
 
-plt.figure(figsize = (4, 3.5))
+plt.figure(figsize = (7, 5))
 
 plt.subplot(111)
 plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
@@ -463,28 +462,47 @@ plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1), '
          color = 'r', label = 'Linear model')
 plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1), '-', 
          color = (0.1, 0.1, 0.9), label = 'Linear model + gK')
+
+for i in range(V_arr_base.shape[0]):
+    
+    if np.isnan(np.nanmean(V_arr_base[i, :])):
+        continue
+    
+    W, p = stats.wilcoxon(err_arr_base[i, :], err_arr_K[i, :])
+    plt.text(V_arr_base[i, 0], -30, str(round(p, 2)),
+             horizontalalignment = 'center')
+
+plt.ylim(-40, plt.ylim()[1])
+
 plt.legend()
 
 plt.xlabel('Vm (mV)')
-plt.ylabel('Model error (mV)')
+plt.ylabel('Model error (mV^2)')
 
 plt.tight_layout()
 plt.show()
 
-
+#%%
 ### COMPARE FIT AT SPECIFIC VOLTAGES
 
-cells_to_exclude = [10]
+cells_to_exclude = []
 cells_to_use = [i for i in range(err_arr_base.shape[1]) if i not in cells_to_exclude]
 del cells_to_exclude
 
-err_arr_base_stats = err_arr_base[:, cells_to_use]
-err_arr_K_stats = err_arr_K[:, cells_to_use]
+err_arr_base_stats = np.sqrt(err_arr_base[:, cells_to_use])
+err_arr_K_stats = np.sqrt(err_arr_K[:, cells_to_use])
 
 print "\n"
 print stats.ttest_rel(err_arr_base_stats[14, :], err_arr_K_stats[14, :], nan_policy = 'omit')
 print stats.ttest_rel(err_arr_base_stats[15, :], err_arr_K_stats[15, :], nan_policy = 'omit')
 print stats.ttest_rel(err_arr_base_stats[16, :], err_arr_K_stats[16, :], nan_policy = 'omit')
+
+
+print '\n'
+print stats.wilcoxon(err_arr_base_stats[14, :], err_arr_K_stats[14, :])
+print stats.wilcoxon(err_arr_base_stats[15, :], err_arr_K_stats[15, :])
+print stats.wilcoxon(err_arr_base_stats[16, :], err_arr_K_stats[16, :])
+
 
 #%% PLOT GBAR ESTIMATES
 
