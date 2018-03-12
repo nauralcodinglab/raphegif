@@ -9,6 +9,7 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 
 # Import GIF toolbox modules from read-only clone
 import sys
@@ -366,7 +367,124 @@ plt.tight_layout()
 plt.show()
 
     
+
+#%% COMPARE FIT ON TEST SET
+
+residuals_K = []
+residuals_base = []
+
+V_test_ls = []
+
+print('\nMEAN RESIDUALS')
+print('{1:>13}{0:>10}'.format('K', 'Base'))
+print('_________________________')
+for i in range(len(experiments)):
     
+    
+    ### Get raw residuals
+    
+    # Allocate arrays to hold test data.
+    I_test = np.zeros((len(experiments[i].testset_traces[0].I),
+                       len(experiments[i].testset_traces)), 
+                      dtype = np.float64)
+    V_test = np.zeros_like(I_test, dtype = np.float64)
+    V_sim_K = np.zeros_like(I_test, dtype = np.float64)
+    V_sim_base = np.zeros_like(I_test, dtype = np.float64)
+    
+    for j in range(len(experiments[i].testset_traces)):
+        # Get experimental data.
+        tr = experiments[i].testset_traces[j]
+        I_test[:, j] = tr.I
+        V_test[:, j] = tr.V
+    
+        # Get simulated data.
+        time, V_sim_K_ij, m, h, n = KCond_GIFs[i].simulate(tr.I, tr.V[0])
+        V_sim_K[:, j] = V_sim_K_ij
+        
+        time, V_sim_base_ij = Base_GIFs[i].simulate(tr.I, tr.V[0])
+        V_sim_base[:, j] = V_sim_base_ij
+        
+    del (j, tr, time, V_sim_K_ij, m, h, n, V_sim_base_ij)
+    
+    # Get residuals.
+    residuals_K.append(V_sim_K - V_test)
+    residuals_base.append(V_sim_base - V_test)
+    
+    # Get voltage along which to bin residuals.
+    V_test_ls.append(V_test)
+    
+    print('{0:>3}{2:>10.1f}{1:>10.1f}'.format(
+            i, residuals_K[i].mean(), residuals_base[i].mean()))
+    
+    
+    
+### Bin residuals as a function of V
+
+# Make bins.
+bins = np.linspace(-120, -30, 20)
+bin_centres = (bins[1:] + bins[:-1]) / 2.
+
+V_arr_base = np.tile(bin_centres[:, np.newaxis], len(residuals_base))
+err_arr_base = np.empty_like(V_arr_base, dtype = np.float64)
+err_arr_base[:, :] = np.NAN
+
+V_arr_K = np.tile(bin_centres[:, np.newaxis], len(residuals_K))
+err_arr_K = np.empty_like(V_arr_K, dtype = np.float64)
+err_arr_K[:, :] = np.NAN
+
+del bin_centres
+    
+for i in range(len(residuals_K)):
+    
+    # Get binned residuals on base model
+    err, V, bin_no = stats.binned_statistic(V_test_ls[i].flatten(),
+                residuals_base[i].flatten(),
+                bins = bins)
+    inds = np.digitize(V, bins) - 1
+    err_arr_base[:, i] = err
+    
+    # Get binned residuals on KCond model
+    err, V, bin_no = stats.binned_statistic(V_test_ls[i].flatten(),
+                residuals_K[i].flatten(),
+                bins = bins)
+    inds = np.digitize(V, bins) - 1
+    err_arr_K[:, i] = err
+
+
+### Make figure
+
+plt.figure(figsize = (4, 3.5))
+
+plt.subplot(111)
+plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
+plt.plot(V_arr_base, err_arr_base, 'r-', markerfacecolor = 'none', alpha = 0.1)
+plt.plot(V_arr_K, err_arr_K, 'b-', markerfacecolor = 'none', alpha = 0.1)
+plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1), '-', 
+         color = 'r', label = 'Linear model')
+plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1), '-', 
+         color = (0.1, 0.1, 0.9), label = 'Linear model + gK')
+plt.legend()
+
+plt.xlabel('Vm (mV)')
+plt.ylabel('Model error (mV)')
+
+plt.tight_layout()
+plt.show()
+
+
+### COMPARE FIT AT SPECIFIC VOLTAGES
+
+cells_to_exclude = [10]
+cells_to_use = [i for i in range(err_arr_base.shape[1]) if i not in cells_to_exclude]
+del cells_to_exclude
+
+err_arr_base_stats = err_arr_base[:, cells_to_use]
+err_arr_K_stats = err_arr_K[:, cells_to_use]
+
+print "\n"
+print stats.ttest_rel(err_arr_base_stats[14, :], err_arr_K_stats[14, :], nan_policy = 'omit')
+print stats.ttest_rel(err_arr_base_stats[15, :], err_arr_K_stats[15, :], nan_policy = 'omit')
+print stats.ttest_rel(err_arr_base_stats[16, :], err_arr_K_stats[16, :], nan_policy = 'omit')
 
 #%% PLOT GBAR ESTIMATES
 
