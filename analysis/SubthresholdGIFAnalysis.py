@@ -508,24 +508,29 @@ print stats.wilcoxon(err_arr_base_stats[16, :], err_arr_K_stats[16, :])
 
 #%% PLOT GBAR ESTIMATES
 
-g_leak_pdata = []
+gk_leak_pdata = []
+gbase_leak_pdata = []
 gk1_pdata = []
 gk2_pdata = []
 
 print 'PLOTTING GBAR ESTIMATES'
 for KGIF in KCond_GIFs:
     
-    g_leak_pdata.append(KGIF.gl)
+    gk_leak_pdata.append(KGIF.gl)
     gk1_pdata.append(KGIF.gbar_K1)
     gk2_pdata.append(KGIF.gbar_K2)
+
+for GIF in Base_GIFs:
+    
+    gbase_leak_pdata.append(GIF.gl)
     
 
 plt.figure()
 
 plt.subplot(111)
 plt.title('Estimated maximal conductances')
-plt.plot([0] * len(g_leak_pdata),
-         g_leak_pdata,
+plt.plot([0] * len(gk_leak_pdata),
+         gk_leak_pdata,
          'ko', markersize = 20, markerfacecolor = 'gray', 
          markeredgecolor = 'k', alpha = 0.5)
 plt.plot([1] * len(gk1_pdata),
@@ -550,8 +555,8 @@ plt.figure(figsize = (3, 4))
 
 plt.subplot(111)
 plt.errorbar([0],
-         np.mean(g_leak_pdata),
-         np.std(g_leak_pdata)/np.sqrt(len(g_leak_pdata)),
+         np.mean(gk_leak_pdata),
+         np.std(gk_leak_pdata)/np.sqrt(len(gk_leak_pdata)),
          fmt = 'ko', markersize = 10)
 plt.errorbar([1],
          np.mean(gk1_pdata),
@@ -572,6 +577,30 @@ plt.tight_layout()
 plt.show()
 
 
+plt.figure()
+
+plt.subplot(211)
+plt.title('Estimated leak conductances')
+plt.hist(gbase_leak_pdata, color = 'k', alpha = 0.5,
+         label = 'Linear model')
+plt.hist(gk_leak_pdata, color = 'b', alpha = 0.5,
+         label = 'Linear model + gk')
+plt.ylabel('Count')
+plt.xlabel('gl (nS)')
+plt.legend()
+
+plt.subplot(212)
+plt.title('Estimated active conductances')
+plt.hist(gk1_pdata, color = (0.9, 0.1, 0.1), alpha = 0.5,
+         label = 'gk1')
+plt.hist(gk2_pdata, color = (0.1, 0.9, 0.1), alpha = 0.5,
+         label = 'gk2')
+plt.ylabel('Count')
+plt.xlabel('g (nS)')
+plt.legend()
+
+plt.tight_layout()
+plt.how()
 
 #%% SHOW SIMULATED V-CLAMP
 
