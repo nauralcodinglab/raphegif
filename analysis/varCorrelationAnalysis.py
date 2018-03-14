@@ -20,6 +20,81 @@ except NameError:
 from matplotlib.mlab import PCA
 import pandas as pd
 
+
+#%% EXAMINE CORRELATIONS BETWEEN MODEL VARIABLES
+
+"""
+This block takes the X_matrix built by GIF.fitSubthresholdDynamics_Build_Xmatrix_Yvector
+and looks for correlations across columns. Substantial covariance between
+model variables may lead to nonsensical coefficient estimates.
+"""
+
+# Set script varibles.
+show_correlation_matrices = True
+show_PCA = False
+
+# Correlation matrices.
+for i in range(len(KCond_GIFs)):
+    
+    # Set local variables.
+    KGIF = KCond_GIFs[i]
+    expt = experiments[i]
+    
+    # Build X-matrix for first trace of training set.
+    # (Usually training set is only one trace.)
+    tr = expt.trainingset_traces[0]
+    X_matrix, Y_vector = KGIF.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr)
+    
+    # Correlation matrices.
+    if show_correlation_matrices:
+        X_DF = pd.DataFrame(X_matrix)
+        
+        X_DF_norm = X_DF.copy()
+        for j in range(X_DF_norm.shape[1]):
+            X_DF_norm.iloc[:, j] -= X_DF_norm.iloc[:, j].mean()
+            X_DF_norm.iloc[:, j] /= X_DF_norm.iloc[:, j].std()
+        
+        
+        plt.matshow(X_DF.corr(), cmap = 'bwr', vmin = -1, vmax = 1)
+        plt.xticks([0, 1, 2, 3, 4], ['V', 'I', 'const', 'gating_k1', 'gating_k2'])
+        plt.yticks([0, 1, 2, 3, 4], ['V', 'I', 'const', 'gating_k1', 'gating_k2'])
+        plt.colorbar()
+    
+
+    # PCA on model variables.
+    if show_PCA:
+        
+        X_matrix_PCA = X_matrix[:, [0, 1, 3, 4]]
+        
+        PCA_results = PCA(X_matrix_PCA)
+
+        print PCA_results.fracs
+        print PCA_results.Wt
+        
+        plt.figure(figsize = (10, 5))
+        
+        plt.subplot(121)
+        plt.title('Variance explained by component')
+        plt.plot(100. * PCA_results.fracs, 'ko-')
+        plt.ylabel('Variance explained (%)')
+        plt.xticks([0, 1, 2, 3], ['1st', '2nd', '3rd', '4th'])
+        plt.xlabel('Component')
+        plt.ylim(-5, 105)
+        
+        plt.subplot(122)
+        plt.title('Component coefficients')
+        ind = np.arange(PCA_results.Wt.shape[1])
+        wid = 0.35
+        plt.bar(ind - wid/2., PCA_results.Wt[0, :], wid, label = '1st component')
+        plt.bar(ind + wid/2., PCA_results.Wt[1, :], wid, label = '2nd component')
+        plt.ylabel('Weight')
+        plt.xticks(ind, ['V', 'I', 'gating_k1', 'gating_k2'])
+        plt.xlabel('Coefficient')
+        plt.legend()
+        
+        plt.tight_layout()
+
+
 #%% EXAMINE CORRELATIONS BETWEEN COEFFICIENTS
 
 # Gather coefficients
