@@ -382,6 +382,10 @@ print('{1:>13}{0:>10}'.format('K', 'Base'))
 print('_________________________')
 for i in range(len(experiments)):
     
+    ### Skip crappy cells.
+    if i in [10]:
+        continue
+    
     ### Get raw residuals
     
     # Allocate arrays to hold test data.
@@ -600,7 +604,7 @@ plt.xlabel('g (nS)')
 plt.legend()
 
 plt.tight_layout()
-plt.how()
+plt.show()
 
 #%% SHOW SIMULATED V-CLAMP
 
