@@ -10,6 +10,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import pandas as pd
+import seaborn as sns
 
 # Import GIF toolbox modules from read-only clone
 import sys
@@ -605,6 +607,100 @@ plt.legend()
 
 plt.tight_layout()
 plt.show()
+
+
+#%% MAKE BEESWARM PLOT OF ALL PARAMETER ESTIMATES
+
+# Place parameter estimates into a DataFrame
+
+param_dict = {
+        'Model': [],
+        'Parameter': [],
+        'Value': [],
+        }
+
+for i in range(len(Base_GIFs)):
+    
+    
+    # Get parameter estimates for base model
+    params_tmp = ['R', 'C', 'tau']
+    vals_tmp = [1./Base_GIFs[i].gl, Base_GIFs[i].C, 
+                1./Base_GIFs[i].gl * Base_GIFs[i].C]
+    
+    assert len(params_tmp) == len(vals_tmp), 'param labels and vals not same length'
+    
+    mod_tmp = ['Base'] * len(params_tmp)
+    
+    param_dict['Model'].extend(mod_tmp)
+    param_dict['Parameter'].extend(params_tmp)
+    param_dict['Value'].extend(vals_tmp)
+    
+    
+    # Get parameter estimates for active model
+    params_tmp = ['R', 'C', 'tau', 'gl', 'gk1', 'gk2']
+    vals_tmp = [1./KCond_GIFs[i].gl, KCond_GIFs[i].C,
+                1./KCond_GIFs[i].gl * KCond_GIFs[i].C,
+                KCond_GIFs[i].gl, KCond_GIFs[i].gbar_K1,
+                KCond_GIFs[i].gbar_K2]
+    
+    assert len(params_tmp) == len(vals_tmp)
+    
+    mod_tmp = ['KCond'] * len(params_tmp)
+    
+    param_dict['Model'].extend(mod_tmp)
+    param_dict['Parameter'].extend(params_tmp)
+    param_dict['Value'].extend(vals_tmp)
+    
+
+# Put param dict into dataframe for plotting using seaborn & clean up
+param_df = pd.DataFrame(data = param_dict)
+del param_dict, params_tmp, vals_tmp, mod_tmp
+
+
+# Make figure
+
+plt.figure(figsize = (5.5, 3.5))
+
+R_plot = plt.subplot2grid((2, 3), (0, 0))
+df_tmp = param_df.loc[param_df['Parameter'] == 'R', :]
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value']/1e3, ax = R_plot)
+R_plot.set_ylabel('R (GOhm)')
+R_plot.set_ylim(0, R_plot.get_ylim()[1])
+
+C_plot = plt.subplot2grid((2, 3), (0, 1))
+df_tmp = param_df.loc[param_df['Parameter'] == 'C', :]
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'] * 1e3, ax = C_plot)
+C_plot.set_ylabel('C (pF)')
+
+tau_plot = plt.subplot2grid((2, 3), (0, 2))
+df_tmp = param_df.loc[param_df['Parameter'] == 'tau', :]
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'], ax = tau_plot)
+tau_plot.set_ylabel('tau (ms)')
+tau_plot.set_ylim(0, tau_plot.get_ylim()[1])
+
+g_plot = plt.subplot2grid((2, 3), (1, 0), colspan = 2)
+param_checker = np.vectorize(lambda x: x in ['gl', 'gk1', 'gk2'])
+selection = np.logical_and(param_df['Model'] == 'KCond',
+                           param_checker(param_df['Parameter']))
+df_tmp = param_df.loc[selection, :]
+sns.swarmplot(x = df_tmp['Parameter'], y = df_tmp['Value'], color = 'k', ax = g_plot)
+g_plot.set_ylabel('g (nS)')
+
+corr_plot = plt.subplot2grid((2, 3), (1, 2))
+param_checker = np.vectorize(lambda x: x in ['C', 'tau'])
+selection = np.logical_and(param_df['Model'] == 'Base',
+                           param_checker(param_df['Parameter']))
+df_tmp = param_df.loc[selection, :]
+corr_plot.plot(df_tmp.loc[df_tmp['Parameter'] == 'tau', 'Value'],
+               df_tmp.loc[df_tmp['Parameter'] == 'C', 'Value'] * 1e3,
+               'ko',
+               alpha = 0.5)
+corr_plot.set_ylabel('C (pF)')
+corr_plot.set_xlabel('tau (ms)')
+corr_plot.set_ylim(0, corr_plot.get_ylim()[1])
+corr_plot.set_xlim(0, corr_plot.get_xlim()[1])
+
+plt.tight_layout()
 
 #%% SHOW SIMULATED V-CLAMP
 
