@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 import pandas as pd
 import seaborn as sns
+import multiprocessing as mp
+import itertools
 
 # Import GIF toolbox modules from read-only clone
 import sys
@@ -756,10 +758,11 @@ truncate = int(5e4)
 very_long_noise = {
     'I': [],
     'V': [],
+    '_dt': [],
     'I_f': [],
     'I_PSD': [],
     'V_f': [],
-    'V_PSD' : []
+    'V_PSD': []
 }
 
 # Perform simulations and extract PSD.
@@ -795,6 +798,7 @@ for i in range(len(KCond_GIFs)):
     # Add output to master dict.
     very_long_noise['I'].append(I_arr)
     very_long_noise['V'].append(V_arr)
+    very_long_noise['_dt'].append(KCond_GIFs[i].dt)
 
     print '\nDone cell {}!'.format(i)
 
@@ -802,11 +806,18 @@ for i in range(len(KCond_GIFs)):
 
 #%% Extract PSD
 
-"""
-Eventually, this should be wrapped in a function and parallelized.
-"""
+def PSDworker(args):
 
-for i in range(len(very_long_noise['V'])):
+    """
+    Worker function to extract PSD of V and I arrays.
+    Used for parallelization with multiprocessing.
+
+    Args should be a tuple of V_arr, I_arr, and dt.
+    """
+
+    V_arr = args[0]
+    I_arr = args[1]
+    dt = args[2]
 
     I_f_arr = []
     I_PSD_arr = []
@@ -815,8 +826,7 @@ for i in range(len(very_long_noise['V'])):
 
     # Get PSD
     for j in range(V_arr.shape[1]):
-        print '\rExtracting PSD: {:0.1f}%'.format(100. * (j+1)/I_arr.shape[1]),
-        tr = Trace(V_arr[:, j], I_arr[:, j], V_arr.shape[0] * KCond_GIFs[i].dt, KCond_GIFs[i].dt)
+        tr = Trace(V_arr[:, j], I_arr[:, j], V_arr.shape[0] * dt, dt)
         V_f, V_PSD, I_f, I_PSD = tr.extractPowerSpectrumDensity()
 
         I_f_arr.append(I_f)
@@ -824,18 +834,45 @@ for i in range(len(very_long_noise['V'])):
         V_f_arr.append(V_f)
         V_PSD_arr.append(V_PSD)
 
-    print('\nDone cell {}!\n'.format(i))
-
     # Convert PSD lists to arrays.
     I_f_arr = np.array(I_f_arr).T
     I_PSD_arr = np.array(I_PSD_arr).T
     V_f_arr = np.array(V_f_arr).T
     V_PSD_arr = np.array(V_PSD_arr).T
 
-    very_long_noise['I_f'].append(I_f_arr)
-    very_long_noise['I_PSD'].append(I_PSD_arr)
-    very_long_noise['V_f'].append(V_f_arr)
-    very_long_noise['V_PSD'].append(V_PSD_arr)
+    return (I_f_arr, I_PSD_arr, V_f_arr, V_PSD_arr)
+
+# Creat an iterable to pass to the worker process.
+noise_input_iter = itertools.izip(very_long_noise['V'], very_long_noise['I'], very_long_noise['_dt'])
+
+# Parallelize.
+if __name__ == '__main__':
+
+    print 'Extracting PSDs in parallel.'
+
+    pool_ = mp.Pool()
+
+    for out in pool_.imap(PSDworker, noise_input_iter):
+
+        very_long_noise['I_f'].append(out[0])
+        very_long_noise['I_PSD'].append(out[1])
+        very_long_noise['V_f'].append(out[2])
+        very_long_noise['V_PSD'].append(out[3])
+
+    pool_.close()
+    pool_.join()
+
+    print 'Done!'
+
+else:
+    print 'Cannot execute parallized PSD extraction outside of __main__.'
+    print 'Iterating normally instead.'
+
+    for out in itertools.imap(PSDworker, noise_input_iter):
+        very_long_noise['I_f'].append(out[0])
+        very_long_noise['I_PSD'].append(out[1])
+        very_long_noise['V_f'].append(out[2])
+        very_long_noise['V_PSD'].append(out[3])
 
 
 #%% PLOT DETAILED SIMULATED PSD
