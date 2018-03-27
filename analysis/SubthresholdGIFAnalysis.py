@@ -8,6 +8,7 @@ from __future__ import division
 import os
 import multiprocessing as mp
 import itertools
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -755,7 +756,7 @@ input.
 
 noise_length = int(1e7)
 noise_sigma = 1                          # (mV)
-noise_voltages = np.array([-80, -70, -60, -55, -50, -47.5, -45, -42.5, -40])  # (mV)
+noise_voltages = np.array([-80, -75, -70, -65, -60, -55, -50, -47.5, -45, -42.5, -41.25, -40], dtype = np.float32)  # (mV)
 
 very_long_noise = {
     'I': [],
@@ -774,30 +775,31 @@ for i in range(len(KCond_GIFs)):
     print 'Getting frequency response for cell {}'.format(i)
 
     I_arr = np.empty((noise_length, len(noise_voltages)),
-                     dtype = np.float64)
+                     dtype = np.float32)
     V_arr = np.empty_like(I_arr)
 
     base_noise = Tools.generateOUprocess(noise_length * 0.1, 5., 0.,
                                               noise_sigma, 0.1)
+    base_noise = base_noise.astype(np.float32)
 
     # Offset noise.
     for j in range(I_arr.shape[1]):
         I_offset = KCond_GIFs[i].simulateVClamp(1, noise_voltages[j], None)[1].mean()
-        I_scale = 10 * (KCond_GIFs[i].simulateVClamp(1, noise_voltages[j] + (noise_sigma / 10), None)[1].mean() - I_offset)
-        I_arr[:, j] = base_noise * I_scale + I_offset
+        I_arr[:, j] = base_noise + I_offset.astype(np.float32)
 
 
     # Simulate V response to noise.
     for j in range(I_arr.shape[1]):
         print '\rSimulating voltage response: {:0.1f}%'.format(100. * (j+1)/I_arr.shape[1]),
-        _, V_arr[:, j], _, _, _ = KCond_GIFs[i].simulate(I_arr[:, j], noise_voltages[j])
-
+        _, V_sim_tmp, _, _, _ = KCond_GIFs[i].simulate(I_arr[:, j], noise_voltages[j])
+        V_sim_tmp = V_sim_tmp.astype(np.float32)
+        V_arr[:, j] = V_sim_tmp
 
     # Add output to master dict.
     very_long_noise['I'].append(I_arr)
     very_long_noise['V'].append(V_arr)
     very_long_noise['_dt'].append(KCond_GIFs[i].dt)
-    very_long_noise['_noise_voltages'].append(np.broadcast_to(noise_voltages[np.newaxis, :], I_arr.shape))
+    very_long_noise['_noise_voltages'].append(noise_voltages)
 
     print '\nDone cell {}!'.format(i)
 
@@ -853,7 +855,7 @@ if __name__ == '__main__':
 
     pool_ = mp.Pool()
 
-    for out in pool_.imap(PSDworker, noise_input_iter):
+    for out in pool_.map(PSDworker, noise_input_iter):
 
         very_long_noise['I_f'].append(out[0])
         very_long_noise['I_PSD'].append(out[1])
@@ -888,14 +890,64 @@ plt.figure()
 ax = plt.subplot(111)
 plt.plot(very_long_noise['V'][0])
 
+
+#%% Pickle very_long_noise
+
+# Check whether pyc file already exists before dumping.
+fpath = 'analysis/veryLongNoisePSD.pyc'
+if os.path.isfile(fpath):
+
+    # If file already exists, ask user if they want to overwrite.
+    if raw_input('veryLongNoisePSD.pyc already exists. Overwrite? (y/n)').lower() == 'y':
+        print 'Overwrite confirmed.'
+        do_dump = True
+    else:
+        print 'Cancelling pickle dump.'
+        do_dump = False
+
+else:
+    do_dump = True
+
+
+if do_dump:
+    with open('analysis/veryLongNoisePSD.pyc', 'wb') as f:
+        tmp = {}
+
+        print 'Creating temporary object...'
+        for key in ['V_f', 'V_PSD', 'I_f', 'I_PSD', '_dt', '_noise_voltages']:
+            tmp[key] = very_long_noise[key]
+
+        print 'Dumping to veryLongNoisePSD.pyc'
+        pickle.dump(tmp, f)
+        print 'Done!'
+
+
+#%% LOAD PICKLED DATA
+
+# Check whether very_long_noise already exists in global namespace before loading.
+if 'very_long_noise' in globals():
+
+    if raw_input('very_long_noise already exists in global namespace. Overwrite? (y/n)').lower() == 'y':
+        print('Overwrite confirmed.')
+        do_load = True
+    else:
+        print 'Cancelling pickle load.'
+        do_load = False
+else:
+    do_load = True
+
+if do_load:
+    with open('analysis/veryLongNoisePSD.pyc', 'rb') as f:
+        very_long_noise = pickle.load(f)
+
 #%% 3D plot
-mod_no = 12
+mod_no = 0
 
 freq_cutoff = 1e2
 
 X = very_long_noise['V_f'][mod_no]
-Y = very_long_noise['_noise_voltages'][mod_no]
-Z = very_long_noise['V_PSD'][mod_no] / very_long_noise['I_PSD'][mod_no]
+Y = np.broadcast_to(very_long_noise['_noise_voltages'][mod_no][np.newaxis, :], X.shape)
+Z = np.sqrt(very_long_noise['V_PSD'][mod_no] / very_long_noise['I_PSD'][mod_no])
 
 sub = np.min(np.where(X[:, 0] >= 1e2)[0])
 
@@ -909,6 +961,6 @@ plt.figure(figsize = (8, 8))
 ax = plt.subplot(111, projection = '3d')
 ax.plot_surface(X, Y, Z, rstride = 2, cstride = 2, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
 ax.set_ylim3d(ax.get_ylim3d()[1], ax.get_ylim3d()[0])
-ax.set_xlabel('Log frequency (log Hz)')
+ax.set_xlabel('log10(f/f0)')
 ax.set_ylabel('Vm (mV)')
-ax.set_zlabel('Amplitude (mV^2)')
+ax.set_zlabel('Impedance (MOhm)')
