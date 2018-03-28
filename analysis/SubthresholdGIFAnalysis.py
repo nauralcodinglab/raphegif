@@ -754,9 +754,9 @@ Get the power spectrum density of model voltage response to very long noisy
 input.
 """
 
-noise_length = int(1e7)
-noise_sigma = 1                          # (mV)
-noise_voltages = np.array([-80, -75, -70, -65, -60, -55, -50, -47.5, -45, -42.5, -41.25, -40], dtype = np.float32)  # (mV)
+noise_length = int(2e6)
+noise_sigma = 0.002
+noise_voltages = np.linspace(-80, -40, 30)
 
 very_long_noise = {
     'I': [],
@@ -770,6 +770,10 @@ very_long_noise = {
 }
 
 # Perform simulations and extract PSD.
+base_noise = Tools.generateOUprocess(noise_length * 0.1, 5., 0.,
+                                          noise_sigma, 0.1)
+base_noise = base_noise.astype(np.float32)
+
 for i in range(len(KCond_GIFs)):
 
     print 'Getting frequency response for cell {}'.format(i)
@@ -777,10 +781,6 @@ for i in range(len(KCond_GIFs)):
     I_arr = np.empty((noise_length, len(noise_voltages)),
                      dtype = np.float32)
     V_arr = np.empty_like(I_arr)
-
-    base_noise = Tools.generateOUprocess(noise_length * 0.1, 5., 0.,
-                                              noise_sigma, 0.1)
-    base_noise = base_noise.astype(np.float32)
 
     # Offset noise.
     for j in range(I_arr.shape[1]):
@@ -857,6 +857,7 @@ if __name__ == '__main__':
 
     for out in pool_.map(PSDworker, noise_input_iter):
 
+        print 'Finished a cell.'
         very_long_noise['I_f'].append(out[0])
         very_long_noise['I_PSD'].append(out[1])
         very_long_noise['V_f'].append(out[2])
@@ -941,7 +942,8 @@ if do_load:
         very_long_noise = pickle.load(f)
 
 #%% 3D plot
-mod_no = 0
+
+mod_no = 4
 
 freq_cutoff = 1e2
 
@@ -957,10 +959,42 @@ Z = Z[:sub, :]
 
 X = np.log10(X) # Convert frequency axis to log units.
 
-plt.figure(figsize = (8, 8))
-ax = plt.subplot(111, projection = '3d')
-ax.plot_surface(X, Y, Z, rstride = 2, cstride = 2, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
-ax.set_ylim3d(ax.get_ylim3d()[1], ax.get_ylim3d()[0])
-ax.set_xlabel('log10(f/f0)')
-ax.set_ylabel('Vm (mV)')
-ax.set_zlabel('Impedance (MOhm)')
+fig3d = plt.figure(figsize = (12, 5))
+
+fig3d.suptitle('Cell {}'.format(mod_no))
+
+ax0 = plt.subplot2grid((2, 5), (0, 0), projection = '3d', colspan = 2, rowspan = 2)
+ax0.set_title('Membrane filter from nonlinear model')
+ax0.plot_surface(X, Y, Z, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
+ax0.set_ylim3d(ax0.get_ylim3d()[1], ax0.get_ylim3d()[0])
+ax0.set_xlabel('log10(f/f0)')
+ax0.set_ylabel('Vm (mV)')
+ax0.set_zlabel('Impedance (MOhm)')
+
+ax1 = plt.subplot2grid((2, 5), (0, 2), projection = '3d', colspan = 2, rowspan = 2)
+ax1.set_title('Perithreshold part of membrane filter')
+ax1.plot_surface(X[:, -15:], Y[:, -15:], Z[:, -15:], rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
+ax1.set_ylim3d(ax1.get_ylim3d()[1], ax1.get_ylim3d()[0])
+ax1.set_xlabel('log10(f/f0)')
+ax1.set_ylabel('Vm (mV)')
+ax1.set_zlabel('Impedance (MOhm)')
+
+ax2 = plt.subplot2grid((2, 5), (0, 4))
+cond_vals = np.array([KCond_GIFs[mod_no].gl, KCond_GIFs[mod_no].gbar_K1, KCond_GIFs[mod_no].gbar_K2])
+ax2.bar([0, 1, 2], cond_vals * 1e3, color = (0.9, 0.1, 0.1))
+ax2.set_xticks([0, 1, 2])
+ax2.set_xticklabels(['gl', 'gk1', 'gk2'])
+ax2.set_ylabel('Conductance (pS)')
+
+ax3 = plt.subplot2grid((2, 5), (1, 4))
+ax3.plot(1./Base_GIFs[mod_no].gl * Base_GIFs[mod_no].C, Base_GIFs[mod_no].C * 1e3, 'o', label = 'base', color = 'gray')
+ax3.plot(1./KCond_GIFs[mod_no].gl * KCond_GIFs[mod_no].C, KCond_GIFs[mod_no].C * 1e3, 'o', label = 'base + k', color = (0.9, 0.1, 0.1))
+ax3.set_xlim(0, ax3.get_xlim()[1] * 1.1)
+ax3.set_ylim(0, ax3.get_ylim()[1] * 1.1)
+ax3.legend()
+ax3.set_ylabel('Capacitance (pF)')
+ax3.set_xlabel('tau_m (ms)')
+
+fig3d.subplots_adjust(top = 0.9, left = 0.017, right = 0.96, bottom = 0.1, hspace = 0.25, wspace = 1)
+
+fig3d.savefig('/Users/eharkin/Desktop/improvedFiltMod{}.png'.format(mod_no), dpi = 600)
