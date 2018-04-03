@@ -13,7 +13,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import scipy as sp
 
-# Import GIF toolbox modules from read-only clone
 import sys
 sys.path.append('src')
 
