@@ -4,9 +4,8 @@ from __future__ import division
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
+import plotly.offline as pyoff
+import plotly.graph_objs as go
 from scipy import signal
 
 import sys
@@ -16,8 +15,6 @@ sys.path.append('analysis/gating')
 from SubthreshGIF_K import SubthreshGIF_K
 import Tools
 from cell_class import Cell
-
-%matplotlib qt5
 
 
 #%% READ IN FILES
@@ -54,7 +51,7 @@ mean_Vs = np.broadcast_to(np.array(mean_Vs)[:9, np.newaxis], kappas.shape)
 #%% DISPLAY MEMBRANE FILTER
 
 """
-Use matplotlib to construct a 3D graph that shows the voltage-dependence of the
+Use plotly to construct a 3D graph that shows the voltage-dependence of the
 membrane filter.
 """
 
@@ -64,7 +61,6 @@ V = mean_Vs.T
 I = kappas.T
 
 # Subset arrays based on frequency.
-
 freq_sub = np.min(np.where(F[:, 0] >= 1e2)[0])
 F = F[1:freq_sub, :]
 V = V[1:freq_sub, :]
@@ -72,16 +68,14 @@ I = I[1:freq_sub, :]
 
 F = np.log10(F)
 
-# Make figure.
-fig3d = plt.figure(figsize = (5, 5))
-
-ax0 = fig3d.add_subplot(111, projection = '3d')
-ax0.set_title('Membrane filter from unidentified neuron')
-ax0.plot_surface(F, V, I, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
-#ax0.set_ylim3d(ax0.get_ylim3d()[1], ax0.get_ylim3d()[0])
-#ax0.set_xticklabels([r'$\displaystyle10^{}$!'.format(tick) for tick in ax0.get_xticks()])
-ax0.set_xlabel('log10(f/f0)')
-ax0.set_ylabel('Vm (mV)')
-ax0.set_zlabel('Impedance (MOhm)')
-
-plt.show()
+# Make exportable interactive 3D plot using plotly.
+data = [go.Surface(x = F, y = V, z = I)]
+layout = go.Layout(title = 'Membrane filter from unidentified neuron',
+scene = go.Scene(
+xaxis = {'title': 'log10(f/f0)'},
+yaxis = {'title': 'Vm (mV)'},
+zaxis = {'title': 'Impedance (MOhm)'}),
+autosize = False, width = 500, height = 500,
+margin = {'l': 30, 'r': 30, 'b': 30, 't': 60})
+pyfig = go.Figure(data = data, layout = layout)
+pyoff.plot(pyfig, image = 'png')
