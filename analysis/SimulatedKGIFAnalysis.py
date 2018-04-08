@@ -361,7 +361,7 @@ class KappaComparator(object):
             # Create temporary arrays to use for 3D plot.
             F = self._kappa_f[mod_no]
             V = np.broadcast_to(self._noiseVoltageOffsets[np.newaxis, :], F.shape)
-            I = self._kappa_impedance[mod_no]
+            I = self._kappa_impedance[mod_no] * 1e-3
 
             # Subset arrays based on frequency.
             if freq_cutoff is not None:
@@ -378,27 +378,32 @@ class KappaComparator(object):
             fig3d.suptitle('Model {}'.format(mod_no))
 
             ax0 = plt.subplot2grid((2, 5), (0, 0), projection = '3d', colspan = 2, rowspan = 2)
-            ax0.set_title('Membrane filter from nonlinear model')
+            ax0.set_title('$\kappa$')
             ax0.plot_surface(F, V, I, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
             ax0.set_ylim3d(ax0.get_ylim3d()[1], ax0.get_ylim3d()[0])
-            #ax0.set_xticklabels([r'$\displaystyle10^{}$!'.format(tick) for tick in ax0.get_xticks()])
-            ax0.set_xlabel('log10(f/f0)')
+            ax0.set_xticks([-1, 0, 1, 2])
+            ax0.set_xticklabels(['$10^{{{}}}$'.format(tick) for tick in ax0.get_xticks()])
+            ax0.set_yticks([-45, -55, -65, -75])
+            ax0.set_xlabel('$f$ (Hz)')
             ax0.set_ylabel('Vm (mV)')
-            ax0.set_zlabel('Impedance (MOhm)')
+            ax0.set_zlabel('Impedance (G$\Omega$)')
 
             ax1 = plt.subplot2grid((2, 5), (0, 2), projection = '3d', colspan = 2, rowspan = 2)
-            ax1.set_title('Perithreshold part of membrane filter')
+            ax1.set_title('Perithreshold $\kappa$')
             ax1.plot_surface(F[:, -15:], V[:, -15:], I[:, -15:], rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
             ax1.set_ylim3d(ax1.get_ylim3d()[1], ax1.get_ylim3d()[0])
-            ax1.set_xlabel('log10(f/f0)')
+            ax1.set_xticks([-1, 0, 1, 2])
+            ax1.set_xticklabels(['$10^{{{}}}$'.format(tick) for tick in ax0.get_xticks()])
+            ax1.set_yticks([-40, -45, -50, -55, -60])
+            ax1.set_xlabel('$f$ (Hz)')
             ax1.set_ylabel('Vm (mV)')
-            ax1.set_zlabel('Impedance (MOhm)')
+            ax1.set_zlabel('Impedance (G$\Omega$)')
 
             ax2 = plt.subplot2grid((2, 5), (0, 4))
             cond_vals = np.array([self.models[mod_no].gl, self.models[mod_no].gbar_K1, self.models[mod_no].gbar_K2])
             ax2.bar([0, 1, 2], cond_vals * 1e3, color = (0.9, 0.1, 0.1))
             ax2.set_xticks([0, 1, 2])
-            ax2.set_xticklabels(['gl', 'gk1', 'gk2'])
+            ax2.set_xticklabels(['$g_l$', '$g_{k1}$', '$g_{k2}$'])
             ax2.set_ylabel('Conductance (pS)')
 
             ax3 = plt.subplot2grid((2, 5), (1, 4))
@@ -408,7 +413,7 @@ class KappaComparator(object):
             ax3.set_ylim(0, ax3.get_ylim()[1] * 1.1)
             ax3.legend()
             ax3.set_ylabel('Capacitance (pF)')
-            ax3.set_xlabel('tau_m (ms)')
+            ax3.set_xlabel('$\\tau_m$ (ms)')
 
             fig3d.subplots_adjust(top = 0.9, left = 0.017, right = 0.96, bottom = 0.1, hspace = 0.25, wspace = 1)
 
