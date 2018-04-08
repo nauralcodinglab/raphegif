@@ -88,8 +88,6 @@ print '\nDone!\n'
 butter_filter_cutoff = 1000.
 butter_filter_order = 3
 
-v_reject_thresh = -80.
-
 print 'FILTERING TRACES & SETTING ROI'
 for i in range(len(experiments)):
 
@@ -100,28 +98,17 @@ for i in range(len(experiments)):
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 59000]])
 
-        boolvec = tr.V > v_reject_thresh
-        boolvec[:10000] = False
-
-        tr.setROI_Bool(boolvec)
-
 
     # Filter test data.
     for tr in experiments[i].testset_traces:
         tr.butterLowpassFilter(butter_filter_cutoff, butter_filter_order)
         tr.setROI([[1000, 9000]])
 
-        boolvec = tr.V > v_reject_thresh
-        boolvec[:10000] = False
-
-        tr.setROI_Bool(boolvec)
 
 print '\nDone!\n'
 
 
 #%% PERFORM AEC
-
-AEC_objs = []
 
 print 'PERFORMING AEC'
 for i in range(len(experiments)):
@@ -146,8 +133,6 @@ for i in range(len(experiments)):
         experiments[i].setAEC(AEC_tmp)
         experiments[i].performAEC()
 
-    # Save AEC to AEC_objs list.
-    AEC_objs.append(AEC_tmp)
 
 print '\nDone!\n'
 
@@ -171,7 +156,7 @@ KGIF.n_tau = 100.
 KGIF.E_K = -101.
 
 
-#%% GET DATA TO PICKLE
+#%% PICKLE DATA
 
 """
 Finagle data into a friendlier format and pickle.
@@ -190,4 +175,4 @@ for i in range(len(experiments)):
     modmat_tmp.computeTrainingGating(KGIF)
     modmat_tmp.pickle(PICKLE_PATH + 'c{}.pyc'.format(i))
 
-print 'Done!'
+print '\nDone!'
