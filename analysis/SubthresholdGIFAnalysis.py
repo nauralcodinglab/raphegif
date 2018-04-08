@@ -730,32 +730,45 @@ del param_dict, params_tmp, vals_tmp, mod_tmp
 
 # Make figure
 
-plt.figure(figsize = (5.5, 3.5))
+plt.figure(figsize = (7, 5))
 
 R_plot = plt.subplot2grid((2, 3), (0, 0))
 df_tmp = param_df.loc[param_df['Parameter'] == 'R', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value']/1e3, ax = R_plot)
-R_plot.set_ylabel('R (GOhm)')
-R_plot.set_ylim(0, R_plot.get_ylim()[1])
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value']/1e3,
+palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = R_plot)
+R_plot.set_xticklabels(['Linear', 'Linear +'])
+R_plot.set_ylabel('R (G$\Omega$)')
+R_plot.set_xlabel('')
+R_plot.set_ylim(-1, R_plot.get_ylim()[1])
 
 C_plot = plt.subplot2grid((2, 3), (0, 1))
 df_tmp = param_df.loc[param_df['Parameter'] == 'C', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'] * 1e3, ax = C_plot)
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'] * 1e3,
+palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = C_plot)
 C_plot.set_ylabel('C (pF)')
+C_plot.set_xticklabels(['Linear', 'Linear +'])
+C_plot.set_xlabel('')
 
 tau_plot = plt.subplot2grid((2, 3), (0, 2))
 df_tmp = param_df.loc[param_df['Parameter'] == 'tau', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'], ax = tau_plot)
-tau_plot.set_ylabel('tau (ms)')
-tau_plot.set_ylim(0, tau_plot.get_ylim()[1])
+sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'],
+palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = tau_plot)
+tau_plot.set_ylabel('$\\tau_m$ (ms)')
+tau_plot.set_xticklabels(['Linear', 'Linear +'])
+tau_plot.set_xlabel('')
+tau_plot.set_ylim(-40, tau_plot.get_ylim()[1])
 
 g_plot = plt.subplot2grid((2, 3), (1, 0), colspan = 2)
 param_checker = np.vectorize(lambda x: x in ['gl', 'gk1', 'gk2'])
 selection = np.logical_and(param_df['Model'] == 'KCond',
                            param_checker(param_df['Parameter']))
 df_tmp = param_df.loc[selection, :]
-sns.swarmplot(x = df_tmp['Parameter'], y = df_tmp['Value'], color = 'k', ax = g_plot)
-g_plot.set_ylabel('g (nS)')
+sns.swarmplot(x = df_tmp['Parameter'], y = df_tmp['Value'] * 1e3,
+color = (0.9, 0.1, 0.1), ax = g_plot)
+g_plot.set_xticklabels(['$g_l$', '$g_{{k1}}$', '$g_{{k2}}$'])
+g_plot.set_ylabel('Conductance (pS)')
+g_plot.set_xlabel('')
+g_plot.set_ylim(-13, 33)
 
 corr_plot = plt.subplot2grid((2, 3), (1, 2))
 param_checker = np.vectorize(lambda x: x in ['C', 'tau'])
@@ -764,12 +777,11 @@ selection = np.logical_and(param_df['Model'] == 'Base',
 df_tmp = param_df.loc[selection, :]
 corr_plot.plot(df_tmp.loc[df_tmp['Parameter'] == 'tau', 'Value'],
                df_tmp.loc[df_tmp['Parameter'] == 'C', 'Value'] * 1e3,
-               'ko',
-               alpha = 0.5)
+               '.', color = (0.1, 0.1, 0.1), markersize = 10, alpha = 0.7)
 corr_plot.set_ylabel('C (pF)')
-corr_plot.set_xlabel('tau (ms)')
-corr_plot.set_ylim(0, corr_plot.get_ylim()[1])
-corr_plot.set_xlim(0, corr_plot.get_xlim()[1])
+corr_plot.set_xlabel('$\\tau_m$ (ms)')
+corr_plot.set_ylim(30, corr_plot.get_ylim()[1] * 1.1)
+corr_plot.set_xlim(0, corr_plot.get_xlim()[1] * 1.1)
 
 plt.tight_layout()
 
