@@ -694,9 +694,10 @@ for i in range(len(Base_GIFs)):
 
 
     # Get parameter estimates for base model
-    params_tmp = ['R', 'C', 'tau']
+    params_tmp = ['R', 'C', 'tau', 'gl']
     vals_tmp = [1./Base_GIFs[i].gl, Base_GIFs[i].C,
-                1./Base_GIFs[i].gl * Base_GIFs[i].C]
+                1./Base_GIFs[i].gl * Base_GIFs[i].C,
+                Base_GIFs[i].gl]
 
     assert len(params_tmp) == len(vals_tmp), 'param labels and vals not same length'
 
@@ -730,60 +731,53 @@ del param_dict, params_tmp, vals_tmp, mod_tmp
 
 # Make figure
 
-plt.figure(figsize = (7, 5))
+plt.figure(figsize = (8, 4))
 
-R_plot = plt.subplot2grid((2, 3), (0, 0))
-df_tmp = param_df.loc[param_df['Parameter'] == 'R', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value']/1e3,
-palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = R_plot)
-R_plot.set_xticklabels(['Linear', 'Linear +'])
-R_plot.set_ylabel('R (G$\Omega$)')
-R_plot.set_xlabel('')
-R_plot.set_ylim(-1, R_plot.get_ylim()[1])
-
-C_plot = plt.subplot2grid((2, 3), (0, 1))
-df_tmp = param_df.loc[param_df['Parameter'] == 'C', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'] * 1e3,
-palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = C_plot)
-C_plot.set_ylabel('C (pF)')
-C_plot.set_xticklabels(['Linear', 'Linear +'])
-C_plot.set_xlabel('')
-
-tau_plot = plt.subplot2grid((2, 3), (0, 2))
-df_tmp = param_df.loc[param_df['Parameter'] == 'tau', :]
-sns.swarmplot(x = df_tmp['Model'], y = df_tmp['Value'],
-palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = tau_plot)
-tau_plot.set_ylabel('$\\tau_m$ (ms)')
-tau_plot.set_xticklabels(['Linear', 'Linear +'])
-tau_plot.set_xlabel('')
-tau_plot.set_ylim(-40, tau_plot.get_ylim()[1])
-
-g_plot = plt.subplot2grid((2, 3), (1, 0), colspan = 2)
+g_plot = plt.subplot(121)
+g_plot.set_title('Conductance coefficients')
+g_plot.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
 param_checker = np.vectorize(lambda x: x in ['gl', 'gk1', 'gk2'])
-selection = np.logical_and(param_df['Model'] == 'KCond',
-                           param_checker(param_df['Parameter']))
+selection = param_checker(param_df['Parameter'])
 df_tmp = param_df.loc[selection, :]
-sns.swarmplot(x = df_tmp['Parameter'], y = df_tmp['Value'] * 1e3,
-color = (0.9, 0.1, 0.1), ax = g_plot)
-g_plot.set_xticklabels(['$g_l$', '$g_{{k1}}$', '$g_{{k2}}$'])
-g_plot.set_ylabel('Conductance (pS)')
+sns.swarmplot(x = df_tmp['Parameter'] + df_tmp['Model'], y = df_tmp['Value'] * 1e3,
+hue = df_tmp['Model'], palette = [(0.1, 0.1, 0.1), (0.9, 0.1, 0.1)], ax = g_plot)
+g_leg = g_plot.get_legend()
+g_leg.set_title('')
+g_leg.get_texts()[0].set_text('Linear model')
+g_leg.get_texts()[1].set_text('Linear + $g_{{k1}}$ & $g_{{k2}}$')
+g_plot.set_xticklabels(['$g_l$', '$g_l$', '$\\bar{{g}}_{{k1}}$', '$\\bar{{g}}_{{k2}}$'])
+g_plot.set_ylabel('$g$ (pS)')
 g_plot.set_xlabel('')
 g_plot.set_ylim(-13, 33)
 
-corr_plot = plt.subplot2grid((2, 3), (1, 2))
+corr_plot = plt.subplot(122)
+corr_plot.set_title('Passive membrane properties')
 param_checker = np.vectorize(lambda x: x in ['C', 'tau'])
 selection = np.logical_and(param_df['Model'] == 'Base',
                            param_checker(param_df['Parameter']))
 df_tmp = param_df.loc[selection, :]
 corr_plot.plot(df_tmp.loc[df_tmp['Parameter'] == 'tau', 'Value'],
                df_tmp.loc[df_tmp['Parameter'] == 'C', 'Value'] * 1e3,
-               '.', color = (0.1, 0.1, 0.1), markersize = 10, alpha = 0.7)
+               '.', color = (0.1, 0.1, 0.1), markersize = 10,
+               label = 'Linear model')
+selection = np.logical_and(param_df['Model'] == 'KCond',
+                           param_checker(param_df['Parameter']))
+df_tmp = param_df.loc[selection, :]
+corr_plot.plot(df_tmp.loc[df_tmp['Parameter'] == 'tau', 'Value'],
+               df_tmp.loc[df_tmp['Parameter'] == 'C', 'Value'] * 1e3,
+               '.', color = (0.9, 0.1, 0.1), markersize = 10,
+               label = 'Linear + $g_{{k1}}$ & $g_{{k2}}$')
+corr_plot.legend()
 corr_plot.set_ylabel('C (pF)')
 corr_plot.set_xlabel('$\\tau_m$ (ms)')
-corr_plot.set_ylim(30, corr_plot.get_ylim()[1] * 1.1)
-corr_plot.set_xlim(0, corr_plot.get_xlim()[1] * 1.1)
+corr_plot.set_ylim(30, 135)
+corr_plot.set_xlim(0, 1050)
 
 plt.tight_layout()
+
+plt.savefig('/Users/eharkin/Desktop/modelCoefficients.png', dpi = 300)
+
+plt.show()
 
 
 #%% SHOW SIMULATED V-CLAMP
