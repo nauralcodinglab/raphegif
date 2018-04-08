@@ -99,7 +99,7 @@ plt.figure()
 
 mods = [ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_mod_coeffs]
 y = [np.mean(x['var_explained_dV']) for x in mods]
-yerr = [np.std(x['var_explained_dV']) for x in mods]
+yerr = [np.std(x['var_explained_dV'])/len(x) for x in mods]
 
 plt.errorbar([i for i in range(len(y))], y, yerr)
 plt.bar([i for i in range(len(y))], y)
@@ -126,7 +126,7 @@ plt.show()
 
 #%%
 
-plt.figure()
+plt.figure(figsize = (8, 6))
 
 exemplars = [1, 4, 11]
 
@@ -150,11 +150,14 @@ for i in range(len(gk1_change)):
     #plt.text(-0.2, 100 * gk1_change[i], '{}'.format(i), verticalalignment = 'center')
 
 plt.xlim(-0.5, 2.5)
+plt.ylim(-0.6, 6.3)
 plt.xticks([0, 1, 2], ['$g_{k1}$', '$g_{k2}$', '$g_{k1} + g_{k2}$'])
 plt.ylabel('$\Delta R^2$ from linear model (%)')
 
 
 plt.subplot2grid((2, 3), (1, 0), colspan = 2)
+
+plt.title('Model coeffs.')
 
 for i in range(len(full_mod_coeffs['R'])):
 
@@ -178,30 +181,35 @@ for i in range(len(full_mod_coeffs['R'])):
 
 
 plt.xlim(-0.5, 2.5)
+plt.ylim(-14, 32)
 plt.xticks([0, 1, 2], ['$g_l$', '$g_{k1}$', '$g_{k2}$'])
 plt.ylabel('Conductance (pS)')
 
 
 plt.subplot2grid((2, 3), (1, 2))
 
+plt.title('Model coeffs.')
+
 for i in range(len(full_mod_coeffs['R'])):
 
     if i in exemplars:
 
-        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i] * 1e-3,
-        full_mod_coeffs['C'][i],
+        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i],
+        full_mod_coeffs['C'][i] * 1e3,
         'o', zorder = len(full_mod_coeffs['R']), markeredgecolor = (0.9, 0.1, 0.1),
         markerfacecolor = (0.9, 0.5, 0.5), alpha = 0.8)
-        plt.text(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i] * 1e-3 + 50,
-        full_mod_coeffs['C'][i], '{}'.format(i))
+        plt.text(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i] * 1.2,
+        full_mod_coeffs['C'][i] * 1e3, '{}'.format(i), verticalalignment = 'center',
+        zorder = len(full_mod_coeffs['R']) + 1)
 
     else:
-        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i] * 1e-3,
-        full_mod_coeffs['C'][i],
+        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i],
+        full_mod_coeffs['C'][i] * 1e3,
         'ko', markerfacecolor = 'none')
 
 plt.xlim(0, plt.xlim()[1])
-plt.ylabel('C (something F)')
+plt.ylim(40, plt.ylim()[1] * 1.1)
+plt.ylabel('C (pF)')
 plt.xlabel('$\\tau$ (ms)')
 
 plt.tight_layout()

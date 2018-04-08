@@ -20,7 +20,7 @@ class ModMats(object):
         self.__VCutoffVec = None
 
 
-    def scrapeTrainingData(self, experiment):
+    def scrapeTraces(self, experiment, use_ROI = True):
 
         """
         Scrape training data from experiment.
@@ -29,10 +29,16 @@ class ModMats(object):
         if experiment.dt != self.dt:
             raise ValueError('dt mismatch')
 
-        self.V_train = np.array([tr.V for tr in experiment.trainingset_traces]).T
-        self.I_train = np.array([tr.I for tr in experiment.trainingset_traces]).T
-        self.V_test = np.array([tr.V for tr in experiment.testset_traces]).T
-        self.I_test = np.array([tr.I for tr in experiment.testset_traces]).T
+        if use_ROI:
+            self.V_train = np.array([tr.V[tr.getROI()] for tr in experiment.trainingset_traces]).T
+            self.I_train = np.array([tr.I[tr.getROI()] for tr in experiment.trainingset_traces]).T
+            self.V_test = np.array([tr.V[tr.getROI()] for tr in experiment.testset_traces]).T
+            self.I_test = np.array([tr.I[tr.getROI()] for tr in experiment.testset_traces]).T
+        else:
+            self.V_train = np.array([tr.V for tr in experiment.trainingset_traces]).T
+            self.I_train = np.array([tr.I for tr in experiment.trainingset_traces]).T
+            self.V_test = np.array([tr.V for tr in experiment.testset_traces]).T
+            self.I_test = np.array([tr.I for tr in experiment.testset_traces]).T
 
         self.dV_train = np.gradient(self.V_train, axis = 0) / self.dt
 

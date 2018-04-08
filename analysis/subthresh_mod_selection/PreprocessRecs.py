@@ -171,7 +171,7 @@ for i in range(len(experiments)):
     print '\rStoring data from cell {}...'.format(i),
 
     modmat_tmp = ModMats(0.1)
-    modmat_tmp.scrapeTrainingData(experiments[i])
+    modmat_tmp.scrapeTraces(experiments[i])
     modmat_tmp.computeTrainingGating(KGIF)
     modmat_tmp.pickle(PICKLE_PATH + 'c{}.pyc'.format(i))
 
