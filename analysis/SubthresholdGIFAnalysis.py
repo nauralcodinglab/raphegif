@@ -470,32 +470,95 @@ for i in range(len(residuals_K)):
 
 plt.figure(figsize = (7, 5))
 
-plt.subplot(111)
+plt.subplot2grid((2, 3), (0, 0), colspan = 2, rowspan = 2)
+plt.title('Improved fit on test-set $V_m$ near threshold')
 plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
-plt.plot(V_arr_base, err_arr_base, 'r-', markerfacecolor = 'none', alpha = 0.1)
-plt.plot(V_arr_K, err_arr_K, 'b-', markerfacecolor = 'none', alpha = 0.1)
-plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1), '-',
-         color = 'r', label = 'Linear model')
-plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1), '-',
-         color = (0.1, 0.1, 0.9), label = 'Linear model + gK')
+plt.plot(V_arr_base, err_arr_base, 'k-', alpha = 0.3, linewidth = 0.5)
+plt.plot(V_arr_K, err_arr_K, '-', color = (0.9, 0.1, 0.1), alpha = 0.3, linewidth = 0.5)
+plt.plot(np.nanmean(V_arr_base, axis = 1), np.nanmean(err_arr_base, axis = 1),
+'k-', label = 'Linear model')
+plt.plot(np.nanmean(V_arr_K, axis = 1), np.nanmean(err_arr_K, axis = 1),
+'-', color = (0.9, 0.1, 0.1), label = 'Linear model + $g_{{k1}}$ & $g_{{k2}}$')
 
 for i in range(V_arr_base.shape[0]):
 
-    if np.isnan(np.nanmean(V_arr_base[i, :])):
+    if np.isnan(np.nanmean(err_arr_base[i, :])):
         continue
 
     W, p = stats.wilcoxon(err_arr_base[i, :], err_arr_K[i, :])
-    plt.text(V_arr_base[i, 0], -30, str(round(p, 2)),
+    p = round(p, 2)
+    if p > 0.05 and p <= 0.1:
+        p_str = 'o'
+    elif p > 0.01 and p <= 0.05:
+        p_str = '*'
+    elif p <= 0.01:
+        p_str = '**'
+    else:
+        p_str = ''
+
+    plt.text(V_arr_base[i, 0], -30, p_str,
              horizontalalignment = 'center')
+
+plt.text(V_arr_base[-7, 0], 60, 'i', horizontalalignment = 'center')
+plt.text(V_arr_base[-4, 0], 130, 'ii', horizontalalignment = 'center')
 
 plt.ylim(-40, plt.ylim()[1])
 
 plt.legend()
 
-plt.xlabel('Vm (mV)')
-plt.ylabel('Model error (mV^2)')
+plt.xlabel('$V_m$ (mV)')
+plt.ylabel('$\\bar\epsilon_{test}$ ($\\mathrm{mV}^2$)')
+
+
+plt.subplot2grid((2, 3), (0, 2))
+plt.title('i. Fit at -60mV')
+
+y = np.concatenate((err_arr_base[-7, :][np.newaxis, :], err_arr_K[-7, :][np.newaxis, :]),
+axis = 0)
+x = np.zeros_like(y)
+x[1, :] = 1
+
+plt.plot(x, y, '-', color = 'gray', alpha = 0.5)
+plt.plot(x[0, :], y[0, :],
+'ko', markerfacecolor = (0.5, 0.5, 0.5), markersize = 10)
+plt.plot(x[1, :], y[1, :],
+'o', markeredgecolor = (0.9, 0.1, 0.1), markerfacecolor = (0.9, 0.5, 0.5),
+markersize = 10)
+plt.text(0.5, plt.ylim()[1] * 1.05, 'n.s.',
+horizontalalignment = 'center', verticalalignment = 'center')
+plt.xlim(-0.2, 1.2)
+plt.ylim(-6, plt.ylim()[1] * 1.2)
+plt.xticks([0, 1], ['Linear', 'Linear +'])
+plt.ylabel('$\\bar\epsilon_{{test}}$ ($\mathrm{{mV}}^2$)')
+
+
+plt.subplot2grid((2, 3), (1, 2))
+plt.title('ii. Fit at -45mV')
+
+y = np.concatenate((err_arr_base[-4, :][np.newaxis, :], err_arr_K[-4, :][np.newaxis, :]),
+axis = 0)
+x = np.zeros_like(y)
+x[1, :] = 1
+
+plt.plot(x, y, '-', color = 'gray', alpha = 0.5)
+plt.plot(x[0, :], y[0, :],
+'ko', markerfacecolor = (0.5, 0.5, 0.5), markersize = 10)
+plt.plot(x[1, :], y[1, :],
+'o', markeredgecolor = (0.9, 0.1, 0.1), markerfacecolor = (0.9, 0.5, 0.5),
+markersize = 10)
+plt.text(0.5, plt.ylim()[1] * 1.05, '**',
+horizontalalignment = 'center', verticalalignment = 'center')
+plt.xlim(-0.2, 1.2)
+plt.ylim(-20, plt.ylim()[1] * 1.2)
+plt.xticks([0, 1], ['Linear', 'Linear +'])
+plt.ylabel('$\\bar\epsilon_{{test}}$ ($\mathrm{{mV}}^2$)')
+
+
 
 plt.tight_layout()
+
+#plt.savefig('/Users/eharkin/Desktop/improvedFitTestSet.png', dpi = 300)
+
 plt.show()
 
 #%%
