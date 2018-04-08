@@ -96,7 +96,7 @@ for i in range(len(model_matrices)):
 print 'Done!'
 
 
-#%%
+#%% CRAPPY BARPLOT OF R^2 ON dV
 
 plt.figure()
 
@@ -111,7 +111,8 @@ plt.xticks([i for i in range(len(y))], ['Ohmic', 'gk1 only', 'gk2 only', 'gk1 + 
 plt.show()
 
 
-#%%
+#%% CRAPPY BARPLOT OF IMPROVEMENT IN R^2 ON dV
+
 gk1_change = [gk1 - ohmic for gk1, ohmic in zip(gk1_mod_coeffs['var_explained_dV'], ohmic_mod_coeffs['var_explained_dV'])]
 gk2_change = [gk2 - ohmic for gk2, ohmic in zip(gk2_mod_coeffs['var_explained_dV'], ohmic_mod_coeffs['var_explained_dV'])]
 full_change = [full - ohmic for full, ohmic in zip(full_mod_coeffs['var_explained_dV'], ohmic_mod_coeffs['var_explained_dV'])]
@@ -127,14 +128,19 @@ plt.xticks([i for i in range(len(y))], ['gk1', 'gk2', 'gk1 + gk2'])
 
 plt.show()
 
-#%%
 
-plt.figure(figsize = (8, 6))
+#%% NICE PLOT OF IMPROVEMENT IN R^2 ON dV
+
+"""
+Pretty plot of improvement in var. explained on dV (train)
+"""
+
+plt.figure(figsize = (7, 5))
 
 exemplars = [1, 4, 11]
 
 plt.subplot2grid((2, 3), (0, 0), colspan = 3)
-plt.title('Improved fit on $\\frac{dV}{dt}$')
+plt.title('Improved fit on training set $\\frac{dV}{dt}$')
 
 for i in range(len(gk1_change)):
 
@@ -144,7 +150,7 @@ for i in range(len(gk1_change)):
         plt.plot([0, 1, 2], np.array([gk1_change[i], gk2_change[i], full_change[i]]) * 100,
         'o', zorder = len(gk1_change), markeredgecolor = (0.9, 0.1, 0.1), markerfacecolor = (0.9, 0.5, 0.5),
          markersize = 15, alpha = 0.8)
-        plt.text(2.15, 100 * full_change[i], '{}'.format(i), verticalalignment = 'center')
+        plt.text(2.1, 100 * full_change[i], '{}'.format(i), verticalalignment = 'center')
     else:
         plt.plot([0, 1, 2], np.array([gk1_change[i], gk2_change[i], full_change[i]]) * 100,
         '-', color = 'gray', alpha = 0.5)
@@ -152,15 +158,15 @@ for i in range(len(gk1_change)):
         'ko', markerfacecolor = 'none', markersize = 15)
     #plt.text(-0.2, 100 * gk1_change[i], '{}'.format(i), verticalalignment = 'center')
 
-plt.xlim(-0.5, 2.5)
+plt.xlim(-0.2, 2.2)
 plt.ylim(-0.6, 6.3)
-plt.xticks([0, 1, 2], ['$g_{k1}$', '$g_{k2}$', '$g_{k1} + g_{k2}$'])
+plt.xticks([0, 1, 2], ['$g_{k1}$ only', '$g_{k2}$ only', '$g_{k1} + g_{k2}$'])
 plt.ylabel('$\Delta R^2$ from linear model (%)')
 
 
 plt.subplot2grid((2, 3), (1, 0), colspan = 2)
 
-plt.title('Model coeffs.')
+plt.title('Conductance coefficients')
 
 for i in range(len(full_mod_coeffs['R'])):
 
@@ -183,7 +189,7 @@ for i in range(len(full_mod_coeffs['R'])):
 
 
 
-plt.xlim(-0.5, 2.5)
+plt.xlim(-0.3, 2.3)
 plt.ylim(-14, 32)
 plt.xticks([0, 1, 2], ['$g_l$', '$g_{k1}$', '$g_{k2}$'])
 plt.ylabel('Conductance (pS)')
@@ -191,7 +197,7 @@ plt.ylabel('Conductance (pS)')
 
 plt.subplot2grid((2, 3), (1, 2))
 
-plt.title('Model coeffs.')
+plt.title('Passive properties')
 
 for i in range(len(full_mod_coeffs['R'])):
 
@@ -213,9 +219,11 @@ for i in range(len(full_mod_coeffs['R'])):
 plt.xlim(0, plt.xlim()[1])
 plt.ylim(40, plt.ylim()[1] * 1.1)
 plt.ylabel('C (pF)')
-plt.xlabel('$\\tau$ (ms)')
+plt.xlabel('$\\tau_m$ (ms)')
 
 plt.tight_layout()
+
+#plt.savefig('/Users/eharkin/Desktop/improvedFitTraining.png', dpi = 300)
 
 plt.show()
 
@@ -316,10 +324,10 @@ full_test_change = [full - ohmic for full, ohmic in zip(full_mod_coeffs['var_exp
 
 plt.figure(figsize = (7, 5))
 
-exemplars = [20]
+exemplars = [1, 4, 11]
 
-plt.subplot2grid((2, 3), (0, 0), colspan = 3, rowspan = 2)
-plt.title('Improved fit on test set $V$')
+plt.subplot(111)
+plt.title('Change in fit on test set $V$')
 
 for i in range(len(gk1_test_change)):
 
@@ -335,79 +343,27 @@ for i in range(len(gk1_test_change)):
         '-', color = 'gray', alpha = 0.5)
         plt.plot([0, 1, 2], np.array([gk1_test_change[i], gk2_test_change[i], full_test_change[i]]) * 100,
         'ko', markerfacecolor = 'none', markersize = 15)
-    #plt.text(-0.2, 100 * gk1_test_change[i], '{}'.format(i), verticalalignment = 'center')
-#plt.ylim(-15, 35)
+
 plt.xlim(-0.2, 2.2)
 plt.xticks([0, 1, 2], ['$g_{k1}$ only', '$g_{k2}$ only', '$g_{k1} + g_{k2}$'])
 plt.ylabel('$\Delta R^2$ from linear model (%)')
-
-"""
-plt.subplot2grid((2, 3), (1, 0), colspan = 2)
-
-plt.title('Conductance coefficients')
-
-for i in range(len(full_mod_coeffs['R'])):
-
-    if i in exemplars:
-        plt.plot([0, 1, 2],
-        1e3 * np.array([1/full_mod_coeffs['R'][i], full_mod_coeffs['gbar_K1'][i], full_mod_coeffs['gbar_K2'][i]]),
-        '-', zorder = len(full_mod_coeffs['R']), color = (0.9, 0.1, 0.1), alpha = 0.5)
-        plt.plot([0, 1, 2],
-        1e3 * np.array([1/full_mod_coeffs['R'][i], full_mod_coeffs['gbar_K1'][i], full_mod_coeffs['gbar_K2'][i]]),
-        'o', zorder = len(full_mod_coeffs['R']), markeredgecolor = (0.9, 0.1, 0.1),
-        markerfacecolor = (0.9, 0.5, 0.5), markersize = 15, alpha = 0.8)
-        plt.text(2.15, 1e3 * full_mod_coeffs['gbar_K2'][i], '{}'.format(i), verticalalignment = 'center')
-    else:
-        plt.plot([0, 1, 2],
-        1e3 * np.array([1/full_mod_coeffs['R'][i], full_mod_coeffs['gbar_K1'][i], full_mod_coeffs['gbar_K2'][i]]),
-        '-', color = 'gray', alpha = 0.5)
-        plt.plot([0, 1, 2],
-        1e3 * np.array([1/full_mod_coeffs['R'][i], full_mod_coeffs['gbar_K1'][i], full_mod_coeffs['gbar_K2'][i]]),
-        'ko', markerfacecolor = 'none', markersize = 15)
-
-
-
-plt.xlim(-0.3, 2.3)
-plt.ylim(-14, 32)
-plt.xticks([0, 1, 2], ['$g_l$', '$g_{k1}$', '$g_{k2}$'])
-plt.ylabel('Conductance (pS)')
-
-
-plt.subplot2grid((2, 3), (1, 2))
-
-plt.title('Passive properties')
-
-for i in range(len(full_mod_coeffs['R'])):
-
-    if i in exemplars:
-
-        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i],
-        full_mod_coeffs['C'][i] * 1e3,
-        'o', zorder = len(full_mod_coeffs['R']), markeredgecolor = (0.9, 0.1, 0.1),
-        markerfacecolor = (0.9, 0.5, 0.5), alpha = 0.8)
-        plt.text(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i] * 1.2,
-        full_mod_coeffs['C'][i] * 1e3, '{}'.format(i), verticalalignment = 'center',
-        zorder = len(full_mod_coeffs['R']) + 1)
-
-    else:
-        plt.plot(full_mod_coeffs['R'][i] * full_mod_coeffs['C'][i],
-        full_mod_coeffs['C'][i] * 1e3,
-        'ko', markerfacecolor = 'none')
-
-plt.xlim(0, plt.xlim()[1])
-plt.ylim(40, plt.ylim()[1] * 1.1)
-plt.ylabel('C (pF)')
-plt.xlabel('$\\tau_m$ (ms)')
-"""
+plt.xlabel('Nonlinearities')
 
 plt.tight_layout()
 
-#plt.savefig('/Users/eharkin/Desktop/improvedFitTraining.png', dpi = 300)
+plt.savefig('/Users/eharkin/Desktop/improvedFitTestBad.png', dpi = 300)
 
 plt.show()
 
 
-#%%
+#%% COMPARE EACH NONLINEAR MODEL TO OHMIC MODEL
+
+"""
+The ohmic model is considered as the base model. This block adds gk1 and gk2 to
+the model one at a time and together. It gets the performance of each model on
+test set voltage and makes a pretty plot comparing each augmented model to the
+base model across voltage bins.
+"""
 
 plt.figure(figsize = (13, 5))
 
@@ -465,7 +421,13 @@ plt.savefig('/Users/eharkin/Desktop/multimodResidualComparison.png', dpi = 300)
 plt.show()
 
 
-#%%
+#%% ASSESS EFFECT OF ADDING GK1 TO MODEL WITH ONLY GK2
+
+"""
+Seems like gk1 doesn't do much on its own, and that gk2 is sufficient to get a
+big improvement over the ohmic model. This block checks whether adding gk1 to
+the gk2 model produces any improvement. (Surprisingly, it does.)
+"""
 
 plt.figure(figsize = (7, 5))
 
