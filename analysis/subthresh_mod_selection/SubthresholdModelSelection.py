@@ -524,3 +524,32 @@ plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 plt.tight_layout()
 plt.savefig('/Users/eharkin/Desktop/gk1gk2ResidualComparison.png', dpi = 300)
 plt.show()
+
+
+#%% TEST WHETHER NONLINEARITIES REMOVE VOLTAGE-DEPENDENCE OF MSE
+
+"""
+So far, I've shown qualitatively that the linear model systematically deviates
+from the behaviour of real cells near threshold, and that adding one or two
+nonlinearities fixes this. However, it would be nice to provide more systematic/
+quantitative support for this idea.
+
+This block uses the Friedman chi-square test to check whether binned MSE depends
+on V in various models. The Friedman test is a non-parametric analog to a
+one-way repeated measures ANOVA. Here, measurements of MSE over voltage (the
+treatment variable) are repeated within cells (the blocking variable).
+"""
+
+fried_base = [ohmic_mod_coeffs['binned_e2_values'][i, :] for i in range(-10, -3)]
+fried_gk1 = [gk1_mod_coeffs['binned_e2_values'][i, :] for i in range(-10, -3)]
+fried_gk2 = [gk2_mod_coeffs['binned_e2_values'][i, :] for i in range(-10, -3)]
+fried_full = [full_mod_coeffs['binned_e2_values'][i, :] for i in range(-10, -3)]
+
+print 'Does MSE depend on V in various models?'
+print '(Friedman test on repeated measurements of MSE across -75mV to -45mV.)\n'
+print '{:>10}{:>20}{:>20}'.format('Model', 'Q-statistic', 'p-value')
+print '______________________________________________________________________'
+print '{:>10}{:>20.1f}{:>20.4f}'.format('Base', *sp.stats.friedmanchisquare(*fried_base))
+print '{:>10}{:>20.1f}{:>20.4f}'.format('gk1', *sp.stats.friedmanchisquare(*fried_gk1))
+print '{:>10}{:>20.1f}{:>20.4f}'.format('gk2', *sp.stats.friedmanchisquare(*fried_gk2))
+print '{:>10}{:>20.1f}{:>20.4f}'.format('Full', *sp.stats.friedmanchisquare(*fried_full))
