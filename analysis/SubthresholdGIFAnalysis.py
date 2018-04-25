@@ -18,6 +18,7 @@ import scipy.stats as stats
 import pandas as pd
 import seaborn as sns
 import scipy as sp
+from sklearn.cluster import KMeans
 
 # Import GIF toolbox modules from read-only clone
 import sys
@@ -779,6 +780,25 @@ plt.savefig('/Users/eharkin/Desktop/modelCoefficients.png', dpi = 300)
 
 plt.show()
 
+
+#%% PERFORM CLUSTER ANALYSIS ON GK2
+
+kmeans_gl = [KMeans(n_clusters = i, random_state = 42).fit(np.array(gk_leak_pdata).reshape(-1, 1)) for i in range(1, 6)]
+kmeans_gk2 = [KMeans(n_clusters = i, random_state = 42).fit(np.array(gk2_pdata).reshape(-1, 1)) for i in range(1, 6)]
+
+
+stats.shapiro(gk2_pdata)
+
+plt.figure()
+plt.plot([i for i in range(1, 6)], [kmeans_gl[i].inertia_ for i in range(5)],
+'k-', label = '$g_l$')
+"""
+plt.plot([i for i in range(1, 6)], [kmeans_gk2[i].inertia_ for i in range(5)],
+'r-', label = '$g_{{k2}}$')
+"""
+plt.ylabel('MSE ($\mathrm{{nS}}^2$)')
+plt.xlabel('No. of clusters')
+plt.show()
 
 #%% SHOW SIMULATED V-CLAMP
 
