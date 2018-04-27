@@ -17,6 +17,7 @@ import pltools
 
 # Load current steps file
 curr_steps = Cell().read_ABF('./figs/figdata/17n23038.abf')[0]
+v_steps = Cell().read_ABF('./figs/figdata/18125015.abf')[0]
 
 # Import passive membrane parameter data.
 params = pd.read_csv('data/DRN_membrane_parameters.csv')
@@ -61,7 +62,15 @@ pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3))
 
 plt.subplot2grid(grid_dims, (1, 3))
 plt.title('C2 Voltage steps', loc = 'left')
-pltools.hide_ticks()
+plt.xlim(1750, 2750)
+plt.ylim(-50, 1200)
+sweeps_to_use = [0, 3, 6, 9]
+plt.plot(
+np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.shape[1], len(sweeps_to_use))),
+v_steps[0, :, sweeps_to_use].T,
+'k-', linewidth = 0.5)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5))
+
 
 ### Passive membrane parameters subplots
 
