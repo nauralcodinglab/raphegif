@@ -1,3 +1,5 @@
+# TODO: make cmd look nice for v-steps
+
 #%% IMPORT MODULES
 
 import numpy as np
@@ -50,26 +52,47 @@ plt.subplot2grid(grid_dims, (1, 0), colspan = 2)
 plt.title('B Identification of DRN 5HT neurons', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid(grid_dims, (1, 2))
-plt.title('C1 Spiking', loc = 'left')
+Iax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 2), ratio = 4)
+xlim = (2000, 4500)
+Iax.set_title('C1 Spiking', loc = 'left')
 sweeps_to_use = [0, 4, 9, 19]
-plt.xlim((2000, 4500))
-plt.plot(
+Iax.set_xlim(xlim)
+Iax.plot(
 np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_steps.shape[1], len(sweeps_to_use))),
 curr_steps[0, :, sweeps_to_use].T - curr_steps[0, 20000:20500, sweeps_to_use].mean(axis = 1),
-'k-', linewidth = 0.5)
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3))
+'k-', linewidth = 0.5
+)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3), ax = Iax)
 
-plt.subplot2grid(grid_dims, (1, 3))
-plt.title('C2 Voltage steps', loc = 'left')
-plt.xlim(1750, 2750)
-plt.ylim(-50, 1200)
+cmdax.set_xlim(xlim)
+cmdax.plot(
+np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_steps.shape[1], len(sweeps_to_use))),
+curr_steps[1, :, sweeps_to_use].T - curr_steps[1, 20000:20500, sweeps_to_use].mean(axis = 1),
+'k-', linewidth = 0.5
+)
+pltools.add_scalebar(y_units = 'pA', anchor = (0.95, 0.3), omit_x = True)
+
+Vax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 3), ratio = 4)
+xlim = (1750, 2750)
+Vax.set_title('C2 Voltage steps', loc = 'left')
+Vax.set_xlim(xlim)
+Vax.set_ylim(-50, 1200)
 sweeps_to_use = [0, 3, 6, 9]
-plt.plot(
+Vax.plot(
 np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.shape[1], len(sweeps_to_use))),
 v_steps[0, :, sweeps_to_use].T,
-'k-', linewidth = 0.5)
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5))
+'k-', linewidth = 0.5
+)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), ax = Vax)
+
+cmdax.set_xlim(xlim)
+cmdax.plot(
+np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.shape[1], len(sweeps_to_use))),
+v_steps[1, :, sweeps_to_use].T,
+'k-', linewidth = 0.5
+)
+pltools.hide_ticks(ax = cmdax)
+pltools.hide_border(ax = cmdax)
 
 
 ### Passive membrane parameters subplots

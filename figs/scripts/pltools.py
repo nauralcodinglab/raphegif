@@ -166,3 +166,60 @@ def p_to_string(p):
         p_str = '$p < 0.001$'
 
     return p_str
+
+
+def subplots_in_grid(shape, loc, ratio = 2, top_bigger = True, fig = None):
+
+    """
+    Generates a set of two vertically-stacked subplots with a given size ratio.
+
+    Useful for generating a set of subplots to show command and recorded voltages from an electrophysiological recording while keeping gridspec grids simple.
+
+
+    Inputs:
+
+        shape: tuple of ints
+        --  Shape of the matplotlib gridspec grid into which to insert the pair of subplots
+
+        loc: tuple of ints
+        --  Location within the gridspec grid to insert the paid of subplots
+
+        ratio: int
+        --  Size ratio between the top and bottom plot
+
+        top_bigger: bool (default True)
+        --  Make the top plot the bigger of the two plots
+
+        fig
+        --  matplotlib figure into which to insert the subplots (set to None to get current figure)
+
+    Returns:
+
+        (top_ax, bottom_ax)
+
+
+    Example:
+
+    >>> top_ax, bottom_ax = pltools.subplots_in_grid((3, 2), (1, 1))
+    >>> top_ax.plot(np.arange(0, 10))
+    >>> bottom_ax.plot(np.random.normal(size = 20))
+    """
+
+    # Check for correct input.
+    if not (int(ratio) == ratio and ratio > 0):
+        raise TypeError('ratio must be a positive integer')
+
+    if fig is None:
+        fig = plt.gcf()
+
+    new_shape = (shape[0] * (ratio + 1), shape[1])
+    new_loc = (loc[0] * (ratio + 1), loc[1])
+
+    if top_bigger:
+        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan = ratio, fig = fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), fig = fig)
+    else:
+        top_ax = plt.subplot2grid(new_shape, new_loc, fig = fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan = ratio, fig = fig)
+
+    return top_ax, bottom_ax
