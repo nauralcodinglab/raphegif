@@ -15,6 +15,9 @@ import pltools
 
 #%% LOAD DATA
 
+# Load current steps file
+curr_steps = Cell().read_ABF('./figs/figdata/17n23038.abf')[0]
+
 # Import passive membrane parameter data.
 params = pd.read_csv('data/DRN_membrane_parameters.csv')
 
@@ -48,7 +51,13 @@ pltools.hide_ticks()
 
 plt.subplot2grid(grid_dims, (1, 2))
 plt.title('C1 Spiking', loc = 'left')
-pltools.hide_ticks()
+sweeps_to_use = [0, 4, 9, 19]
+plt.xlim((2000, 4500))
+plt.plot(
+np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_steps.shape[1], len(sweeps_to_use))),
+curr_steps[0, :, sweeps_to_use].T - curr_steps[0, 20000:20500, sweeps_to_use].mean(axis = 1),
+'k-', linewidth = 0.5)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3))
 
 plt.subplot2grid(grid_dims, (1, 3))
 plt.title('C2 Voltage steps', loc = 'left')
@@ -68,6 +77,9 @@ shapiro_w, shapiro_p = stats.shapiro(1e3/params_5HT['R'])
 plt.text(0.98, 0.98,
 'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
+plt.text(0.5, 0.02,
+'$N = {}$ cells'.format(len(1e3/params_5HT['R'])),
+verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Capacitance
 ax = plt.subplot2grid(grid_dims, (2, 1))
@@ -81,6 +93,9 @@ shapiro_w, shapiro_p = stats.shapiro(params_5HT['C'])
 plt.text(0.98, 0.98,
 'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
+plt.text(0.5, 0.02,
+'$N = {}$ cells'.format(len(params_5HT['C'])),
+verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Membrane time constant
 ax = plt.subplot2grid(grid_dims, (2, 2))
@@ -94,6 +109,9 @@ shapiro_w, shapiro_p = stats.shapiro(params_5HT['R'] * params_5HT['C'] * 1e-3)
 plt.text(0.98, 0.98,
 'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
+plt.text(0.5, 0.02,
+'$N = {}$ cells'.format(len(params_5HT['R'] * params_5HT['C'] * 1e-3)),
+verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Estimated resting membrane potential
 ax = plt.subplot2grid(grid_dims, (2, 3))
@@ -107,7 +125,11 @@ shapiro_w, shapiro_p = stats.shapiro(params_5HT['El_est'][~np.isnan(params_5HT['
 plt.text(0.98, 0.98,
 'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
+plt.text(0.5, 0.02,
+'$N = {}$ cells'.format(len(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])])),
+verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
-#plt.subplots_adjust(hspace = 0.3, wspace = 0.3)
+plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05)
 
+plt.savefig('/Users/eharkin/Desktop/testfig.png', dpi = 300)
 plt.show()
