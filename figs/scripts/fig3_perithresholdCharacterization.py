@@ -6,6 +6,7 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
@@ -311,45 +312,6 @@ peakact_params, peakact_fittedpts       = optimizer_wrapper(peakact_pdata, [12, 
 peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12, -1, -60])
 ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
 
-#%%
-
-verbose = True
-funcs_to_use = {
-        'steady_state': sigmoid_curve,
-        'peak': sigmoid_curve,
-        'inactivation': sigmoid_curve
-        }
-p0 = {
-      'steady_state': [12, 1, -25],
-      'peak': [12, 1, -30],
-      'inactivation': [12, -1, -60]}
-
-### Create dicts to hold outputs.
-fitted_params = {}
-fitted_points = {}
-
-
-### Main
-for key in V_vals.keys():
-
-    V = np.broadcast_to(V_vals[key].mean(axis = 1)[:, np.newaxis],
-                        V_vals[key].shape)
-    V = V.flatten()
-    Y = cond_vals[key].flatten()
-
-    p = opt.least_squares(compute_residuals, p0[key], kwargs = {
-            'func': funcs_to_use[key], 'X': V, 'Y': Y
-            })['x']
-    fitted = funcs_to_use[key](p, V)
-
-    fitted_params[key] = p
-    fitted_points[key] = fitted
-
-    if verbose:
-        print('\n\nFitted params for {} using {}:\n'
-              'A = {:0.2f} \nk = {:0.2f} \nV0 = {:0.2f}'.format(
-                      key, funcs_to_use[key].__name__, p[0], p[1], p[2]))
-
 
 #%% MAKE FIGURE
 
@@ -358,7 +320,11 @@ plt.figure(figsize = (14.67, 18))
 grid_dims = (3, 4)
 
 # A: pharmacology
-Iax, cmdax = pltools.subplots_in_grid((3, 4), (0, 0), ratio = 4, colspan = 2)
+
+inset_pos_ll = (80, -45)
+inset_pos_ur = (300, 740)
+
+Iax, cmdax = pltools.subplots_in_grid((5, 4), (0, 0), ratio = 4)
 Iax.set_title('A1 Pharmacology example traces', loc = 'left')
 Iax.set_ylim(-50, 750)
 Iax.plot(
@@ -379,9 +345,13 @@ TEA_4AP_sweep,
 '-', linewidth = 0.5, color = (0.2, 0.2, 0.8),
 label = '20mM TEA + 3mM 4AP'
 )
+Iax.add_patch(patches.Rectangle(inset_pos_ll,
+                                inset_pos_ur[0] - inset_pos_ll[0],
+                                inset_pos_ur[1] - inset_pos_ll[1],
+                                color = 'k', linestyle = 'dashed',
+                                fill = False))
 Iax.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.6, 0.4), ax = Iax)
-
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
@@ -390,22 +360,55 @@ cmd_sweep,
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot2grid((6, 4), (0, 2), colspan = 2)
+Iax, cmdax = pltools.subplots_in_grid((5, 4), (0, 1), ratio = 4)
+Iax.set_title('A1 Pharmacology example traces', loc = 'left')
+Iax.set_ylim(inset_pos_ll[1], inset_pos_ur[1])
+Iax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
+Iax.plot(
+np.arange(0, len(baseline_sweep)/10, 0.1),
+baseline_sweep,
+'k-', linewidth = 0.5,
+label = 'Baseline'
+)
+Iax.plot(
+np.arange(0, len(baseline_sweep)/10, 0.1),
+TEA_sweep,
+'-', linewidth = 0.5, color = (0.8, 0.2, 0.2),
+label = '20mM TEA'
+)
+Iax.plot(
+np.arange(0, len(baseline_sweep)/10, 0.1),
+TEA_4AP_sweep,
+'-', linewidth = 0.5, color = (0.2, 0.2, 0.8),
+label = '20mM TEA + 3mM 4AP'
+)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
+
+cmdax.plot(
+np.arange(0, len(baseline_sweep)/10, 0.1),
+cmd_sweep,
+'k-', linewidth = 0.5
+)
+cmdax.set_xlim(80, 300)
+pltools.hide_border()
+pltools.hide_ticks()
+
+plt.subplot2grid((5, 4), (0, 2))
 plt.title('A2 TEA washin', loc = 'left')
 plt.plot(TEA_washin_pdata, '-', color = (0.8, 0.2, 0.2))
-plt.axhline(0, linewidth = 0.5, linestyle = 'dashed')
+plt.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
 
-plt.subplot2grid((6, 4), (1, 2), colspan = 2)
-plt.title('A3 4AP washin', loc = 'left')
+plt.subplot2grid((5, 4), (0, 3))
+plt.title('A3 4AP peak height before after', loc = 'left')
 
 # B: kinetics
-Iax, cmdax = pltools.subplots_in_grid((3, 4), (1, 0), ratio = 4, colspan = 2)
+Iax, cmdax = pltools.subplots_in_grid((5, 4), (1, 0), ratio = 4)
 Iax.set_title('B1 Pharmacology example traces', loc = 'left')
 pltools.hide_ticks(ax = Iax)
 pltools.hide_ticks(ax = cmdax)
 
-ax = plt.subplot2grid((6, 4), (2, 2))
-plt.title('B2 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
+ax = plt.subplot2grid((5, 4), (1, 3))
+plt.title('B3 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
 plt.hist(
 peakact_pdata[0, :, :].max(axis = 0),
 bins = 8, color = (0.2, 0.2, 0.8)
@@ -422,8 +425,8 @@ pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.ylim(0, plt.ylim()[1] * 1.2)
 
-plt.subplot2grid((6, 4), (2, 3))
-plt.title('B3 $g_{{k1}}$ fitted curves', loc = 'left')
+plt.subplot2grid((5, 4), (1, 1), colspan = 2)
+plt.title('B2 $g_{{k1}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 peakact_pdata[1, :, :],
 max_normalize(peakact_pdata[0, :, :]),
@@ -432,7 +435,8 @@ max_normalize(peakact_pdata[0, :, :]),
 plt.plot(
 peakact_fittedpts[1, :],
 peakact_fittedpts[0, :],
-'-', linewidth = 2, color = (0.2, 0.2, 0.8), linestyle = 'dashed'
+'-', linewidth = 2, color = (0.2, 0.2, 0.8), linestyle = 'dashed',
+label = 'Activation gate'
 )
 plt.plot(
 peakinact_pdata[1, :, :],
@@ -442,14 +446,16 @@ max_normalize(peakinact_pdata[0, :, :]),
 plt.plot(
 peakinact_fittedpts[1, :],
 peakinact_fittedpts[0, :],
-'-', linewidth = 2, color = (0.2, 0.8, 0.2), linestyle = 'dashed'
+'-', linewidth = 2, color = (0.2, 0.8, 0.2), linestyle = 'dashed',
+label = 'Inactivation gate'
 )
 plt.ylabel('$g_{{k1}}/\\bar{{g}}_{{k1}}$ (pS)')
 plt.xlabel('$V$ (mV)')
+plt.legend()
 pltools.hide_border('tr')
 
-ax = plt.subplot2grid((6, 4), (3, 2))
-plt.title('B4 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
+ax = plt.subplot2grid((5, 4), (2, 3))
+plt.title('B5 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
 plt.hist(
 ss_pdata[0, :, :].max(axis = 0),
 bins = 8, color = (0.8, 0.2, 0.2)
@@ -466,8 +472,8 @@ pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.ylim(0, plt.ylim()[1] * 1.2)
 
-plt.subplot2grid((6, 4), (3, 3))
-plt.title('B5 $g_{{k2}}$ fitted curves', loc = 'left')
+plt.subplot2grid((5, 4), (2, 1), colspan = 2)
+plt.title('B4 $g_{{k2}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 np.delete(ss_pdata[1, :, :], 4, axis = 1),
 np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
@@ -476,24 +482,26 @@ np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
 plt.plot(
 ss_fittedpts[1, :],
 ss_fittedpts[0, :],
-'-', linewidth = 2, color = (0.8, 0.2, 0.2), linestyle = 'dashed'
+'-', linewidth = 2, color = (0.8, 0.2, 0.2), linestyle = 'dashed',
+label = 'Activation gate'
 )
 plt.ylabel('$g_{{k2}}/\\bar{{g}}_{{k2}}$')
 plt.xlabel('$V$ (mV)')
+plt.legend()
 pltools.hide_border('tr')
 
 #ss_pdata[0, 2, :].drop()
 
 # C: model
-plt.subplot2grid((6, 4), (4, 0), rowspan = 2, colspan = 2)
+plt.subplot2grid((5, 4), (3, 0), rowspan = 2, colspan = 2)
 plt.title('C1 Model', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid((6, 4), (4, 2), rowspan = 2)
+plt.subplot2grid((5, 4), (3, 2), colspan = 2)
 plt.title('C2 Gating response of model', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid((6, 4), (4, 3), rowspan = 2)
+plt.subplot2grid((5, 4), (4, 2), colspan = 2)
 plt.title('C3 Simulated voltage step', loc = 'left')
 pltools.hide_ticks()
 
