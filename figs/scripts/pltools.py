@@ -168,7 +168,7 @@ def p_to_string(p):
     return p_str
 
 
-def subplots_in_grid(shape, loc, ratio = 2, top_bigger = True, fig = None):
+def subplots_in_grid(shape, loc, ratio = 2, colspan = 1, top_bigger = True, fig = None):
 
     """
     Generates a set of two vertically-stacked subplots with a given size ratio.
@@ -186,6 +186,8 @@ def subplots_in_grid(shape, loc, ratio = 2, top_bigger = True, fig = None):
 
         ratio: int
         --  Size ratio between the top and bottom plot
+
+        colspan: int
 
         top_bigger: bool (default True)
         --  Make the top plot the bigger of the two plots
@@ -216,10 +218,10 @@ def subplots_in_grid(shape, loc, ratio = 2, top_bigger = True, fig = None):
     new_loc = (loc[0] * (ratio + 1), loc[1])
 
     if top_bigger:
-        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan = ratio, fig = fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), fig = fig)
+        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan = ratio, colspan = colspan, fig = fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), colspan = colspan, fig = fig)
     else:
-        top_ax = plt.subplot2grid(new_shape, new_loc, fig = fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan = ratio, fig = fig)
+        top_ax = plt.subplot2grid(new_shape, new_loc, colspan = colspan, fig = fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan = ratio, colspan = colspan, fig = fig)
 
     return top_ax, bottom_ax

@@ -2,10 +2,13 @@
 
 from __future__ import division
 
+import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import scipy.stats as stats
+import scipy.optimize as optimize
 
 import sys
 sys.path.append('./analysis/gating/')
@@ -13,6 +16,85 @@ sys.path.append('./figs/scripts')
 
 from cell_class import Cell, Recording
 import pltools
+
+
+#%% HANDY FUNCTIONS
+
+max_normalize = lambda cell_channel: cell_channel / cell_channel.max(axis = 0)
+
+def subtract_baseline(cell, baseline_range, channel):
+
+    """
+    Subtracts baseline from the selected channel of a Cell-like np.ndarray.
+
+    Inputs:
+
+    cell: Cell-like
+    --  [c, t, s] array where c is channels, t is time (in timesteps), and s is sweeps
+
+    baseline_range: slice
+    --  Baseline time slice in timesteps
+
+    channel: int
+    --  Index of channel from which to subtract baseline. Not guaranteed to work with multiple channels.
+
+    Returns:
+
+        Copy of cell with baseline subtracted from the relevant channel.
+    """
+
+    cell = cell.copy()
+
+    cell[channel, :, :] -= cell[channel, baseline_range, :].mean(axis = 0)
+
+    return cell
+
+
+def subtract_leak(cell, baseline_range, test_range, V_channel = 1, I_channel = 0):
+
+    """
+    Subtracts leak conductance from the I channel of a Cell-like np.ndarray.
+
+    Calculates leak conductance based on Rm, which is extracted from test pulse.
+    Assumes test pulse is the same in each sweep.
+
+    Inputs:
+
+        cell: Cell-like
+        --  [c, t, s] array where c is channels, t is time (in timesteps), and s is sweeps
+
+        baseline_range: slice
+        --  baseline time slice in timesteps
+
+        test_range: slice
+        --  test pulse time slice in timesteps
+
+        V_channel: int
+
+        I_channel: int
+
+    Returns:
+
+        Leak-subtracted array.
+    """
+
+    Vtest_step = (
+    cell[V_channel, baseline_range, :].mean(axis = 0)
+    - cell[V_channel, test_range, :].mean(axis = 0)
+    ).mean()
+    Itest_step = (
+    cell[I_channel, baseline_range, :].mean(axis = 0)
+    - cell[I_channel, test_range, :].mean(axis = 0)
+    ).mean()
+
+    Rm = Vtest_step/Itest_step
+
+    I_leak = (cell[V_channel, :, :] - cell[V_channel, baseline_range, :].mean()) / Rm
+
+    leak_subtracted = cell.copy()
+    leak_subtracted[I_channel, :, :] -= I_leak
+
+    return leak_subtracted
 
 
 #%% LOAD DATA
@@ -67,13 +149,8 @@ TEA_washin_pdata[:, :] = np.NAN
 for i, cell in enumerate(TEA_washin):
 
     # Estimate Rm from test pulse and use to compute leak current.
-    Vtest_step = (cell[1, xrange_baseline, :].mean(axis = 0) - cell[1, xrange_testpulse, :].mean(axis = 0)).mean()
-    Itest_step = (cell[0, xrange_baseline, :].mean(axis = 0) - cell[0, xrange_testpulse, :].mean(axis = 0)).mean()
-    Rm = Vtest_step/Itest_step
 
-    I_leak = cell[1, :, :] / Rm
-
-    TEA_washin_pdata[i, :, :cell.shape[2]] = cell[0, :, :] - I_leak
+    TEA_washin_pdata[i, :, :cell.shape[2]] = subtract_leak(cell, xrange_baseline, xrange_testpulse)[0, :, :]
     TEA_washin_pdata[i, :, :] -= np.nanmean(TEA_washin_pdata[i, xrange_baseline, :], axis = 0)
     #TEA_washin_pdata[i, :, :] /= np.nanmean(TEA_washin_pdata[i, xrange_ss, :6])
 
@@ -94,8 +171,184 @@ for i, cell in enumerate(TEA_4AP_washin):
 
 TEA_4AP_washin_pdata = np.nanmean(TEA_4AP_washin_pdata[:, xrange_ss, :], axis = 1).T
 
-#%% PROCESS GATING DATA
+#%% PROCESS RAW GATING DATA
 
+# Define time intervals from which to grab data.
+xrange_baseline     = slice(0, 2000)
+xrange_test         = slice(3500, 4000)
+xrange_peakact      = slice(26140, 26160)
+xrange_ss           = slice(55000, 56000)
+xrange_peakinact    = slice(56130, 56160)
+
+# Format will be [channel, sweep, cell]
+# Such that we can use plt.plot(pdata[0, :, :], pdata[1, :, :], '-') to plot I over V by cell.
+
+shape_pdata = (2, gating[0].shape[2], len(gating))
+
+peakact_pdata       = np.empty(shape_pdata)
+ss_pdata            = np.empty(shape_pdata)
+peakinact_pdata     = np.empty(shape_pdata)
+
+for i, cell in enumerate(gating):
+
+    cell = subtract_baseline(cell, xrange_baseline, 0)
+    cell = subtract_leak(cell, xrange_baseline, xrange_test)
+
+    # Average time windows to get leak-subtracted IA and KSlow currents
+    peakact_pdata[:, :, i]      = cell[:, xrange_peakact, :].mean(axis = 1)
+    ss_pdata[:, :, i]           = cell[:, xrange_ss, :].mean(axis = 1)
+
+    # Get prepulse voltage for peakinact
+    peakinact_pdata[0, :, i]    = cell[0, xrange_peakinact, :].mean(axis = 0)
+    peakinact_pdata[1, :, i]    = cell[1, xrange_peakact, :].mean(axis = 0)
+
+peakact_pdata[0, :, :]      /= peakact_pdata[1, :, :] - -101
+ss_pdata[0, :, :]           /= ss_pdata[1, :, :] - -101
+peakinact_pdata[0, :, :]    /= peakinact_pdata[1, :, :] - -101
+
+# Average out small differences in cmd between cells due to Rs comp
+peakact_pdata[1, :, :]      = peakact_pdata[1, :, :].mean(axis = 1, keepdims = True)
+ss_pdata[1, :, :]           = ss_pdata[1, :, :].mean(axis = 1, keepdims = True)
+peakinact_pdata[1, :, :]    = peakinact_pdata[1, :, :].mean(axis = 1, keepdims = True)
+
+# Remove contribution of KSlow to apparent inactivation peak.
+peakinact_pdata[0, :, :] -= ss_pdata[0, :, :]
+
+# Pickle in case needed.
+
+with open(FIGDATA_PATH + 'peakact_pdata.pyc', 'wb') as f:
+    pickle.dump(peakact_pdata, f)
+
+with open(FIGDATA_PATH + 'ss_pdata.pyc', 'wb') as f:
+    pickle.dump(ss_pdata, f)
+
+with open(FIGDATA_PATH + 'peakinact_pdata.pyc', 'wb') as f:
+    pickle.dump(peakinact_pdata, f)
+
+
+#%% FIG SIGMOID CURVES TO GATING DATA
+
+def sigmoid_curve(p, V):
+
+    """Three parameter logit.
+
+    p = [A, k, V0]
+
+    y = A / ( 1 + exp(-k * (V - V0)) )
+    """
+
+    if len(p) != 3:
+        raise ValueError('p must be vector-like with len 3.')
+
+    A = p[0]
+    k = p[1]
+    V0 = p[2]
+
+    return A / (1 + np.exp(-k * (V - V0)))
+
+
+def compute_residuals(p, func, Y, X):
+
+    """Compute residuals of a fitted curve.
+
+    Inputs:
+        p       -- vector of function parameters
+        func    -- a callable function
+        Y       -- real values
+        X       -- vector of points on which to compute fitted values
+
+    Returns:
+        Array of residuals.
+    """
+
+    if len(Y) != len(X):
+        raise ValueError('Y and X must be of the same length.')
+
+    Y_hat = func(p, X)
+
+    return Y - Y_hat
+
+
+def optimizer_wrapper(pdata, p0, max_norm = True):
+
+    """
+    Least-squares optimizer
+
+    Uses `compute_residuals` as the loss function to optimize `sigmoid_curve`
+
+    Returns:
+
+    Tupple of parameters and corresponding curve.
+    Curve is stored as a [channel, sweep] np.ndarray; channels 0 and 1 should correspond to I and V, respectively.
+    Curve spans domain of data used for fitting.
+    """
+
+    X = pdata[1, :, :].flatten()
+
+    if max_norm:
+        y = max_normalize(pdata[0, :, :]).flatten()
+    else:
+        y = pdata[0, :, :].flatten()
+
+    p = optimize.least_squares(compute_residuals, p0, kwargs = {
+    'func': sigmoid_curve,
+    'X': X,
+    'Y': y
+    })['x']
+
+    no_pts = 500
+
+    fitted_points = np.empty((2, no_pts))
+    x_min = pdata[1, :, :].mean(axis = 1).min()
+    x_max = pdata[1, :, :].mean(axis = 1).max()
+    fitted_points[1, :] = np.linspace(x_min, x_max, no_pts)
+    fitted_points[0, :] = sigmoid_curve(p, fitted_points[1, :])
+
+    return p, fitted_points
+
+
+peakact_params, peakact_fittedpts       = optimizer_wrapper(peakact_pdata, [12, 1, -30])
+peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12, -1, -60])
+ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
+
+#%%
+
+verbose = True
+funcs_to_use = {
+        'steady_state': sigmoid_curve,
+        'peak': sigmoid_curve,
+        'inactivation': sigmoid_curve
+        }
+p0 = {
+      'steady_state': [12, 1, -25],
+      'peak': [12, 1, -30],
+      'inactivation': [12, -1, -60]}
+
+### Create dicts to hold outputs.
+fitted_params = {}
+fitted_points = {}
+
+
+### Main
+for key in V_vals.keys():
+
+    V = np.broadcast_to(V_vals[key].mean(axis = 1)[:, np.newaxis],
+                        V_vals[key].shape)
+    V = V.flatten()
+    Y = cond_vals[key].flatten()
+
+    p = opt.least_squares(compute_residuals, p0[key], kwargs = {
+            'func': funcs_to_use[key], 'X': V, 'Y': Y
+            })['x']
+    fitted = funcs_to_use[key](p, V)
+
+    fitted_params[key] = p
+    fitted_points[key] = fitted
+
+    if verbose:
+        print('\n\nFitted params for {} using {}:\n'
+              'A = {:0.2f} \nk = {:0.2f} \nV0 = {:0.2f}'.format(
+                      key, funcs_to_use[key].__name__, p[0], p[1], p[2]))
 
 
 #%% MAKE FIGURE
@@ -105,7 +358,7 @@ plt.figure(figsize = (14.67, 18))
 grid_dims = (3, 4)
 
 # A: pharmacology
-Iax, cmdax = pltools.subplots_in_grid((3, 2), (0, 0), ratio = 4)
+Iax, cmdax = pltools.subplots_in_grid((3, 4), (0, 0), ratio = 4, colspan = 2)
 Iax.set_title('A1 Pharmacology example traces', loc = 'left')
 Iax.set_ylim(-50, 750)
 Iax.plot(
@@ -137,54 +390,112 @@ cmd_sweep,
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot2grid((6, 2), (0, 1))
+plt.subplot2grid((6, 4), (0, 2), colspan = 2)
 plt.title('A2 TEA washin', loc = 'left')
 plt.plot(TEA_washin_pdata, '-', color = (0.8, 0.2, 0.2))
 plt.axhline(0, linewidth = 0.5, linestyle = 'dashed')
 
-plt.subplot2grid((6, 2), (1, 1))
+plt.subplot2grid((6, 4), (1, 2), colspan = 2)
 plt.title('A3 4AP washin', loc = 'left')
 
 # B: kinetics
-Iax, cmdax = pltools.subplots_in_grid((3, 2), (1, 0), ratio = 4)
+Iax, cmdax = pltools.subplots_in_grid((3, 4), (1, 0), ratio = 4, colspan = 2)
 Iax.set_title('B1 Pharmacology example traces', loc = 'left')
 pltools.hide_ticks(ax = Iax)
 pltools.hide_ticks(ax = cmdax)
 
-plt.subplot2grid((6, 4), (2, 2))
+ax = plt.subplot2grid((6, 4), (2, 2))
 plt.title('B2 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
+plt.hist(
+peakact_pdata[0, :, :].max(axis = 0),
+bins = 8, color = (0.2, 0.2, 0.8)
+)
+shapiro_w, shapiro_p = stats.shapiro(peakact_pdata[0, :, :].max(axis = 0))
+plt.text(
+0.98, 0.90,
+'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+verticalalignment = 'center', horizontalalignment = 'right',
+transform = ax.transAxes
+)
 plt.xlabel('$\\bar{{g}}_{{k1}}$')
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 plt.subplot2grid((6, 4), (2, 3))
 plt.title('B3 $g_{{k1}}$ fitted curves', loc = 'left')
-plt.ylabel('$g_{{k1}}/\\bar{{g}}_{{k1}}$')
+plt.plot(
+peakact_pdata[1, :, :],
+max_normalize(peakact_pdata[0, :, :]),
+'-', linewidth = 0.5, alpha = 0.5, color = (0.2, 0.2, 0.8)
+)
+plt.plot(
+peakact_fittedpts[1, :],
+peakact_fittedpts[0, :],
+'-', linewidth = 2, color = (0.2, 0.2, 0.8), linestyle = 'dashed'
+)
+plt.plot(
+peakinact_pdata[1, :, :],
+max_normalize(peakinact_pdata[0, :, :]),
+'-', linewidth = 0.5, alpha = 0.5, color = (0.2, 0.8, 0.2)
+)
+plt.plot(
+peakinact_fittedpts[1, :],
+peakinact_fittedpts[0, :],
+'-', linewidth = 2, color = (0.2, 0.8, 0.2), linestyle = 'dashed'
+)
+plt.ylabel('$g_{{k1}}/\\bar{{g}}_{{k1}}$ (pS)')
 plt.xlabel('$V$ (mV)')
+pltools.hide_border('tr')
 
-plt.subplot2grid((6, 4), (3, 2))
+ax = plt.subplot2grid((6, 4), (3, 2))
 plt.title('B4 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
-plt.xlabel('$\\bar{{g}}_{{k2}}$')
+plt.hist(
+ss_pdata[0, :, :].max(axis = 0),
+bins = 8, color = (0.8, 0.2, 0.2)
+)
+shapiro_w, shapiro_p = stats.shapiro(ss_pdata[0, :, :].max(axis = 0))
+plt.text(
+0.98, 0.90,
+'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+verticalalignment = 'center', horizontalalignment = 'right',
+transform = ax.transAxes
+)
+plt.xlabel('$\\bar{{g}}_{{k2}}$ (pS)')
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 plt.subplot2grid((6, 4), (3, 3))
 plt.title('B5 $g_{{k2}}$ fitted curves', loc = 'left')
+plt.plot(
+np.delete(ss_pdata[1, :, :], 4, axis = 1),
+np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
+'-', linewidth = 0.5, alpha = 0.5, color = (0.8, 0.2, 0.2)
+)
+plt.plot(
+ss_fittedpts[1, :],
+ss_fittedpts[0, :],
+'-', linewidth = 2, color = (0.8, 0.2, 0.2), linestyle = 'dashed'
+)
 plt.ylabel('$g_{{k2}}/\\bar{{g}}_{{k2}}$')
 plt.xlabel('$V$ (mV)')
+pltools.hide_border('tr')
+
+#ss_pdata[0, 2, :].drop()
 
 # C: model
-plt.subplot2grid((3, 3), (2, 0))
+plt.subplot2grid((6, 4), (4, 0), rowspan = 2, colspan = 2)
 plt.title('C1 Model', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid((3, 3), (2, 1))
+plt.subplot2grid((6, 4), (4, 2), rowspan = 2)
 plt.title('C2 Gating response of model', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid((3, 3), (2, 2))
+plt.subplot2grid((6, 4), (4, 3), rowspan = 2)
 plt.title('C3 Simulated voltage step', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05)
+plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
 plt.show()
