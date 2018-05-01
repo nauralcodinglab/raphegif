@@ -158,16 +158,24 @@ for i, cell in enumerate(TEA_washin):
 
 TEA_washin_pdata = np.nanmean(TEA_washin_pdata[:, xrange_ss, :], axis = 1).T
 
+# Remove data where there is no conductance left after subtracting leak.
+# (TEA can't have an effect if there's nothing to block.)
+TEA_washin_pdata = np.delete(
+TEA_washin_pdata,
+np.where(TEA_washin_pdata[:7, :].mean(axis = 0) <= 0)[0],
+axis = 1
+)
 
 # 4AP washin
 # Probably won't use...
-xrange_baseline = slice(10000, 11000)
-xrange_ss = slice(50000, 51000)
-TEA_4AP_washin_pdata = np.empty((len(TEA_4AP_washin), TEA_4AP_washin[0].shape[1], 44))
+xrange_baseline         = slice(1000, 2000)
+xrange_testpulse        = slice(3000, 3500)
+xrange_ss               = slice(21770, 21800)
+TEA_4AP_washin_pdata    = np.empty((len(TEA_4AP_washin), TEA_4AP_washin[0].shape[1], 44))
 TEA_4AP_washin_pdata[:, :] = np.NAN
 
 for i, cell in enumerate(TEA_4AP_washin):
-    TEA_4AP_washin_pdata[i, :, :cell.shape[2]] = cell[0, :, :]
+    TEA_4AP_washin_pdata[i, :, :cell.shape[2]] = subtract_leak(cell, xrange_baseline, xrange_testpulse)[0, :, :]
     TEA_4AP_washin_pdata[i, :, :] -= np.nanmean(TEA_4AP_washin_pdata[i, xrange_baseline, :], axis = 0)
     #TEA_4AP_washin_pdata[i, :, :] /= np.nanmean(TEA_4AP_washin_pdata[i, xrange_ss, :6])
 
@@ -455,11 +463,25 @@ pltools.hide_ticks()
 
 plt.subplot2grid((5, 4), (0, 2))
 plt.title('A2 TEA washin', loc = 'left')
-plt.plot(TEA_washin_pdata, '-', color = m_color)
-plt.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.plot(
+np.arange(-1, TEA_washin_pdata.shape[0] / 6. - 1, 1./6.),
+TEA_washin_pdata,
+'-', color = n_color
+)
+plt.ylim(0, plt.ylim()[1])
+plt.ylabel('Leak-subtracted current (pA)')
+plt.xlabel('Time from TEA washin (min)')
 
 plt.subplot2grid((5, 4), (0, 3))
 plt.title('A3 4AP peak height before after', loc = 'left')
+plt.plot(
+np.broadcast_to(np.arange(-1, TEA_4AP_washin_pdata.shape[0] / 6. - 1, 1./6.).reshape((-1, 1)), TEA_4AP_washin_pdata.shape),
+TEA_4AP_washin_pdata,
+'-', color = m_color
+)
+plt.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.ylabel('Leak-subtracted current (pA)')
+plt.xlabel('Time from 4AP washin (min)')
 
 # B: kinetics
 Iax, cmdax = pltools.subplots_in_grid((5, 4), (1, 0), ratio = 4)
