@@ -7,15 +7,16 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
 
 import sys
+sys.path.append('./src/')
 sys.path.append('./analysis/gating/')
 sys.path.append('./figs/scripts')
 
-from cell_class import Cell, Recording
+from SubthreshGIF_K import SubthreshGIF_K
+from cell_class import Cell
 import pltools
 
 
@@ -313,6 +314,61 @@ peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12
 ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
 
 
+#%% SIMULATE GATING
+
+gatingGIF = SubthreshGIF_K(0.1)
+
+gatingGIF_params = {
+'C': 70,
+'gl': 1,
+'El': -70,
+'gbar_K1': 50,
+'m_tau': 1.,
+'h_tau': 50.,
+'gbar_K2': 50,
+'n_tau': 100.
+}
+
+# Define parameters
+gatingGIF.C = gatingGIF_params['C'] * 1e-3
+gatingGIF.gl = gatingGIF_params['gl'] * 1e-3
+gatingGIF.El = gatingGIF_params['El']
+
+gatingGIF.gbar_K1 = gatingGIF_params['gbar_K1'] * 1e-3
+gatingGIF.m_Vhalf = peakact_params[2]
+gatingGIF.m_k = peakact_params[1]
+gatingGIF.m_tau = gatingGIF_params['m_tau']
+
+gatingGIF.h_Vhalf = peakinact_params[2]
+gatingGIF.h_k = peakinact_params[1]
+gatingGIF.h_tau = gatingGIF_params['h_tau']
+
+gatingGIF.gbar_K2 =  gatingGIF_params['gbar_K2'] * 1e-3
+gatingGIF.n_Vhalf = ss_params[2]
+gatingGIF.n_k = ss_params[1]
+gatingGIF.n_tau =  gatingGIF_params['n_tau']
+
+gatingGIF.E_K = -101.
+
+prepad = 50
+V_pre = -90
+V_const = -35
+simulated_Vclamp = list(gatingGIF.simulateVClamp(400, V_const, V_pre))
+simulated_Vclamp[0] = np.concatenate((np.ones(prepad * 10) * V_pre, simulated_Vclamp[0]))
+simulated_Vclamp[1] = np.concatenate((np.ones(prepad * 10) * simulated_Vclamp[1][0], simulated_Vclamp[1]))
+
+simulated_g = {
+'m': gatingGIF.computeGating(
+simulated_Vclamp[0], gatingGIF.mInf(simulated_Vclamp[0]), gatingGIF_params['m_tau']
+),
+'h': gatingGIF.computeGating(
+simulated_Vclamp[0], gatingGIF.hInf(simulated_Vclamp[0]), gatingGIF_params['h_tau']
+),
+'n': gatingGIF.computeGating(
+simulated_Vclamp[0], gatingGIF.nInf(simulated_Vclamp[0]), gatingGIF_params['n_tau']
+)
+}
+
 #%% MAKE FIGURE
 
 plt.figure(figsize = (14.67, 18))
@@ -494,8 +550,6 @@ plt.xlabel('$V$ (mV)')
 plt.legend()
 pltools.hide_border('tr')
 
-#ss_pdata[0, 2, :].drop()
-
 # C: model
 plt.subplot2grid((5, 4), (3, 0), rowspan = 2, colspan = 2)
 plt.title('C1 Model', loc = 'left')
@@ -503,11 +557,35 @@ pltools.hide_ticks()
 
 plt.subplot2grid((5, 4), (3, 2), colspan = 2)
 plt.title('C2 Gating response of model', loc = 'left')
-pltools.hide_ticks()
+plt.plot(simulated_g['m'], '-', color = m_color, linewidth = simlinewidth)
+plt.plot(simulated_g['h'], '-', color = h_color, linewidth = simlinewidth)
+plt.plot(simulated_g['n'], '-', color = n_color, linewidth = simlinewidth)
+plt.ylim(-0.05, 1.05)
+plt.xticks([])
+plt.ylabel('$g/g_{{max}}$')
+pltools.hide_border('rtb')
 
-plt.subplot2grid((5, 4), (4, 2), colspan = 2)
-plt.title('C3 Simulated voltage step', loc = 'left')
+Iax, cmdax = pltools.subplots_in_grid((5, 4), (4, 2), 3, colspan = 2)
+Iax.set_title('C3 Simulated voltage step', loc = 'left')
+Iax.plot(np.arange(0, len(simulated_Vclamp[1]) / 10., 0.1), simulated_Vclamp[1] * 1e3, 'k-', linewidth = simlinewidth)
+Iax.text(0, 0,
+'Simulated neuron parameters:'
+'\n$C = {C}$pF'
+'\n$g_l = {gl}$pS'
+'\n$E_l = {El}$mV'
+'\n$\\tau_m = {m_tau}$ms'
+'\n$\\tau_h = {h_tau}$ms'
+'\n$\\tau_n = {n_tau}$ms'.format(**gatingGIF_params))
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', ax = Iax, remove_frame = False)
+pltools.hide_border(ax = Iax)
+Iax.set_xticks([])
+Iax.set_yticks([])
+Iax.set_ylabel('Simulated $I$')
+
+cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], 'k-', linewidth = simlinewidth)
+cmdax.set_ylabel('Simulated $V_{{cmd}}$')
 pltools.hide_ticks()
+pltools.hide_border()
 
 plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
 plt.show()
