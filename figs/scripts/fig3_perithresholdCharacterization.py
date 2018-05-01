@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
 
@@ -321,6 +322,17 @@ peakact_params, peakact_fittedpts       = optimizer_wrapper(peakact_pdata, [12, 
 peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12, -1, -60])
 ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
 
+param_pickle_df = pd.DataFrame(
+{
+'m': peakact_params,
+'h': peakinact_params,
+'n': ss_params
+},
+index = ('A', 'k', 'V_half')
+)
+
+with open(FIGDATA_PATH + 'gating_params.pyc', 'wb') as f:
+    pickle.dump(param_pickle_df, f)
 
 #%% SIMULATE GATING
 
