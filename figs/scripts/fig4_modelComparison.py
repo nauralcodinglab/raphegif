@@ -261,31 +261,36 @@ KGIF.E_K = -101.
 
 print 'GETTING PERFORMANCE ON TEST SET\nWorking',
 
-for mod in [ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_mod_coeffs]:
+for i, mod in enumerate([ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_mod_coeffs]):
 
     print '.',
 
     mod['var_explained_Vtest'] = []
     mod['binned_e2_values'] = []
     mod['binned_e2_centres'] = []
+    mod['simulated_testset_traces'] = []
+    mod['real_testset_traces'] = []
 
-    for i in range(len(model_matrices)):
+    for j in range(len(model_matrices)):
 
-        KGIF.El = mod['El'][i]
-        KGIF.C = mod['C'][i]
-        KGIF.gl = 1/mod['R'][i]
-        KGIF.gbar_K1 = mod.get('gbar_K1', np.zeros_like(mod['El']))[i]
-        KGIF.gbar_K2 = mod.get('gbar_K2', np.zeros_like(mod['El']))[i]
+        KGIF.El = mod['El'][j]
+        KGIF.C = mod['C'][j]
+        KGIF.gl = 1/mod['R'][j]
+        KGIF.gbar_K1 = mod.get('gbar_K1', np.zeros_like(mod['El']))[j]
+        KGIF.gbar_K2 = mod.get('gbar_K2', np.zeros_like(mod['El']))[j]
 
-        V_real = model_matrices[i].V_test
+        V_real = model_matrices[j].V_test
         V_sim = np.empty_like(V_real)
 
         for sw_ind in range(V_real.shape[1]):
 
             V_sim[:, sw_ind] = KGIF.simulate(
-            model_matrices[i].I_test[:, sw_ind],
+            model_matrices[j].I_test[:, sw_ind],
             V_real[0, sw_ind]
             )[1]
+
+        mod['simulated_testset_traces'].append(V_sim)
+        mod['real_testset_traces'].append(V_real)
 
         mod['binned_e2_values'].append(stats.binned_statistic(
         V_real.flatten(), ((V_real - V_sim)**2).flatten(), bins = bins
@@ -295,7 +300,7 @@ for mod in [ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_mod_coeffs]:
         """
         # Comment out so that residuals are computed for full V range.
         for sw_ind in range(V_real.shape[1]):
-            below_V_cutoff = np.where(V_real[:, sw_ind] < model_matrices[i].VCutoff)[0]
+            below_V_cutoff = np.where(V_real[:, sw_ind] < model_matrices[j].VCutoff)[0]
             V_real[below_V_cutoff, sw_ind] = np.nan
             V_sim[below_V_cutoff, sw_ind] = np.nan
 
@@ -311,7 +316,51 @@ print '\nDone!'
 
 #%% EXPLORE TRACES
 
-NotImplemented
+"""
+Exploratory series of plots to check out performance on test set in all cells.
+This will be used to select a cell to use for sample traces.
+
+Performance on cell #12 is really, really good.
+Use cell #13 as an example of a good cell.
+"""
+
+for i in range(len(ohmic_mod_coeffs['real_testset_traces'])):
+    plt.figure(figsize = (18, 5))
+
+    plt.suptitle('{}'.format(i))
+
+    plt.subplot(131)
+    plt.xlim(40000, 80000)
+    plt.plot(ohmic_mod_coeffs['real_testset_traces'][i].mean(axis = 1),
+    'k-', linewidth = 0.5, label = 'Real data')
+    plt.plot(ohmic_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'r-', linewidth = 0.5, label = 'Ohmic model')
+    plt.plot(gk1_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'b-', linewidth = 0.5, label = 'Nonlinear model')
+    plt.legend()
+
+    plt.subplot(132)
+    plt.xlim(40000, 80000)
+    plt.plot(ohmic_mod_coeffs['real_testset_traces'][i].mean(axis = 1),
+    'k-', linewidth = 0.5, label = 'Real data')
+    plt.plot(ohmic_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'r-', linewidth = 0.5, label = 'Ohmic model')
+    plt.plot(gk2_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'b-', linewidth = 0.5, label = 'Nonlinear model')
+    plt.legend()
+
+    plt.subplot(133)
+    plt.xlim(40000, 80000)
+    plt.plot(ohmic_mod_coeffs['real_testset_traces'][i].mean(axis = 1),
+    'k-', linewidth = 0.5, label = 'Real data')
+    plt.plot(ohmic_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'r-', linewidth = 0.5, label = 'Ohmic model')
+    plt.plot(full_mod_coeffs['simulated_testset_traces'][i].mean(axis = 1),
+    'b-', linewidth = 0.5, label = 'Nonlinear model')
+    plt.legend()
+
+    plt.show()
+
 
 #%% DEFINE FUNCTIONS FOR MAKING COMPLICATED PLOTS
 
@@ -407,6 +456,40 @@ def single_bin_e_comparison_plot(null_mod, alt_mod, V, null_mod_label = None, al
     plt.xticks([0, 1], [null_mod_label, alt_mod_label])
 
 
+def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, alt_mod_label = None,
+                        real_color = (0, 0, 0), null_color = (0.1, 0.1, 0.9),
+                        alt_color = (0.9, 0.1, 0.1), ax = None):
+
+    """
+    Compare testset traces for one cell.
+
+    Note: averages sweeps from testset before plotting (looks nicer)
+
+    Inputs:
+
+        null_mod/alt_mod: `x_mod_coeffs`-style dicts
+
+        cell: int
+        --  Index of cell from null_mod/alt_mod for which to plot traces.
+    """
+
+    if ax is None:
+        ax = plt.gca()
+
+    if null_mod_label is None:
+        null_mod_label = ''
+    if alt_mod_label is None:
+        alt_mod_label = ''
+
+    plt.plot(null_mod['real_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = real_color, linewidth = 0.5, label = 'Real data')
+    plt.plot(null_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = null_color, linewidth = 0.5, label = null_mod_label)
+    plt.plot(alt_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = alt_color, linewidth = 0.5, label = alt_mod_label)
+    plt.legend()
+
+
 #%% MAKE SOME LATEX TEXT FOR MODEL DEFINITIONS
 
 ohmic_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l)$'
@@ -427,10 +510,20 @@ plt.title('A1 Model definitions', loc = 'left')
 plt.text(0.1, 0.5,
 '\n'.join([ohmic_latex, gk1_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
+pltools.hide_border()
 pltools.hide_ticks()
+
 plt.subplot(spec[1, :2])
 plt.title('A2 Predictions on test set', loc = 'left')
-pltools.hide_ticks()
+testset_traces_plot(
+ohmic_mod_coeffs, gk1_mod_coeffs, 13,
+null_mod_label = 'Linear model',
+alt_mod_label = 'Linear model + $g_{{k1}}$'
+)
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.xlim(40000, 80000)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
+
 
 plt.subplot(spec[0:2, 2:4])
 plt.title('A3 Model error according to voltage', loc = 'left')
@@ -445,18 +538,21 @@ plt.ylim(-40, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[0, 4])
 plt.title('A4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -60,
                              'Linear', 'Linear + $g_{{k1}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[1, 4])
 plt.title('A5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -45,
                              'Linear', 'Linear + $g_{{k1}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 
 # B: gk2 vs ohmic
@@ -465,10 +561,19 @@ plt.title('B1 Model definitions', loc = 'left')
 plt.text(0.1, 0.5,
 '\n'.join([ohmic_latex, gk2_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
+pltools.hide_border()
 pltools.hide_ticks()
+
 plt.subplot(spec[3, :2])
 plt.title('B2 Predictions on test set', loc = 'left')
-pltools.hide_ticks()
+testset_traces_plot(
+ohmic_mod_coeffs, gk2_mod_coeffs, 13,
+null_mod_label = 'Linear model',
+alt_mod_label = 'Linear model + $g_{{k2}}$'
+)
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.xlim(40000, 80000)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
 
 plt.subplot(spec[2:4, 2:4])
 plt.title('B3 Model error according to voltage', loc = 'left')
@@ -483,18 +588,21 @@ plt.ylim(-40, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[2, 4])
 plt.title('B4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -60,
                              'Linear', 'Linear + $g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[3, 4])
 plt.title('B5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -45,
                              'Linear', 'Linear + $g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 
 # C: gk1 given gk2
@@ -503,10 +611,19 @@ plt.title('C1 Model definitions', loc = 'left')
 plt.text(0.1, 0.5,
 '\n'.join([gk2_latex, full_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
+pltools.hide_border()
 pltools.hide_ticks()
+
 plt.subplot(spec[5, :2])
 plt.title('C2 Predictions on test set', loc = 'left')
-pltools.hide_ticks()
+testset_traces_plot(
+gk2_mod_coeffs, full_mod_coeffs, 13,
+null_mod_label = 'Linear model + $g_{{k2}}$',
+alt_mod_label = 'Linear model + $g_{{k1}}$ & $g_{{k2}}$'
+)
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.xlim(40000, 80000)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
 
 plt.subplot(spec[4:6, 2:4])
 plt.title('C3 Model error according to voltage', loc = 'left')
@@ -521,18 +638,21 @@ plt.ylim(-40, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[4, 4])
 plt.title('C4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -60,
                              '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 plt.subplot(spec[5, 4])
 plt.title('C5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -45,
                              '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+pltools.hide_border('tr')
 
 
 plt.savefig('/Users/eharkin/Desktop/fig4poster.png', dpi = 300)
