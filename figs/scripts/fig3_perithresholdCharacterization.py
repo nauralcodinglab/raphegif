@@ -318,6 +318,10 @@ ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -2
 plt.figure(figsize = (14.67, 18))
 
 grid_dims = (3, 4)
+m_color = (0.2, 0.2, 0.8)
+h_color = (0.2, 0.8, 0.2)
+n_color = (0.8, 0.2, 0.2)
+simlinewidth = 0.9
 
 # A: pharmacology
 
@@ -336,13 +340,13 @@ label = 'Baseline'
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_sweep,
-'-', linewidth = 0.5, color = (0.8, 0.2, 0.2),
+'-', linewidth = 0.5, color = n_color,
 label = '20mM TEA'
 )
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
-'-', linewidth = 0.5, color = (0.2, 0.2, 0.8),
+'-', linewidth = 0.5, color = m_color,
 label = '20mM TEA + 3mM 4AP'
 )
 Iax.add_patch(patches.Rectangle(inset_pos_ll,
@@ -373,13 +377,13 @@ label = 'Baseline'
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_sweep,
-'-', linewidth = 0.5, color = (0.8, 0.2, 0.2),
+'-', linewidth = 0.5, color = n_color,
 label = '20mM TEA'
 )
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
-'-', linewidth = 0.5, color = (0.2, 0.2, 0.8),
+'-', linewidth = 0.5, color = m_color,
 label = '20mM TEA + 3mM 4AP'
 )
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
@@ -395,7 +399,7 @@ pltools.hide_ticks()
 
 plt.subplot2grid((5, 4), (0, 2))
 plt.title('A2 TEA washin', loc = 'left')
-plt.plot(TEA_washin_pdata, '-', color = (0.8, 0.2, 0.2))
+plt.plot(TEA_washin_pdata, '-', color = m_color)
 plt.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
 
 plt.subplot2grid((5, 4), (0, 3))
@@ -411,7 +415,7 @@ ax = plt.subplot2grid((5, 4), (1, 3))
 plt.title('B3 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
 plt.hist(
 peakact_pdata[0, :, :].max(axis = 0),
-bins = 8, color = (0.2, 0.2, 0.8)
+bins = 8, color = m_color
 )
 shapiro_w, shapiro_p = stats.shapiro(peakact_pdata[0, :, :].max(axis = 0))
 plt.text(
@@ -430,23 +434,23 @@ plt.title('B2 $g_{{k1}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 peakact_pdata[1, :, :],
 max_normalize(peakact_pdata[0, :, :]),
-'-', linewidth = 0.5, alpha = 0.5, color = (0.2, 0.2, 0.8)
+'-', linewidth = 0.5, alpha = 0.5, color = m_color
 )
 plt.plot(
 peakact_fittedpts[1, :],
 peakact_fittedpts[0, :],
-'-', linewidth = 2, color = (0.2, 0.2, 0.8), linestyle = 'dashed',
+'-', linewidth = 2, color = m_color, linestyle = 'dashed',
 label = 'Activation gate'
 )
 plt.plot(
 peakinact_pdata[1, :, :],
 max_normalize(peakinact_pdata[0, :, :]),
-'-', linewidth = 0.5, alpha = 0.5, color = (0.2, 0.8, 0.2)
+'-', linewidth = 0.5, alpha = 0.5, color = h_color
 )
 plt.plot(
 peakinact_fittedpts[1, :],
 peakinact_fittedpts[0, :],
-'-', linewidth = 2, color = (0.2, 0.8, 0.2), linestyle = 'dashed',
+'-', linewidth = 2, color = h_color, linestyle = 'dashed',
 label = 'Inactivation gate'
 )
 plt.ylabel('$g_{{k1}}/\\bar{{g}}_{{k1}}$ (pS)')
@@ -458,7 +462,7 @@ ax = plt.subplot2grid((5, 4), (2, 3))
 plt.title('B5 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
 plt.hist(
 ss_pdata[0, :, :].max(axis = 0),
-bins = 8, color = (0.8, 0.2, 0.2)
+bins = 8, color = n_color
 )
 shapiro_w, shapiro_p = stats.shapiro(ss_pdata[0, :, :].max(axis = 0))
 plt.text(
@@ -477,12 +481,12 @@ plt.title('B4 $g_{{k2}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 np.delete(ss_pdata[1, :, :], 4, axis = 1),
 np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
-'-', linewidth = 0.5, alpha = 0.5, color = (0.8, 0.2, 0.2)
+'-', linewidth = 0.5, alpha = 0.5, color = n_color
 )
 plt.plot(
 ss_fittedpts[1, :],
 ss_fittedpts[0, :],
-'-', linewidth = 2, color = (0.8, 0.2, 0.2), linestyle = 'dashed',
+'-', linewidth = 2, color = n_color, linestyle = 'dashed',
 label = 'Activation gate'
 )
 plt.ylabel('$g_{{k2}}/\\bar{{g}}_{{k2}}$')
