@@ -501,8 +501,8 @@ full_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - (\\bar{{g}}_{{k1}
 
 plt.figure(figsize = (14.67, 18))
 
-spec = gridspec.GridSpec(6, 5,
-left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
+spec = gridspec.GridSpec(12, 5,
+left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 1.5, wspace = 0.4)
 
 
 plt.subplot(spec[0, :2])
@@ -513,19 +513,25 @@ horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot(spec[1, :2])
+plt.subplot(spec[1:4, :2])
 plt.title('A2 Predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs, 13,
 null_mod_label = 'Linear model',
 alt_mod_label = 'Linear model + $g_{{k1}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.text(
+52000, -70,
+'$V_m = -70$mV',
+horizontalalignment = 'center',
+verticalalignment = 'bottom'
+)
 plt.xlim(40000, 80000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
 
 
-plt.subplot(spec[0:2, 2:4])
+plt.subplot(spec[0:4, 2:4])
 plt.title('A3 Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs,
@@ -540,14 +546,14 @@ plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[0, 4])
+plt.subplot(spec[0:2, 4])
 plt.title('A4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -60,
                              'Linear', 'Linear + $g_{{k1}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[1, 4])
+plt.subplot(spec[2:4, 4])
 plt.title('A5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -45,
                              'Linear', 'Linear + $g_{{k1}}$')
@@ -556,7 +562,7 @@ pltools.hide_border('tr')
 
 
 # B: gk2 vs ohmic
-plt.subplot(spec[2, :2])
+plt.subplot(spec[4, :2])
 plt.title('B1 Model definitions', loc = 'left')
 plt.text(0.1, 0.5,
 '\n'.join([ohmic_latex, gk2_latex]),
@@ -564,18 +570,24 @@ horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot(spec[3, :2])
+plt.subplot(spec[5:8, :2])
 plt.title('B2 Predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs, 13,
 null_mod_label = 'Linear model',
 alt_mod_label = 'Linear model + $g_{{k2}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.text(
+52000, -70,
+'$V_m = -70$mV',
+horizontalalignment = 'center',
+verticalalignment = 'bottom'
+)
 plt.xlim(40000, 80000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
 
-plt.subplot(spec[2:4, 2:4])
+plt.subplot(spec[4:8, 2:4])
 plt.title('B3 Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs,
@@ -590,14 +602,14 @@ plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[2, 4])
+plt.subplot(spec[4:6, 4])
 plt.title('B4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -60,
                              'Linear', 'Linear + $g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[3, 4])
+plt.subplot(spec[6:8, 4])
 plt.title('B5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -45,
                              'Linear', 'Linear + $g_{{k2}}$')
@@ -606,7 +618,7 @@ pltools.hide_border('tr')
 
 
 # C: gk1 given gk2
-plt.subplot(spec[4, :2])
+plt.subplot(spec[8, :2])
 plt.title('C1 Model definitions', loc = 'left')
 plt.text(0.1, 0.5,
 '\n'.join([gk2_latex, full_latex]),
@@ -614,18 +626,24 @@ horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot(spec[5, :2])
+plt.subplot(spec[9:12, :2])
 plt.title('C2 Predictions on test set', loc = 'left')
 testset_traces_plot(
 gk2_mod_coeffs, full_mod_coeffs, 13,
 null_mod_label = 'Linear model + $g_{{k2}}$',
 alt_mod_label = 'Linear model + $g_{{k1}}$ & $g_{{k2}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = 'dashed')
+plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.text(
+52000, -70,
+'$V_m = -70$mV',
+horizontalalignment = 'center',
+verticalalignment = 'bottom'
+)
 plt.xlim(40000, 80000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
 
-plt.subplot(spec[4:6, 2:4])
+plt.subplot(spec[8:12, 2:4])
 plt.title('C3 Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 gk2_mod_coeffs, full_mod_coeffs,
@@ -640,14 +658,14 @@ plt.xlabel('$V_m$ (mV)')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[4, 4])
+plt.subplot(spec[8:10, 4])
 plt.title('C4 Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -60,
                              '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec[5, 4])
+plt.subplot(spec[10:12, 4])
 plt.title('C5 Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -45,
                              '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
