@@ -271,6 +271,7 @@ for i, mod in enumerate([ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_
     mod['simulated_testset_traces'] = []
     mod['real_testset_traces'] = []
     mod['real_testset_current'] = []
+    mod['binned_e2_edges'] = []
 
     for j in range(len(model_matrices)):
 
@@ -298,6 +299,7 @@ for i, mod in enumerate([ohmic_mod_coeffs, gk1_mod_coeffs, gk2_mod_coeffs, full_
         V_real.flatten(), ((V_real - V_sim)**2).flatten(), bins = bins
         )[0])
         mod['binned_e2_centres'].append(bin_centres)
+        mod['binned_e2_edges'].append(bins)
 
         """
         # Comment out so that residuals are computed for full V range.
