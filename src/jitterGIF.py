@@ -114,18 +114,90 @@ class jitterGIF(GIF) :
     # SYNAPTIC INPUT RELATED METHODS
     ########################################################################################################
 
-    @staticmethod
-    def _convolveSynapticKernel(signal, ampli, tau_rise, tau_decay):
+    def _convolveSynapticKernel(self, signal, ampli, tau_rise, tau_decay, kernel_length):
 
-        NotImplemented
+        # Convert to timesteps
+        kernel_length = int(kernel_length / self.dt)
+        tau_rise /= self.dt
+        tau_decay /= self.dt
 
-    def initializeSynapses(self, no_synapses, ampli, tau_rise, tau_decay, duration, arrival_mean, arrival_SD):
+        # Generate synaptic waveform kernel
+        kernel_support = np.arange(0, kernel_length)
+        kernel = np.exp(-kernel_support/tau_decay) - np.exp(-kernel_support/tau_rise)
+        kernel /= kernel.max()
+        kernel *= ampli
 
-        NotImplemented
+        # Convolve with signal
+        if signal.ndim == 1:
+            signal.reshape((-1, 1))
+
+        for i in range(signal.shape[1]):
+            signal[:, i] = np.convolve(signal[:, i], kernel, 'same')
+
+        return signal
+
+
+    def initializeSynapses(self, no_synapses, ampli, tau_rise, tau_decay, duration, arrival_mean, arrival_SD, random_seed = None):
+
+        synaptic_input = np.zeros((int(duration/self.dt), no_synapses), dtype = np.float64)
+        synaptic_tvec = np.arange(0, int(synaptic_input.shape[0] * self.dt), self.dt)
+
+        assert synaptic_input.shape[0] == len(synaptic_tvec)
+
+        kernel_length = tau_decay*5
+        compensated_arrival_mean = arrival_mean + kernel_length / 2. # Needed because otherwise 'arrivals' occur in the middle of the synaptic waveform due to how convolution works.
+
+        np.random.seed(random_seed)
+        arrival_times = np.random.normal(compensated_arrival_mean, arrival_SD, no_synapses)
+        arrival_inds = (arrival_times / self.dt).astype(np.int32)
+
+        for syn_ind, arriv_ind in enumerate(arrival_inds):
+            synaptic_input[arriv_ind, syn_ind] = 1.
+
+        synaptic_input = self._convolveSynapticKernel(synaptic_input, ampli, tau_rise, tau_decay, kernel_length)
+
+        # Assign output to jitterGIF attributes
+        self.synaptic_input = synaptic_input
+
 
     def getSummatedSynapticInput(self):
 
-        NotImplemented
+        return self.synaptic_input.sum(axis = 1)
+
+
+    def getSynapticSupport(self, matrix_format = False):
+
+        """
+        Return a time support vector (or support matrix) for synaptic inputs.
+
+        Note that the support matrix is just a time vector broadcasted to the shape of jitterGIF.synaptic_input.
+        """
+
+        support = np.arange(0, int(self.synaptic_input.shape[0] * self.dt), self.dt)
+        assert len(support) == self.synaptic_input.shape[0]
+
+        if matrix_format:
+            support = np.broadcast_to(support.reshape((-1, 1)), self.synaptic_input.shape)
+
+        return support
+
+
+    def plotSynaptic(self):
+
+        plt.figure()
+
+        supp = self.getSynapticSupport(True)
+
+        for i in range(self.synaptic_input.shape[1]):
+            plt.subplot(self.synaptic_input.shape[1] + 1, 1, i + 1)
+            plt.plot(supp[:, i], self.synaptic_input[:, i], 'k-', linewidth = 0.5)
+
+        plt.subplot(self.synaptic_input.shape[1] + 1, 1, self.synaptic_input.shape[1] + 1)
+        plt.plot(supp[:, 0], self.getSummatedSynapticInput(), 'r-')
+
+        plt.subplots_adjust(hspace = 0)
+        plt.show()
+
 
     def simulateSynaptic(self, spiking = False):
 
@@ -133,15 +205,174 @@ class jitterGIF(GIF) :
         Essentially a switch to select between jitterGIF.simulate (for subthreshold simulations) and jitterGIF._simulateHardThreshold (for spiking simulations).
         """
 
-        NotImplemented
+        if not spiking:
 
-    def _simulateHardThreshold(self):
+            return self.simulate(self.getSummatedSynapticInput(), self.El)
+
+        else:
+
+            return self._simulateHardThreshold(self.getSummatedSynapticInput(), self.El)
+
+
+    def _simulateHardThreshold(self, I, V0):
 
         """
         Simulates spiking response using a hard threshold/hard reset model based on the subthreshold model.
         """
 
-        NotImplemented
+        # Input parameters
+        p_T         = len(I)
+        p_dt        = self.dt
+        p_Vthresh   = np.float64(self.Vthresh)
+        p_Vreset    = np.float64(self.Vreset)
+
+        # Model parameters
+        p_gl        = self.gl
+        p_C         = self.C
+        p_El        = self.El
+
+        p_m_Vhalf   = self.m_Vhalf
+        p_m_k       = self.m_k
+        p_m_tau     = self.m_tau
+
+        p_h_Vhalf   = self.h_Vhalf
+        p_h_k       = self.h_k
+        p_h_tau     = self.h_tau
+
+        p_n_Vhalf   = self.n_Vhalf
+        p_n_k       = self.n_k
+        p_n_tau     = self.n_tau
+
+        p_E_K       = self.E_K
+
+        p_gbar_K1   = self.gbar_K1
+        p_gbar_K2   = self.gbar_K2
+
+
+        # Define arrays
+        V = np.array(np.zeros(p_T), dtype="double")
+        I = np.array(I, dtype="double")
+
+        m = np.zeros_like(V, dtype = "double")
+        h = np.zeros_like(V, dtype = "double")
+        n = np.zeros_like(V, dtype = "double")
+
+        spks = np.zeros_like(V, dtype = "double")
+
+        # Set initial condition
+        V[0] = V0
+
+        m[0] = self.mInf(V0)
+        h[0] = self.hInf(V0)
+        n[0] = self.nInf(V0)
+
+        code =  """
+                #include <math.h>
+                #include <stdio.h>
+
+
+                // DECLARE IMPORTED PARAMETERS
+
+                int   T_ind      = int(p_T);
+                float dt         = float(p_dt);
+                float Vthresh    = float(p_Vthresh);
+                float Vreset     = float(p_Vreset);
+
+                float gl         = float(p_gl);
+                float C          = float(p_C);
+                float El         = float(p_El);
+
+                float m_Vhalf    = float(p_m_Vhalf);
+                float m_k        = float(p_m_k);
+                float m_tau      = float(p_m_tau);
+
+                float h_Vhalf    = float(p_h_Vhalf);
+                float h_k        = float(p_h_k);
+                float h_tau      = float(p_h_tau);
+
+                float n_Vhalf    = float(p_n_Vhalf);
+                float n_k        = float(p_n_k);
+                float n_tau      = float(p_n_tau);
+
+                float E_K        = float(p_E_K);
+
+                float gbar_K1    = float(p_gbar_K1);
+                float gbar_K2    = float(p_gbar_K2);
+
+
+                // DECLARE ADDITIONAL VARIABLES
+
+                float m_inf_t;
+                float h_inf_t;
+                float n_inf_t;
+
+                float DF_K_t;
+                float gk_1_term;
+                float gk_2_term;
+
+                for (int t=1; t<T_ind; t++) {
+
+                    // INTEGRATE m GATE
+                    m_inf_t = 1/(1 + exp(-m_k * (V[t-1] - m_Vhalf)));
+                    m[t] = m[t-1] + dt/m_tau*(m_inf_t - m[t-1]);
+
+                    // INTEGRATE h GATE
+                    h_inf_t = 1/(1 + exp(-h_k * (V[t-1] - h_Vhalf)));
+                    h[t] = h[t-1] + dt/h_tau*(h_inf_t - h[t-1]);
+
+                    // INTEGRATE n GATE
+                    n_inf_t = 1/(1 + exp(-n_k * (V[t-1] - n_Vhalf)));
+                    n[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+
+                    // COMPUTE K CONDUCTANCES
+                    DF_K_t = V[t-1] - E_K;
+                    gk_1_term = -DF_K_t * m[t] * h[t] * gbar_K1;
+                    gk_2_term = -DF_K_t * n[t] * gbar_K2;
+
+                    // INTEGRATE VOLTAGE
+                    V[t] = V[t-1] + dt/C*( -gl*(V[t-1] - El) + I[t-1] + gk_1_term + gk_2_term);
+
+
+                    // DO SPIKING STUFF IF NECESSARY
+                    if (V[t] > Vthresh){
+
+                    // Log spike
+                    spks[t + 1] = 1;
+                    V[t + 1] = 0;
+
+                    // Reset condition
+                    V[t + 2] = Vreset;
+
+                    // Leave nonlinearities unperturbed
+                    m[t + 1] = m[t];
+                    m[t + 2] = m[t];
+                    h[t + 1] = h[t];
+                    h[t + 2] = h[t];
+                    n[t + 1] = n[t];
+                    n[t + 2] = n[t];
+
+                    // Increment t
+                    t = t + 2;
+
+                    }
+
+                }
+
+                """
+
+        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+                'p_m_Vhalf', 'p_m_k', 'p_m_tau',
+                'p_h_Vhalf', 'p_h_k', 'p_h_tau',
+                'p_n_Vhalf', 'p_n_k', 'p_n_tau',
+                'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
+                'V','I','m','h','n',
+                'p_Vthresh', 'p_Vreset', 'spks']
+
+        v = weave.inline(code, vars)
+
+        time = np.arange(p_T)*self.dt
+
+        return (time, V, m, h, n, spks)
 
 
     ########################################################################################################
