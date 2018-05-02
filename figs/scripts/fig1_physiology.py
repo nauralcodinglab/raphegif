@@ -31,6 +31,8 @@ params_5HT.drop('TdT', axis = 1, inplace = True)
 
 #%%
 
+IMG_PATH = './figs/ims/'
+
 plt.figure(figsize = (14.67, 10))
 
 grid_dims = (3, 4)
@@ -163,5 +165,5 @@ verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.tra
 
 plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05)
 
-plt.savefig('/Users/eharkin/Desktop/testfig.png', dpi = 300)
+plt.savefig(IMG_PATH + 'fig1_physiology.png', dpi = 300)
 plt.show()

@@ -391,6 +391,8 @@ simulated_Vclamp[0], gatingGIF.nInf(simulated_Vclamp[0]), gatingGIF_params['n_ta
 
 #%% MAKE FIGURE
 
+IMG_PATH = './figs/ims/'
+
 plt.figure(figsize = (14.67, 18))
 
 grid_dims = (3, 4)
@@ -622,4 +624,5 @@ pltools.hide_ticks()
 pltools.hide_border()
 
 plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
+plt.savefig(IMG_PATH + 'fig3_perithresholdCharacterization.png', dpi = 300)
 plt.show()

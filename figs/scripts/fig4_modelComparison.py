@@ -673,5 +673,5 @@ plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 
-plt.savefig('/Users/eharkin/Desktop/fig4poster.png', dpi = 300)
+plt.savefig(IMG_PATH + 'fig4_modelComparison.png', dpi = 300)
 plt.show()
