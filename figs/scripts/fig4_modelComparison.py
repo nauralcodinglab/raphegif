@@ -170,7 +170,7 @@ full_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - (\\bar{{g}}_{{k1}
 
 #%% ASSEMBLE FIGURE
 
-IMG_PATH = './figs/imgs/'
+IMG_PATH = './figs/ims/'
 
 plt.figure(figsize = (14.67, 18))
 
