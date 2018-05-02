@@ -7,6 +7,7 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from matplotlib import gridspec
 import pandas as pd
 import scipy.stats as stats
@@ -32,12 +33,33 @@ with open(PICKLE_PATH + 'ohmic_mod.pyc', 'rb') as f:
 
 
 #%%
-
 IMG_PATH = './figs/ims/'
+
+mpl.rcParams['text.latex.preamble'] = [
+       r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+       r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+       r'\usepackage{helvet}',    # set the normal font here
+       r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+       r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
+]
+mpl.rc('text', usetex = True)
+
+SMALL_SIZE = 14
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 22
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=SMALL_SIZE)     # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
 
 plt.figure(figsize = (14.67, 10))
 
-spec = gridspec.GridSpec(4, 4, height_ratios = [1, 1, 1.5, 0.5])
+spec = gridspec.GridSpec(4, 4, height_ratios = [1, 1, 1.5, 0.5],
+left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.3, wspace = 0.4)
 
 plt.subplot(spec[0, :2])
 plt.title('A1 Neuron as RC circuit', loc = 'left')
@@ -56,7 +78,7 @@ plt.title('B2 Using model to predict cellular responses on hold-out data', loc =
 pltools.hide_ticks()
 
 ax0 = plt.subplot(spec[2, :2])
-plt.title('C1. Example quantification of model performance on new data', loc = 'left')
+plt.title('\\textbf{{C1}} Sample model performance on test data', loc = 'left')
 
 plt.xlim(4000, 8000)
 cell_no     = 5
@@ -68,7 +90,7 @@ bins = np.arange(-122.5, -26, 5)[7:]
 plt.axhline(-70, color = 'k', linewidth = 1, linestyle = '--', dashes = (10, 10),
 zorder = 0)
 plt.text(
-5200, -68,
+5200, -69,
 '$V_m = -70$mV',
 horizontalalignment = 'center',
 verticalalignment = 'bottom'
@@ -109,30 +131,61 @@ plt.legend()
 ax1 = plt.subplot(spec[3, :2])
 plt.xlim(4000, 8000)
 plt.plot(
-t, ohmic_mod_coeffs['real_testset_current'][cell_no].mean(axis = 1),
+t, 1e3 * ohmic_mod_coeffs['real_testset_current'][cell_no].mean(axis = 1),
 '-', color = (0.5, 0.5, 0.5), linewidth = 2
 )
-pltools.add_scalebar()
+pltools.add_scalebar(y_units = 'pA', omit_x = True, anchor = (0.77, 0.4))
 
 bbox = ax0.get_position()
 bbox.y0 = ax1.get_position().y1
 ax0.set_position(bbox)
 
 plt.subplot(spec[2:, 2:])
-plt.title('C2 Quantification of model error (V-dependence)', loc = 'left')
+plt.title('\\textbf{{C2}} Test error is voltage-dependent', loc = 'left')
 plt.plot(
-ohmic_mod_coeffs['binned_e2_centres'],
-ohmic_mod_coeffs['binned_e2_values'],
+np.delete(ohmic_mod_coeffs['binned_e2_centres'], cell_no, axis = 1),
+np.delete(ohmic_mod_coeffs['binned_e2_values'], cell_no, axis = 1),
 '-', linewidth = 0.7, color = (0.2, 0.2, 0.2), alpha = 0.5
 )
 plt.plot(
+ohmic_mod_coeffs['binned_e2_centres'][:, cell_no],
+ohmic_mod_coeffs['binned_e2_values'][:, cell_no],
+'-', linewidth = 0.7, color = (0.2, 0.2, 0.2), alpha = 0.5,
+label = 'Individual neuron'
+)
+
+for i in range(7, ohmic_mod_coeffs['binned_e2_centres'].shape[0]):
+
+    pastel_factor = 0.3
+    fill_colour = np.array([0.1, (i + 1) / ohmic_mod_coeffs['binned_e2_centres'].shape[0], 0.1]) * (1 - pastel_factor) + pastel_factor
+    edge_colour = np.array([0.1, (i + 1) / ohmic_mod_coeffs['binned_e2_centres'].shape[0] * 0.7, 0.1]) * (1 - pastel_factor) + pastel_factor
+
+
+    if i == 12:
+        plt.plot(
+        ohmic_mod_coeffs['binned_e2_centres'][i, cell_no],
+        ohmic_mod_coeffs['binned_e2_values'][i, cell_no],
+        'o', markeredgecolor = edge_colour, markerfacecolor = fill_colour, markersize = 10,
+        label = 'Binned error from sample trace'
+        )
+    else:
+        plt.plot(
+        ohmic_mod_coeffs['binned_e2_centres'][i, cell_no],
+        ohmic_mod_coeffs['binned_e2_values'][i, cell_no],
+        'o', markeredgecolor = edge_colour, markerfacecolor = fill_colour, markersize = 10
+        )
+
+plt.plot(
 np.nanmedian(ohmic_mod_coeffs['binned_e2_centres'], axis = 1),
 np.nanmedian(ohmic_mod_coeffs['binned_e2_values'], axis = 1),
-'-', linewidth = 2, color = (0.2, 0.2, 0.2)
+'-', linewidth = 2, color = (0.2, 0.2, 0.2),
+label = 'Median'
 )
+plt.legend()
 plt.ylim(0, plt.ylim()[1])
 plt.ylabel('Mean squared error ($\mathrm{{mV}}^2$)')
 plt.xlabel('Binned $V_{{real}}$ (mV)')
+pltools.hide_border('tr')
 
 plt.savefig(IMG_PATH + 'fig2_model.png', dpi = 300)
 plt.show()
