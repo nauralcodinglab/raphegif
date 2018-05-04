@@ -4,6 +4,8 @@ from __future__ import division
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 import sys
 sys.path.append('./src/')
@@ -174,5 +176,30 @@ plt.xlim(xlim)
 plt.ylabel('Cumulative spike probability')
 pltools.hide_border('tr')
 plt.legend()
+
+plt.show()
+
+
+#%% PERFORM SIMULATIONS FOR 3D PLOT
+
+sim_for_3D = masterJGIF.multiSim(np.linspace(10, 20, 40), np.linspace(0.001, 0.030, 40), 100, duration,
+                                 arrival_time, tau_rise, tau_decay, ampli,
+                                 no_syn, verbose = True)
+
+#%% CONSTRUCT 3D PLOT
+
+Z_pspk = sim_for_3D['pspk'].cumsum(axis = 0).max(axis = 0)
+Y_jitters = np.broadcast_to(sim_for_3D['jitters'].reshape((-1, 1)), Z_pspk.shape)
+X_gk2s = np.broadcast_to(sim_for_3D['gk2s'], Z_pspk.shape)
+
+plt.figure(figsize = (10, 10))
+
+ax0 = plt.subplot(111, projection = '3d')
+ax0.plot_surface(1e3 * X_gk2s, np.flip(Y_jitters, axis = 0), Z_pspk, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
+ax0.set_xlabel('gk2 (pS)')
+ax0.set_ylabel('jitter (ms)')
+ax0.set_zlabel('Max pspk')
+
+plt.savefig('/Users/eharkin/Desktop/synchronyDecoder.png', dpi = 300)
 
 plt.show()

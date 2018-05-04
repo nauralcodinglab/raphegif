@@ -381,6 +381,13 @@ class jitterGIF(GIF) :
                  arrival_time = 150, tau_rise = 1, tau_decay = 15,
                  ampli = 0.010, no_syn = 10, verbose = False):
 
+        """
+        sample_syn[t, syn, jitter]
+        Vsub[t, rep, jitter, gk2]
+        pspk[t, jitter, gk2]
+        no_spks[rep, jitter, gk2]
+        """
+
         sim_output = {
         'jitters': jitters,
         'gk2s': gk2s,
