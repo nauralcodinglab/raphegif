@@ -2,8 +2,6 @@
 
 from __future__ import division
 
-from copy import deepcopy
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -50,7 +48,7 @@ masterJGIF.E_K = -101.
 duration = 800
 arrival_time = 150
 dt = 0.1
-no_reps = 500
+no_reps = 100
 
 # Synaptic parameters
 ampli = 0.010 #nA
@@ -64,37 +62,9 @@ gk2_var = [0.001, 0.015]
 
 
 # Create dict to hold simulation output
-sim_output = {
-'sample_syn': np.empty((int(duration/dt), len(jitter_var)), dtype = np.float64),
-'Vsub': np.empty((int(duration / dt), no_reps, len(jitter_var), len(gk2_var)), dtype = np.float64),
-'pspk': np.zeros((int(duration / dt), len(jitter_var), len(gk2_var)), dtype = np.float64),
-'no_spks': np.empty((no_reps, len(jitter_var), len(gk2_var)), dtype = np.int32)
-}
-
-simJGIF = deepcopy(masterJGIF)
-
-for r_ in range(no_reps):
-
-    print '\rSimulating {}%'.format(100 * (r_ + 1)/no_reps),
-
-    for j_ in range(len(jitter_var)):
-
-        simJGIF.initializeSynapses(no_syn, ampli, tau_rise, tau_decay, duration, arrival_time, jitter_var[j_], r_)
-
-        if r_ == 0:
-            sim_output['sample_syn'][:, j_] = simJGIF.getSummatedSynapticInput()
-
-        for g_ in range(len(gk2_var)):
-
-            simJGIF.gbar_K2 = gk2_var[g_]
-
-            _, _, _, _, _, spks_tmp = simJGIF.simulateSynaptic(True)
-            _, Vsub_tmp, _, _, _ = simJGIF.simulateSynaptic(False)
-
-            sim_output['no_spks'][r_, j_, g_] = spks_tmp.sum()
-            sim_output['pspk'][:, j_, g_] += spks_tmp / no_reps
-
-            sim_output['Vsub'][:, r_, j_, g_] = Vsub_tmp
+sim_output = masterJGIF.multiSim(jitter_var, gk2_var, no_reps, duration,
+                                 arrival_time, tau_rise, tau_decay, ampli,
+                                 no_syn, verbose = True)
 
 
 #%% MAKE MAIN FIGURE
@@ -104,12 +74,10 @@ xlim = (0, 400)
 
 plt.figure(figsize = (15, 8))
 
-plt.subplot2grid(())
-
 plt.subplot2grid((3, 2), (0, 0))
 plt.title('{}ms jitter'.format(jitter_var[0]))
 x       = np.arange(0, duration, dt)
-plt.plot(x, 1e3 * sim_output['sample_syn'][:, 0], 'k-')
+plt.plot(x, 1e3 * sim_output['sample_syn'][:, :, 0].sum(axis = 1), 'k-')
 plt.xlim(xlim)
 plt.ylim(-5, 80)
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', omit_x = True, anchor = (0.9, 0.3), remove_frame = False)
@@ -122,7 +90,7 @@ plt.ylabel('$\sum I_{{syn, i}}$', rotation = 'horizontal')
 plt.subplot2grid((3, 2), (0, 1))
 plt.title('{}ms jitter'.format(jitter_var[1]))
 x       = np.arange(0, duration, dt)
-plt.plot(x, 1e3 * sim_output['sample_syn'][:, 1], 'k-')
+plt.plot(x, 1e3 * sim_output['sample_syn'][:, :, 1].sum(axis = 1), 'k-')
 plt.ylim(-5, 80)
 plt.xlim(xlim)
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', omit_x = True, anchor = (0.9, 0.3), remove_frame = False)

@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
@@ -373,6 +375,48 @@ class jitterGIF(GIF) :
         time = np.arange(p_T)*self.dt
 
         return (time, V, m, h, n, spks)
+
+
+    def multiSim(self, jitters, gk2s, no_reps = 50, duration = 800,
+                 arrival_time = 150, tau_rise = 1, tau_decay = 15,
+                 ampli = 0.010, no_syn = 10, verbose = False):
+
+        sim_output = {
+        'jitters': jitters,
+        'gk2s': gk2s,
+        'sample_syn': np.empty((int(duration/ self.dt), no_syn, len(jitters)), dtype = np.float64),
+        'Vsub': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s)), dtype = np.float64),
+        'pspk': np.zeros((int(duration / self.dt), len(jitters), len(gk2s)), dtype = np.float64),
+        'no_spks': np.empty((no_reps, len(jitters), len(gk2s)), dtype = np.int32)
+        }
+
+        simJGIF = deepcopy(self)
+
+        for r_ in range(no_reps):
+
+            if verbose:
+                print '\rSimulating {}%'.format(100 * (r_ + 1)/no_reps),
+
+            for j_ in range(len(jitters)):
+
+                simJGIF.initializeSynapses(no_syn, ampli, tau_rise, tau_decay, duration, arrival_time, jitters[j_], r_)
+
+                if r_ == 0:
+                    sim_output['sample_syn'][:, :, j_] = simJGIF.synaptic_input
+
+                for g_ in range(len(gk2s)):
+
+                    simJGIF.gbar_K2 = gk2s[g_]
+
+                    _, _, _, _, _, spks_tmp = simJGIF.simulateSynaptic(True)
+                    _, Vsub_tmp, _, _, _ = simJGIF.simulateSynaptic(False)
+
+                    sim_output['no_spks'][r_, j_, g_] = spks_tmp.sum()
+                    sim_output['pspk'][:, j_, g_] += spks_tmp / no_reps
+
+                    sim_output['Vsub'][:, r_, j_, g_] = Vsub_tmp
+
+        return sim_output
 
 
     ########################################################################################################
