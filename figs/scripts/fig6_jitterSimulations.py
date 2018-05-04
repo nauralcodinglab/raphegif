@@ -71,6 +71,7 @@ sim_output = masterJGIF.multiSim(jitter_var, gk2_var, no_reps, duration,
 
 #%% MAKE MAIN FIGURE
 
+IMG_PATH = './figs/ims/'
 
 xlim = (0, 400)
 
@@ -177,6 +178,8 @@ plt.ylabel('Cumulative spike probability')
 pltools.hide_border('tr')
 plt.legend()
 
+plt.savefig(IMG_PATH + 'fig6_jitterSimulations.png', dpi = 300)
+
 plt.show()
 
 
@@ -200,6 +203,6 @@ ax0.set_xlabel('gk2 (pS)')
 ax0.set_ylabel('jitter (ms)')
 ax0.set_zlabel('Max pspk')
 
-plt.savefig('/Users/eharkin/Desktop/synchronyDecoder.png', dpi = 300)
+plt.savefig(IMG_PATH + 'synchronyDecoder.png', dpi = 300)
 
 plt.show()
