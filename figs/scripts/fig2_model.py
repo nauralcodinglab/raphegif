@@ -43,6 +43,7 @@ mpl.rcParams['text.latex.preamble'] = [
        r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
 ]
 mpl.rc('text', usetex = True)
+mpl.rc('svg', fonttype = 'none')
 
 SMALL_SIZE = 14
 MEDIUM_SIZE = 18
@@ -125,7 +126,7 @@ plt.annotate(
 xytext = (6000, -45),
 arrowprops={'arrowstyle': '->'}
 )
-pltools.add_scalebar('ms', 'mV', (0.95, 0.3))
+pltools.add_scalebar('ms', 'mV', (0.9, 0.35), text_spacing = (0.02, -0.02), bar_spacing = 0, round = True)
 plt.legend()
 
 ax1 = plt.subplot(spec[3, :2])

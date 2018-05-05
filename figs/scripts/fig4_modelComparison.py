@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+import matplotlib as mpl
 import scipy.stats as stats
 
 import sys
@@ -164,11 +165,38 @@ def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, a
 #%% MAKE SOME LATEX TEXT FOR MODEL DEFINITIONS
 
 ohmic_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l)$'
-gk1_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{k1}}mh\\times(V(t) - E_k)$'
-gk2_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{k2}}n\\times(V(t) - E_k)$'
-full_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - (\\bar{{g}}_{{k1}}mh + \\bar{{g}}_{{k2}}n)\\times(V(t) - E_k)$'
+gk1_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{Kfast}}mh\\times(V(t) - E_k)$'
+gk2_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{Kslow}}n\\times(V(t) - E_k)$'
+full_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - (\\bar{{g}}_{{Kfast}}mh + \\bar{{g}}_{{Kslow}}n)\\times(V(t) - E_k)$'
 
 #%% ASSEMBLE FIGURE
+
+Kfast_color = (0.2, 0.2, 0.8)
+Kslow_color = (0.8, 0.2, 0.2)
+
+mpl.rcParams['text.latex.preamble'] = [
+       r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+       r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+       r'\usepackage{helvet}',    # set the normal font here
+       r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+       r'\sansmath',              # <- tricky! -- gotta actually tell tex to use!
+]
+mpl.rc('text', usetex = True)
+mpl.rc('svg', fonttype = 'none')
+
+','.join(np.array(Kfast_color).astype(str))
+
+SMALL_SIZE = 14
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 22
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=SMALL_SIZE)     # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = './figs/ims/'
 
@@ -179,19 +207,19 @@ left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 1.5, wspace = 0.4
 
 
 plt.subplot(spec[0, :2])
-plt.title('A1 Model definitions', loc = 'left')
-plt.text(0.1, 0.5,
+plt.title('\\textbf{{A1}} Model definitions', loc = 'left')
+plt.text(0, 0.5,
 '\n'.join([ohmic_latex, gk1_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[1:4, :2])
-plt.title('A2 Predictions on test set', loc = 'left')
+plt.title('\\textbf{{A2}} Predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs, 13,
 null_mod_label = 'Linear model',
-alt_mod_label = 'Linear model + $g_{{k1}}$'
+alt_mod_label = 'Linear model + $g_{{Kfast}}$'
 )
 plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
 plt.text(
@@ -201,14 +229,14 @@ horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
 plt.xlim(40000, 80000)
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 
 plt.subplot(spec[0:4, 2:4])
-plt.title('A3 Model error according to voltage', loc = 'left')
+plt.title('\\textbf{{A3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs,
-'Linear model', 'Linear model + $g_{{k1}}$')
+'Linear model', 'Linear model + $g_{{Kfast}}$')
 
 plt.text(-60, 90, 'i', horizontalalignment = 'center')
 plt.text(-45, 80, 'ii', horizontalalignment = 'center')
@@ -220,35 +248,35 @@ plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[0:2, 4])
-plt.title('A4 Error at -60mV', loc = 'left')
+plt.title('\\textbf{{A4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -60,
-                             'Linear', 'Linear + $g_{{k1}}$')
+                             'Linear', 'Linear + $g_{{Kfast}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[2:4, 4])
-plt.title('A5 Error at -45mV', loc = 'left')
+plt.title('\\textbf{{A5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -45,
-                             'Linear', 'Linear + $g_{{k1}}$')
+                             'Linear', 'Linear + $g_{{Kfast}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 
 # B: gk2 vs ohmic
 plt.subplot(spec[4, :2])
-plt.title('B1 Model definitions', loc = 'left')
-plt.text(0.1, 0.5,
+plt.title('\\textbf{{B1}} Model definitions', loc = 'left')
+plt.text(0, 0.5,
 '\n'.join([ohmic_latex, gk2_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[5:8, :2])
-plt.title('B2 Predictions on test set', loc = 'left')
+plt.title('\\textbf{{B2}} Predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs, 13,
 null_mod_label = 'Linear model',
-alt_mod_label = 'Linear model + $g_{{k2}}$'
+alt_mod_label = 'Linear model + $g_{{Kslow}}$'
 )
 plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
 plt.text(
@@ -258,13 +286,13 @@ horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
 plt.xlim(40000, 80000)
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 plt.subplot(spec[4:8, 2:4])
-plt.title('B3 Model error according to voltage', loc = 'left')
+plt.title('\\textbf{{B3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs,
-'Linear model', 'Linear model + $g_{{k2}}$')
+'Linear model', 'Linear model + $g_{{Kslow}}$')
 
 plt.text(-60, 90, 'i', horizontalalignment = 'center')
 plt.text(-45, 80, 'ii', horizontalalignment = 'center')
@@ -276,35 +304,35 @@ plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[4:6, 4])
-plt.title('B4 Error at -60mV', loc = 'left')
+plt.title('\\textbf{{B4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -60,
-                             'Linear', 'Linear + $g_{{k2}}$')
+                             'Linear', 'Linear + $g_{{Kslow}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[6:8, 4])
-plt.title('B5 Error at -45mV', loc = 'left')
+plt.title('\\textbf{{B5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -45,
-                             'Linear', 'Linear + $g_{{k2}}$')
+                             'Linear', 'Linear + $g_{{Kslow}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 
 # C: gk1 given gk2
 plt.subplot(spec[8, :2])
-plt.title('C1 Model definitions', loc = 'left')
-plt.text(0.1, 0.5,
+plt.title('\\textbf{{C1}} Model definitions', loc = 'left')
+plt.text(0.0, 0.5,
 '\n'.join([gk2_latex, full_latex]),
 horizontalalignment = 'left', verticalalignment = 'center')
 pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[9:12, :2])
-plt.title('C2 Predictions on test set', loc = 'left')
+plt.title('\\textbf{{C2}} Predictions on test set', loc = 'left')
 testset_traces_plot(
 gk2_mod_coeffs, full_mod_coeffs, 13,
-null_mod_label = 'Linear model + $g_{{k2}}$',
-alt_mod_label = 'Linear model + $g_{{k1}}$ & $g_{{k2}}$'
+null_mod_label = 'Linear model + $g_{{Kslow}}$',
+alt_mod_label = 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$'
 )
 plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
 plt.text(
@@ -314,13 +342,13 @@ horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
 plt.xlim(40000, 80000)
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV')
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 plt.subplot(spec[8:12, 2:4])
-plt.title('C3 Model error according to voltage', loc = 'left')
+plt.title('\\textbf{{C3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 gk2_mod_coeffs, full_mod_coeffs,
-'Linear model + $g_{{k2}}$', 'Linear model + $g_{{k1}}$ & $g_{{k2}}$')
+'Linear model + $g_{{Kslow}}$', 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$')
 
 plt.text(-60, 90, 'i', horizontalalignment = 'center')
 plt.text(-45, 80, 'ii', horizontalalignment = 'center')
@@ -332,16 +360,16 @@ plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[8:10, 4])
-plt.title('C4 Error at -60mV', loc = 'left')
+plt.title('\\textbf{{C4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -60,
-                             '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
+                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[10:12, 4])
-plt.title('C5 Error at -45mV', loc = 'left')
+plt.title('\\textbf{{C5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -45,
-                             '$g_{{k2}}$', '$g_{{k1}} + g_{{k2}}$')
+                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$')
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 

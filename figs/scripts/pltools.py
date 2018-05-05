@@ -8,7 +8,7 @@ import numpy as np
 # Function to make a set of scalebars for a mpl plot
 def add_scalebar(x_units = None, y_units = None, anchor = (0.98, 0.02),
 text_spacing = (0.02, 0.02), bar_spacing = 0.06, linewidth = 5,
-remove_frame = True, omit_x = False, omit_y = False, ax = None):
+remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
 
     """
     Automagically add a set of x and y scalebars to a matplotlib plot
@@ -37,6 +37,9 @@ remove_frame = True, omit_x = False, omit_y = False, ax = None):
         omit_x/omit_y: bool (default False)
         --  skip drawing the x/y scalebar
 
+        round: bool (default True)
+        --  round units to the nearest integer
+
         ax: matplotlib.axes object
         --  manually specify the axes object to which the scalebar should be added
     """
@@ -59,11 +62,20 @@ remove_frame = True, omit_x = False, omit_y = False, ax = None):
         y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[:, 1]
         y_length_ax = y_span_ax[1] - y_span_ax[0]
 
+        if round:
+            y_length = int(np.round(y_length))
+
         # y-scalebar label
+
+        if text_spacing[0] <= 0:
+            horizontalalignment = 'left'
+        else:
+            horizontalalignment = 'right'
+
         ax.text(
         text_spacer_point[0], anchor[1] + y_length_ax / 2 + bar_spacing,
         '{}{}'.format(y_length, y_units),
-        verticalalignment = 'center', horizontalalignment = 'right',
+        verticalalignment = 'center', horizontalalignment = horizontalalignment,
         transform = ax.transAxes
         )
 
@@ -82,11 +94,19 @@ remove_frame = True, omit_x = False, omit_y = False, ax = None):
         x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[:, 0]
         x_length_ax = x_span_ax[1] - x_span_ax[0]
 
+        if round:
+            x_length = int(np.round(x_length))
+
+        if text_spacing[1] <= 0:
+            verticalalignment = 'top'
+        else:
+            verticalalignment = 'bottom'
+
         # x-scalebar label
         ax.text(
         anchor[0] - x_length_ax / 2 - bar_spacing, text_spacer_point[1],
         '{}{}'.format(x_length, x_units),
-        verticalalignment = 'bottom', horizontalalignment = 'center',
+        verticalalignment = verticalalignment, horizontalalignment = 'center',
         transform = ax.transAxes
         )
 

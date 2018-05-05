@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import pandas as pd
 import scipy.stats as stats
 
@@ -31,6 +32,28 @@ params_5HT.drop('TdT', axis = 1, inplace = True)
 
 #%%
 
+mpl.rcParams['text.latex.preamble'] = [
+       r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+       r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+       r'\usepackage{helvet}',    # set the normal font here
+       r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+       r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
+]
+mpl.rc('text', usetex = True)
+mpl.rc('svg', fonttype = 'none')
+
+SMALL_SIZE = 14
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 22
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=SMALL_SIZE)     # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
 IMG_PATH = './figs/ims/'
 
 plt.figure(figsize = (14.67, 10))
@@ -39,24 +62,24 @@ grid_dims = (3, 4)
 hist_color = 'gray'
 
 plt.subplot2grid(grid_dims, (0, 0), colspan = 2)
-plt.title('A1 Motivation', loc = 'left')
+plt.title('\\textbf{{A1}} Motivation', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot2grid(grid_dims, (0, 2))
-plt.title('A2 DRN inputs', loc = 'left')
+plt.title('\\textbf{{A2}} DRN inputs', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot2grid(grid_dims, (0, 3))
-plt.title('A3 DRN outputs', loc = 'left')
+plt.title('\\textbf{{A3}} DRN outputs', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot2grid(grid_dims, (1, 0), colspan = 2)
-plt.title('B Identification of DRN 5HT neurons', loc = 'left')
+plt.title('\\textbf{{B}} Identification of DRN 5HT neurons', loc = 'left')
 pltools.hide_ticks()
 
 Iax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 2), ratio = 4)
 xlim = (2000, 4500)
-Iax.set_title('C1 Spiking', loc = 'left')
+Iax.set_title('\\textbf{{C1}} Spiking', loc = 'left')
 sweeps_to_use = [0, 4, 9, 19]
 Iax.set_xlim(xlim)
 Iax.plot(
@@ -64,7 +87,7 @@ np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_
 curr_steps[0, :, sweeps_to_use].T - curr_steps[0, 20000:20500, sweeps_to_use].mean(axis = 1),
 'k-', linewidth = 0.5
 )
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3), ax = Iax)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3), text_spacing = (0.02, -0.05), bar_spacing = 0, ax = Iax)
 
 cmdax.set_xlim(xlim)
 cmdax.plot(
@@ -76,7 +99,7 @@ pltools.add_scalebar(y_units = 'pA', anchor = (0.95, 0.3), omit_x = True)
 
 Vax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 3), ratio = 4)
 xlim = (1750, 2750)
-Vax.set_title('C2 Voltage steps', loc = 'left')
+Vax.set_title('\\textbf{{C2}} Voltage steps', loc = 'left')
 Vax.set_xlim(xlim)
 Vax.set_ylim(-50, 1200)
 sweeps_to_use = [0, 3, 6, 9]
@@ -85,7 +108,7 @@ np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.
 v_steps[0, :, sweeps_to_use].T,
 'k-', linewidth = 0.5
 )
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), ax = Vax)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), text_spacing = (0.02, -0.05), bar_spacing = 0, ax = Vax)
 
 cmdax.set_xlim(xlim)
 cmdax.plot(
@@ -101,7 +124,7 @@ pltools.hide_border(ax = cmdax)
 
 # Leak conductance
 ax = plt.subplot2grid(grid_dims, (2, 0))
-plt.title('D1 Leak conductance', loc = 'left')
+plt.title('\\textbf{{D1}} Leak conductance', loc = 'left')
 plt.hist(1e3/params_5HT['R'], color = hist_color)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
@@ -117,7 +140,7 @@ verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.tra
 
 # Capacitance
 ax = plt.subplot2grid(grid_dims, (2, 1))
-plt.title('D2 Capacitance', loc = 'left')
+plt.title('\\textbf{{D2}} Capacitance', loc = 'left')
 plt.hist(params_5HT['C'], color = hist_color)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
@@ -133,7 +156,7 @@ verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.tra
 
 # Membrane time constant
 ax = plt.subplot2grid(grid_dims, (2, 2))
-plt.title('D3 Time constant', loc = 'left')
+plt.title('\\textbf{{D3}} Time constant', loc = 'left')
 plt.hist(params_5HT['R'] * params_5HT['C'] * 1e-3, color = hist_color)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
@@ -149,7 +172,7 @@ verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.tra
 
 # Estimated resting membrane potential
 ax = plt.subplot2grid(grid_dims, (2, 3))
-plt.title('D4 Equilibrium potential', loc = 'left')
+plt.title('\\textbf{{D4}} Equilibrium potential', loc = 'left')
 plt.hist(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])], color = hist_color)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])

@@ -59,7 +59,7 @@ def corr_plot(x, y, outliers = None, ax = None):
 
     plt.plot(x_masked, y_masked, 'ko')
     plt.plot(x[~outlier_mask], y[~outlier_mask], 'o', color = 'gray')
-    plt.plot(np.unique(x_masked), np.poly1d(np.polyfit(x_masked, y_masked, 1))(np.unique(x_masked)))
+    plt.plot(np.unique(x_masked), np.poly1d(np.polyfit(x_masked, y_masked, 1))(np.unique(x_masked)), 'k-')
     plt.text(0.9, 0.1, '$r = {:.2f}$'.format(stats.pearsonr(x_masked, y_masked)[0]),
     horizontalalignment = 'right', transform = ax.transAxes)
 
@@ -72,6 +72,7 @@ mpl.rcParams['text.latex.preamble'] = [
        r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
 ]
 mpl.rc('text', usetex = True)
+mpl.rc('svg', fonttype = 'none')
 
 SMALL_SIZE = 14
 MEDIUM_SIZE = 18
@@ -107,13 +108,13 @@ pltools.hide_border('tr')
 plt.subplot(143)
 plt.title('\\textbf{{A3}} Leak conductance', loc = 'left')
 corr_plot(testpulse_params['El_est'], np.array(gk2_mod_coeffs['El']), outliers)
-plt.ylabel('Model $\hat{{E}}_l$ (mV)')
+plt.ylabel('Model $E_l$ (mV)')
 plt.xlabel('Test-pulse $\hat{{E}}_l$ (pS)')
 pltools.hide_border('tr')
 
 gk2_color = (0.9, 0.2, 0.2)
 plt.subplot(144)
-plt.title('\\textbf{{B1}} $\\bar{{g}}_{{k2}}$', loc = 'left')
+plt.title('\\textbf{{B1}} $\\bar{{g}}_{{Kslow}}$', loc = 'left')
 plt.hist(
 1e3 * np.array(gk2_mod_coeffs['gbar_K2'])[[i not in outliers for i in range(len(gk2_mod_coeffs['gbar_K2']))]],
 facecolor = gk2_color, edgecolor = gk2_color
@@ -128,7 +129,7 @@ transform = plt.gca().transAxes
 plt.ylim(0, plt.ylim()[1] * 1.1)
 pltools.hide_border('ltr')
 plt.yticks([])
-plt.xlabel('$\\bar{{g}}_{{k2}}$ (pS)')
+plt.xlabel('$\\bar{{g}}_{{Kslow}}$ (pS)')
 
 
 plt.subplots_adjust(left = 0.1, top = 0.85, right = 0.95, bottom = 0.15, wspace = 0.4)

@@ -454,7 +454,7 @@ TEA_sweep,
 label = 'TTX + TEA'
 )
 Iax.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), ax = Iax)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.6), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax)
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
@@ -482,7 +482,7 @@ TEA_4AP_sweep,
 '-', linewidth = 0.5, color = m_color,
 label = 'TTX + 4AP + TEA'
 )
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.4), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax)
 Iax.legend()
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
@@ -633,7 +633,7 @@ Iax.text(0, 0,
 '\n$\\tau_m = {m_tau}$ms'
 '\n$\\tau_h = {h_tau}$ms'
 '\n$\\tau_n = {n_tau}$ms'.format(**gatingGIF_params))
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', ax = Iax, remove_frame = False)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax, remove_frame = False)
 pltools.hide_border(ax = Iax)
 Iax.set_xticks([])
 Iax.set_yticks([])
