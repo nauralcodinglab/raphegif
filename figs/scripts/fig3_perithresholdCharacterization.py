@@ -493,6 +493,7 @@ cmdax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 pltools.hide_border()
 pltools.hide_ticks()
 
+"""
 plt.subplot(spec[2:4, 1])
 plt.title('\\textbf{{A2}} TEA washin', loc = 'left')
 plt.plot(
@@ -515,10 +516,11 @@ TEA_4AP_washin_pdata,
 plt.axhline(0, color = 'k', linewidth = 0.5, linestyle = 'dashed')
 plt.ylabel('Leak-subtracted current (pA)')
 plt.xlabel('Time from 4AP washin (min)')
+"""
 
 # B: kinetics
 
-plt.subplot(spec[:2, 2])
+plt.subplot(spec[:2, 1:])
 plt.title('\\textbf{{B2}} $K_{{fast}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 peakact_pdata[1, :, :],
@@ -547,7 +549,7 @@ plt.xlabel('$V$ (mV)')
 plt.legend()
 pltools.hide_border('tr')
 
-plt.subplot(spec[2:4, 2])
+plt.subplot(spec[2:4, 1:])
 plt.title('\\textbf{{B4}} $K_{{slow}}$ steady-state voltage dependence', loc = 'left')
 plt.plot(
 np.delete(ss_pdata[1, :, :], 4, axis = 1),
