@@ -225,3 +225,14 @@ def subplots_in_grid(shape, loc, ratio = 2, colspan = 1, top_bigger = True, fig 
         bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan = ratio, colspan = colspan, fig = fig)
 
     return top_ax, bottom_ax
+
+
+def join_plots(top_ax, bottom_ax):
+
+    """
+    Expand the top axis object so that its lower edge touches the top edge of bottom_ax.
+    """
+
+    bbox = top_ax.get_position()
+    bbox.y0 = bottom_ax.get_position().y1
+    top_ax.set_position(bbox)

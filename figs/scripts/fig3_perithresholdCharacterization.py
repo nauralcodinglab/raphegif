@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.gridspec as gridspec
 import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
@@ -134,7 +135,7 @@ gating = Cell().read_ABF([GATING_PATH + '18411002.abf',
 #%% PROCESS PHARMACOLOGY DATA
 
 # Example traces.
-sweep_to_use        = 11
+sweep_to_use        = 10
 xrange              = slice(25000, 45000)
 xrange_baseline     = slice(24500, 25200)
 baseline_sweep      = baseline[0, xrange, sweep_to_use] - baseline[0, xrange_baseline, sweep_to_use].mean()
@@ -393,9 +394,14 @@ simulated_Vclamp[0], gatingGIF.nInf(simulated_Vclamp[0]), gatingGIF_params['n_ta
 
 IMG_PATH = './figs/ims/'
 
-plt.figure(figsize = (14.67, 18))
+plt.figure(figsize = (14.67, 12))
 
-grid_dims = (3, 4)
+spec = gridspec.GridSpec(
+6, 3, height_ratios = (0.75, 0.25, 0.75, 0.25, 0.75, 0.25),
+left = 0.05, bottom = 0.05, right = 0.95, top = 0.95,
+wspace = 0.3, hspace = 0.9
+)
+
 m_color = (0.2, 0.2, 0.8)
 h_color = (0.2, 0.8, 0.2)
 n_color = (0.8, 0.2, 0.2)
@@ -404,36 +410,41 @@ simlinewidth = 0.9
 # A: pharmacology
 
 inset_pos_ll = (80, -45)
-inset_pos_ur = (300, 740)
+inset_pos_ur = (250, 500)
 
-Iax, cmdax = pltools.subplots_in_grid((5, 4), (0, 0), ratio = 4)
-Iax.set_title('A1 Pharmacology example traces', loc = 'left')
-Iax.set_ylim(-50, 750)
+Iax = plt.subplot(spec[2, 0])
+cmdax = plt.subplot(spec[3, 0])
+pltools.join_plots(Iax, cmdax)
+Iax.set_title('\\textbf{{A2}} $K_{{slow}}$', loc = 'left')
+Iax.set_ylim(-10, 170)
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 baseline_sweep,
 'k-', linewidth = 0.5,
-label = 'Baseline'
+label = 'TTX (baseline)'
 )
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_sweep,
 '-', linewidth = 0.5, color = n_color,
-label = '20mM TEA'
+label = 'TTX + TEA'
 )
+"""
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
 '-', linewidth = 0.5, color = m_color,
 label = '20mM TEA + 3mM 4AP'
 )
+
 Iax.add_patch(patches.Rectangle(inset_pos_ll,
                                 inset_pos_ur[0] - inset_pos_ll[0],
                                 inset_pos_ur[1] - inset_pos_ll[1],
                                 color = 'k', linestyle = 'dashed',
                                 fill = False))
+"""
 Iax.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), ax = Iax)
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
@@ -442,40 +453,45 @@ cmd_sweep,
 pltools.hide_border()
 pltools.hide_ticks()
 
-Iax, cmdax = pltools.subplots_in_grid((5, 4), (0, 1), ratio = 4)
-Iax.set_title('A1 Pharmacology example traces', loc = 'left')
+
+Iax = plt.subplot(spec[0, 0])
+cmdax = plt.subplot(spec[1, 0])
+pltools.join_plots(Iax, cmdax)
+Iax.set_title('\\textbf{{A1}} $K_{{fast}}$', loc = 'left')
 Iax.set_ylim(inset_pos_ll[1], inset_pos_ur[1])
 Iax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 baseline_sweep,
 'k-', linewidth = 0.5,
-label = 'Baseline'
+label = 'TTX (baseline)'
 )
+"""
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_sweep,
 '-', linewidth = 0.5, color = n_color,
 label = '20mM TEA'
 )
+"""
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
 '-', linewidth = 0.5, color = m_color,
-label = '20mM TEA + 3mM 4AP'
+label = 'TTX + 4AP + TEA'
 )
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), ax = Iax)
-
+Iax.legend()
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
 'k-', linewidth = 0.5
 )
-cmdax.set_xlim(80, 300)
+cmdax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 pltools.hide_border()
 pltools.hide_ticks()
 
-plt.subplot2grid((5, 4), (0, 2))
+plt.subplot(spec[2:4, 1])
 plt.title('A2 TEA washin', loc = 'left')
 plt.plot(
 np.arange(-1, TEA_washin_pdata.shape[0] / 6. - 1, 1./6.),
@@ -485,8 +501,9 @@ TEA_washin_pdata,
 plt.ylim(0, plt.ylim()[1])
 plt.ylabel('Leak-subtracted current (pA)')
 plt.xlabel('Time from TEA washin (min)')
+pltools.hide_border('tr')
 
-plt.subplot2grid((5, 4), (0, 3))
+plt.subplot(spec[:2, 1])
 plt.title('A3 4AP peak height before after', loc = 'left')
 plt.plot(
 np.broadcast_to(np.arange(-1, TEA_4AP_washin_pdata.shape[0] / 6. - 1, 1./6.).reshape((-1, 1)), TEA_4AP_washin_pdata.shape),
@@ -498,10 +515,12 @@ plt.ylabel('Leak-subtracted current (pA)')
 plt.xlabel('Time from 4AP washin (min)')
 
 # B: kinetics
+"""
 Iax, cmdax = pltools.subplots_in_grid((5, 4), (1, 0), ratio = 4)
 Iax.set_title('B1 Pharmacology example traces', loc = 'left')
 pltools.hide_ticks(ax = Iax)
 pltools.hide_ticks(ax = cmdax)
+
 
 ax = plt.subplot2grid((5, 4), (1, 3))
 plt.title('B3 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
@@ -520,8 +539,9 @@ plt.xlabel('$\\bar{{g}}_{{k1}}$')
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.ylim(0, plt.ylim()[1] * 1.2)
+"""
 
-plt.subplot2grid((5, 4), (1, 1), colspan = 2)
+plt.subplot(spec[:2, 2])
 plt.title('B2 $g_{{k1}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 peakact_pdata[1, :, :],
@@ -545,11 +565,12 @@ peakinact_fittedpts[0, :],
 '-', linewidth = 2, color = h_color, linestyle = 'dashed',
 label = 'Inactivation gate'
 )
-plt.ylabel('$g_{{k1}}/\\bar{{g}}_{{k1}}$ (pS)')
+plt.ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
 plt.xlabel('$V$ (mV)')
 plt.legend()
 pltools.hide_border('tr')
 
+"""
 ax = plt.subplot2grid((5, 4), (2, 3))
 plt.title('B5 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
 plt.hist(
@@ -567,8 +588,9 @@ plt.xlabel('$\\bar{{g}}_{{k2}}$ (pS)')
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.ylim(0, plt.ylim()[1] * 1.2)
+"""
 
-plt.subplot2grid((5, 4), (2, 1), colspan = 2)
+plt.subplot(spec[2:4, 2])
 plt.title('B4 $g_{{k2}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 np.delete(ss_pdata[1, :, :], 4, axis = 1),
@@ -581,27 +603,36 @@ ss_fittedpts[0, :],
 '-', linewidth = 2, color = n_color, linestyle = 'dashed',
 label = 'Activation gate'
 )
-plt.ylabel('$g_{{k2}}/\\bar{{g}}_{{k2}}$')
+plt.ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
 plt.xlabel('$V$ (mV)')
 plt.legend()
 pltools.hide_border('tr')
 
 # C: model
-plt.subplot2grid((5, 4), (3, 0), rowspan = 2, colspan = 2)
+plt.subplot(spec[4:6, 2])
 plt.title('C1 Model', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid((5, 4), (3, 2), colspan = 2)
-plt.title('C2 Gating response of model', loc = 'left')
-plt.plot(simulated_g['m'], '-', color = m_color, linewidth = simlinewidth)
-plt.plot(simulated_g['h'], '-', color = h_color, linewidth = simlinewidth)
-plt.plot(simulated_g['n'], '-', color = n_color, linewidth = simlinewidth)
-plt.ylim(-0.05, 1.05)
-plt.xticks([])
-plt.ylabel('$g/g_{{max}}$')
-pltools.hide_border('rtb')
+gatingax = plt.subplot(spec[4, 1])
+cmdax = plt.subplot(spec[5, 1])
+pltools.join_plots(gatingax, cmdax)
+gatingax.set_title('C2 Gating response of model', loc = 'left')
+gatingax.plot(simulated_g['m'], '-', color = m_color, linewidth = simlinewidth)
+gatingax.plot(simulated_g['h'], '-', color = h_color, linewidth = simlinewidth)
+gatingax.plot(simulated_g['n'], '-', color = n_color, linewidth = simlinewidth)
+gatingax.set_ylim(-0.05, 1.05)
+gatingax.set_xticks([])
+gatingax.set_ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
+pltools.hide_border('rtb', ax = gatingax)
 
-Iax, cmdax = pltools.subplots_in_grid((5, 4), (4, 2), 3, colspan = 2)
+cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], 'k-', linewidth = simlinewidth)
+cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
+pltools.hide_ticks()
+pltools.hide_border()
+
+Iax = plt.subplot(spec[4, 0])
+cmdax = plt.subplot(spec[5, 0])
+pltools.join_plots(Iax, cmdax)
 Iax.set_title('C3 Simulated voltage step', loc = 'left')
 Iax.plot(np.arange(0, len(simulated_Vclamp[1]) / 10., 0.1), simulated_Vclamp[1] * 1e3, 'k-', linewidth = simlinewidth)
 Iax.text(0, 0,
@@ -616,13 +647,13 @@ pltools.add_scalebar(x_units = 'ms', y_units = 'pA', ax = Iax, remove_frame = Fa
 pltools.hide_border(ax = Iax)
 Iax.set_xticks([])
 Iax.set_yticks([])
-Iax.set_ylabel('Simulated $I$')
+Iax.set_ylabel('Simulated $I$', rotation = 'horizontal')
 
 cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], 'k-', linewidth = simlinewidth)
-cmdax.set_ylabel('Simulated $V_{{cmd}}$')
+cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
 pltools.hide_ticks()
 pltools.hide_border()
 
-plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
+#plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
 plt.savefig(IMG_PATH + 'fig3_perithresholdCharacterization.png', dpi = 300)
 plt.show()
