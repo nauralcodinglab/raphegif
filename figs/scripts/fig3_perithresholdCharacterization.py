@@ -439,7 +439,7 @@ inset_pos_ur = (250, 500)
 Iax = plt.subplot(spec[2, 0])
 cmdax = plt.subplot(spec[3, 0])
 pltools.join_plots(Iax, cmdax)
-Iax.set_title('\\textbf{{A2}} $K_{{slow}}$', loc = 'left')
+Iax.set_title('\\textbf{{B1}} $K_{{slow}}$ pharmacology', loc = 'left')
 Iax.set_ylim(-10, 170)
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
@@ -467,7 +467,7 @@ pltools.hide_ticks()
 Iax = plt.subplot(spec[0, 0])
 cmdax = plt.subplot(spec[1, 0])
 pltools.join_plots(Iax, cmdax)
-Iax.set_title('\\textbf{{A1}} $K_{{fast}}$', loc = 'left')
+Iax.set_title('\\textbf{{A1}} $K_{{fast}}$ pharmacology', loc = 'left')
 Iax.set_ylim(inset_pos_ll[1], inset_pos_ur[1])
 Iax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 Iax.plot(
@@ -521,28 +521,47 @@ plt.xlabel('Time from 4AP washin (min)')
 # B: kinetics
 
 plt.subplot(spec[:2, 1:])
-plt.title('\\textbf{{B2}} $K_{{fast}}$ gating voltage dependence', loc = 'left')
+plt.title('\\textbf{{A2}} $K_{{fast}}$ steady-state voltage dependence', loc = 'left')
+peakact_y_mean = max_normalize(peakact_pdata[0, :, :]).mean(axis = 1)
+peakact_y_std = max_normalize(peakact_pdata[0, :, :]).std(axis = 1)
+plt.fill_between(
+peakact_pdata[1, :, :].mean(axis = 1),
+peakact_y_mean - peakact_y_std, peakact_y_mean + peakact_y_std,
+facecolor = m_color, edgecolor = 'none', alpha = 0.3
+)
 plt.plot(
-peakact_pdata[1, :, :],
-max_normalize(peakact_pdata[0, :, :]),
-'-', linewidth = 0.5, alpha = 0.5, color = m_color
+peakact_pdata[1, :, :].mean(axis = 1),
+peakact_y_mean,
+'-', color = m_color,
+label = 'Activation (mean $\pm$ SD)'
 )
 plt.plot(
 peakact_fittedpts[1, :],
 peakact_fittedpts[0, :],
-'-', linewidth = 2, color = m_color, linestyle = 'dashed',
-label = 'Activation gate'
+'--', linewidth = 2, color = 'gray',
+label = 'Fitted'
+)
+peakinact_y_mean = max_normalize(peakinact_pdata[0, :, :]).mean(axis = 1)
+peakinact_y_std = max_normalize(peakinact_pdata[0, :, :]).std(axis = 1)
+plt.fill_between(
+peakinact_pdata[1, :, :].mean(axis = 1),
+peakinact_y_mean - peakinact_y_std, peakinact_y_mean + peakinact_y_std,
+facecolor = h_color, edgecolor = 'none', alpha = 0.3
 )
 plt.plot(
-peakinact_pdata[1, :, :],
-max_normalize(peakinact_pdata[0, :, :]),
-'-', linewidth = 0.5, alpha = 0.5, color = h_color
+peakinact_pdata[1, :, :].mean(axis = 1),
+peakinact_y_mean,
+'-', color = h_color,
+label = 'Inactivation (mean $\pm$ SD)'
 )
 plt.plot(
 peakinact_fittedpts[1, :],
 peakinact_fittedpts[0, :],
-'-', linewidth = 2, color = h_color, linestyle = 'dashed',
-label = 'Inactivation gate'
+'--', linewidth = 2, color = 'gray'
+)
+plt.text(
+0.95, 0.1, '$N = {}$ cells'.format(11),
+horizontalalignment = 'right', transform = plt.gca().transAxes
 )
 plt.ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
 plt.xlabel('$V$ (mV)')
@@ -550,17 +569,29 @@ plt.legend()
 pltools.hide_border('tr')
 
 plt.subplot(spec[2:4, 1:])
-plt.title('\\textbf{{B4}} $K_{{slow}}$ steady-state voltage dependence', loc = 'left')
+plt.title('\\textbf{{B2}} $K_{{slow}}$ steady-state voltage dependence', loc = 'left')
+ss_y_mean = np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1).mean(axis = 1) # Cell #4 has substantial negative conductance near -70
+ss_y_std = np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1).std(axis = 1)
+plt.fill_between(
+ss_pdata[1, :, :].mean(axis = 1),
+ss_y_mean - ss_y_std, ss_y_mean + ss_y_std,
+facecolor = n_color, edgecolor = 'none', alpha = 0.3
+)
 plt.plot(
-np.delete(ss_pdata[1, :, :], 4, axis = 1),
-np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
-'-', linewidth = 0.5, alpha = 0.5, color = n_color
+ss_pdata[1, :, :].mean(axis = 1),
+ss_y_mean,
+'-', color = n_color,
+label = 'Activation (mean $\pm$ SD)'
 )
 plt.plot(
 ss_fittedpts[1, :],
 ss_fittedpts[0, :],
-'-', linewidth = 2, color = n_color, linestyle = 'dashed',
-label = 'Activation gate'
+'--', linewidth = 2, color = 'gray',
+label = 'Fitted'
+)
+plt.text(
+0.95, 0.1, '$N = {}$ cells'.format(10),
+horizontalalignment = 'right', transform = plt.gca().transAxes
 )
 plt.ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
 plt.xlabel('$V$ (mV)')
