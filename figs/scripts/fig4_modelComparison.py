@@ -50,38 +50,16 @@ def binned_e_comparison_plot(null_mod, alt_mod, null_mod_label = None, alt_mod_l
     if alt_mod_label is None:
         alt_mod_label = ''
 
-    plt.axhline(color = 'k', linestyle = 'dashed', linewidth = 0.5)
     plt.plot(null_mod['binned_e2_centres'], null_mod['binned_e2_values'],
     '-', color = null_color, linewidth = 0.5, alpha = 0.3)
-    plt.plot(np.nanmean(null_mod['binned_e2_centres'], axis = 1),
-    np.nanmean(null_mod['binned_e2_values'], axis = 1),
+    plt.plot(np.nanmedian(null_mod['binned_e2_centres'], axis = 1),
+    np.nanmedian(null_mod['binned_e2_values'], axis = 1),
     '-', color = null_color, label = null_mod_label)
     plt.plot(alt_mod['binned_e2_centres'], alt_mod['binned_e2_values'],
     '-', color = alt_color, linewidth = 0.5, alpha = 0.3)
-    plt.plot(np.nanmean(alt_mod['binned_e2_centres'], axis = 1),
-    np.nanmean(alt_mod['binned_e2_values'], axis = 1),
+    plt.plot(np.nanmedian(alt_mod['binned_e2_centres'], axis = 1),
+    np.nanmedian(alt_mod['binned_e2_values'], axis = 1),
     '-', color = alt_color, label = alt_mod_label)
-
-    if wilcoxon:
-        for i in range(null_mod['binned_e2_values'].shape[0]):
-
-            if np.isnan(np.nanmean(null_mod['binned_e2_values'][i, :])):
-                continue
-
-            W, p = stats.wilcoxon(null_mod['binned_e2_values'][i, :],
-            alt_mod['binned_e2_values'][i, :])
-
-            if p > 0.05 and p <= 0.1:
-                p_str = 'o'
-            elif p > 0.01 and p <= 0.05:
-                p_str = '*'
-            elif p <= 0.01:
-                p_str = '**'
-            else:
-                p_str = ''
-
-            plt.text(null_mod['binned_e2_centres'][i, 0], -30, p_str,
-            horizontalalignment = 'center')
 
 
 def single_bin_e_comparison_plot(null_mod, alt_mod, V, null_mod_label = None, alt_mod_label = None,
@@ -130,7 +108,7 @@ def single_bin_e_comparison_plot(null_mod, alt_mod, V, null_mod_label = None, al
 
 def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, alt_mod_label = None,
                         real_color = (0, 0, 0), null_color = (0.1, 0.1, 0.9),
-                        alt_color = (0.9, 0.1, 0.1), ax = None):
+                        alt_color = (0.9, 0.1, 0.1), dt = 0.1, ax = None):
 
     """
     Compare testset traces for one cell.
@@ -153,12 +131,17 @@ def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, a
     if alt_mod_label is None:
         alt_mod_label = ''
 
-    plt.plot(null_mod['real_testset_traces'][cell_no].mean(axis = 1),
-    '-', color = real_color, linewidth = 0.5, label = 'Real data')
-    plt.plot(null_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
-    '-', color = null_color, linewidth = 0.5, label = null_mod_label)
-    plt.plot(alt_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
-    '-', color = alt_color, linewidth = 0.5, label = alt_mod_label)
+    t = np.arange(0, int(null_mod['real_testset_traces'][cell_no].shape[0] * dt), dt)
+
+    plt.plot(t,
+    null_mod['real_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = real_color, linewidth = 2, label = 'Real data')
+    plt.plot(t,
+    null_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = null_color, linewidth = 2, label = null_mod_label)
+    plt.plot(t,
+    alt_mod['simulated_testset_traces'][cell_no].mean(axis = 1),
+    '-', color = alt_color, linewidth = 2, alpha = 0.85, label = alt_mod_label)
     plt.legend()
 
 
@@ -183,8 +166,6 @@ mpl.rcParams['text.latex.preamble'] = [
 ]
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
-
-','.join(np.array(Kfast_color).astype(str))
 
 SMALL_SIZE = 14
 MEDIUM_SIZE = 18
@@ -215,20 +196,20 @@ pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[1:4, :2])
-plt.title('\\textbf{{A2}} Predictions on test set', loc = 'left')
+plt.title('\\textbf{{A2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs, 13,
 null_mod_label = 'Linear model',
 alt_mod_label = 'Linear model + $g_{{Kfast}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
-52000, -70,
+5200, -70,
 '$V_m = -70$mV',
 horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
-plt.xlim(40000, 80000)
+plt.xlim(4000, 8000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 
@@ -238,13 +219,13 @@ binned_e_comparison_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs,
 'Linear model', 'Linear model + $g_{{Kfast}}$')
 
-plt.text(-60, 90, 'i', horizontalalignment = 'center')
-plt.text(-45, 80, 'ii', horizontalalignment = 'center')
+plt.text(-60, 80, 'A4', horizontalalignment = 'center')
+plt.text(-45, 140, 'A5', horizontalalignment = 'center')
 
-plt.ylim(-40, 310)
+plt.ylim(0, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
-plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+plt.ylabel('Mean squared error ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[0:2, 4])
@@ -272,20 +253,20 @@ pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[5:8, :2])
-plt.title('\\textbf{{B2}} Predictions on test set', loc = 'left')
+plt.title('\\textbf{{B2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs, 13,
 null_mod_label = 'Linear model',
 alt_mod_label = 'Linear model + $g_{{Kslow}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
-52000, -70,
+5200, -70,
 '$V_m = -70$mV',
 horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
-plt.xlim(40000, 80000)
+plt.xlim(4000, 8000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 plt.subplot(spec[4:8, 2:4])
@@ -294,13 +275,13 @@ binned_e_comparison_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs,
 'Linear model', 'Linear model + $g_{{Kslow}}$')
 
-plt.text(-60, 90, 'i', horizontalalignment = 'center')
-plt.text(-45, 80, 'ii', horizontalalignment = 'center')
+plt.text(-60, 100, 'B4', horizontalalignment = 'center')
+plt.text(-45, 140, 'B5', horizontalalignment = 'center')
 
-plt.ylim(-40, 310)
+plt.ylim(0, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
-plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+plt.ylabel('Mean squared error ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[4:6, 4])
@@ -328,20 +309,20 @@ pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[9:12, :2])
-plt.title('\\textbf{{C2}} Predictions on test set', loc = 'left')
+plt.title('\\textbf{{C2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 gk2_mod_coeffs, full_mod_coeffs, 13,
 null_mod_label = 'Linear model + $g_{{Kslow}}$',
 alt_mod_label = 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$'
 )
-plt.axhline(-70, color = 'k', linewidth = 0.5, linestyle = '--', dashes = (10, 10))
+plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
-52000, -70,
+5200, -70,
 '$V_m = -70$mV',
 horizontalalignment = 'center',
 verticalalignment = 'bottom'
 )
-plt.xlim(40000, 80000)
+plt.xlim(4000, 8000)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV', text_spacing = (0.02, -0.05), bar_spacing = 0)
 
 plt.subplot(spec[8:12, 2:4])
@@ -350,13 +331,13 @@ binned_e_comparison_plot(
 gk2_mod_coeffs, full_mod_coeffs,
 'Linear model + $g_{{Kslow}}$', 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$')
 
-plt.text(-60, 90, 'i', horizontalalignment = 'center')
-plt.text(-45, 80, 'ii', horizontalalignment = 'center')
+plt.text(-60, 90, 'C4', horizontalalignment = 'center')
+plt.text(-45, 80, 'C5', horizontalalignment = 'center')
 
-plt.ylim(-40, 310)
+plt.ylim(0, 310)
 plt.legend(loc = 'upper right')
 plt.xlabel('$V_m$ (mV)')
-plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
+plt.ylabel('Mean squared error ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[8:10, 4])
