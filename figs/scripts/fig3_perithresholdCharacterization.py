@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.gridspec as gridspec
+import matplotlib as mpl
 import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
@@ -392,6 +393,29 @@ simulated_Vclamp[0], gatingGIF.nInf(simulated_Vclamp[0]), gatingGIF_params['n_ta
 
 #%% MAKE FIGURE
 
+mpl.rcParams['text.latex.preamble'] = [
+       r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+       r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+       r'\usepackage{helvet}',    # set the normal font here
+       r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+       r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
+]
+mpl.rc('text', usetex = True)
+mpl.rc('svg', fonttype = 'none')
+
+SMALL_SIZE = 14
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 22
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=SMALL_SIZE)     # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
+
 IMG_PATH = './figs/ims/'
 
 plt.figure(figsize = (14.67, 12))
@@ -429,20 +453,6 @@ TEA_sweep,
 '-', linewidth = 0.5, color = n_color,
 label = 'TTX + TEA'
 )
-"""
-Iax.plot(
-np.arange(0, len(baseline_sweep)/10, 0.1),
-TEA_4AP_sweep,
-'-', linewidth = 0.5, color = m_color,
-label = '20mM TEA + 3mM 4AP'
-)
-
-Iax.add_patch(patches.Rectangle(inset_pos_ll,
-                                inset_pos_ur[0] - inset_pos_ll[0],
-                                inset_pos_ur[1] - inset_pos_ll[1],
-                                color = 'k', linestyle = 'dashed',
-                                fill = False))
-"""
 Iax.legend()
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), ax = Iax)
 cmdax.plot(
@@ -466,14 +476,6 @@ baseline_sweep,
 'k-', linewidth = 0.5,
 label = 'TTX (baseline)'
 )
-"""
-Iax.plot(
-np.arange(0, len(baseline_sweep)/10, 0.1),
-TEA_sweep,
-'-', linewidth = 0.5, color = n_color,
-label = '20mM TEA'
-)
-"""
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
@@ -492,7 +494,7 @@ pltools.hide_border()
 pltools.hide_ticks()
 
 plt.subplot(spec[2:4, 1])
-plt.title('A2 TEA washin', loc = 'left')
+plt.title('\\textbf{{A2}} TEA washin', loc = 'left')
 plt.plot(
 np.arange(-1, TEA_washin_pdata.shape[0] / 6. - 1, 1./6.),
 TEA_washin_pdata,
@@ -504,7 +506,7 @@ plt.xlabel('Time from TEA washin (min)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[:2, 1])
-plt.title('A3 4AP peak height before after', loc = 'left')
+plt.title('\\textbf{{A3}} 4AP washin', loc = 'left')
 plt.plot(
 np.broadcast_to(np.arange(-1, TEA_4AP_washin_pdata.shape[0] / 6. - 1, 1./6.).reshape((-1, 1)), TEA_4AP_washin_pdata.shape),
 TEA_4AP_washin_pdata,
@@ -515,34 +517,9 @@ plt.ylabel('Leak-subtracted current (pA)')
 plt.xlabel('Time from 4AP washin (min)')
 
 # B: kinetics
-"""
-Iax, cmdax = pltools.subplots_in_grid((5, 4), (1, 0), ratio = 4)
-Iax.set_title('B1 Pharmacology example traces', loc = 'left')
-pltools.hide_ticks(ax = Iax)
-pltools.hide_ticks(ax = cmdax)
-
-
-ax = plt.subplot2grid((5, 4), (1, 3))
-plt.title('B3 $\\bar{{g}}_{{k1}}$ histogram', loc = 'left')
-plt.hist(
-peakact_pdata[0, :, :].max(axis = 0),
-bins = 8, color = m_color
-)
-shapiro_w, shapiro_p = stats.shapiro(peakact_pdata[0, :, :].max(axis = 0))
-plt.text(
-0.98, 0.90,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
-verticalalignment = 'center', horizontalalignment = 'right',
-transform = ax.transAxes
-)
-plt.xlabel('$\\bar{{g}}_{{k1}}$')
-pltools.hide_border(sides = 'rlt')
-plt.yticks([])
-plt.ylim(0, plt.ylim()[1] * 1.2)
-"""
 
 plt.subplot(spec[:2, 2])
-plt.title('B2 $g_{{k1}}$ gating voltage dependence', loc = 'left')
+plt.title('\\textbf{{B2}} $K_{{fast}}$ gating voltage dependence', loc = 'left')
 plt.plot(
 peakact_pdata[1, :, :],
 max_normalize(peakact_pdata[0, :, :]),
@@ -570,28 +547,8 @@ plt.xlabel('$V$ (mV)')
 plt.legend()
 pltools.hide_border('tr')
 
-"""
-ax = plt.subplot2grid((5, 4), (2, 3))
-plt.title('B5 $\\bar{{g}}_{{k2}}$ histogram', loc = 'left')
-plt.hist(
-ss_pdata[0, :, :].max(axis = 0),
-bins = 8, color = n_color
-)
-shapiro_w, shapiro_p = stats.shapiro(ss_pdata[0, :, :].max(axis = 0))
-plt.text(
-0.98, 0.90,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
-verticalalignment = 'center', horizontalalignment = 'right',
-transform = ax.transAxes
-)
-plt.xlabel('$\\bar{{g}}_{{k2}}$ (pS)')
-pltools.hide_border(sides = 'rlt')
-plt.yticks([])
-plt.ylim(0, plt.ylim()[1] * 1.2)
-"""
-
 plt.subplot(spec[2:4, 2])
-plt.title('B4 $g_{{k2}}$ gating voltage dependence', loc = 'left')
+plt.title('\\textbf{{B4}} $K_{{slow}}$ steady-state voltage dependence', loc = 'left')
 plt.plot(
 np.delete(ss_pdata[1, :, :], 4, axis = 1),
 np.delete(max_normalize(ss_pdata[0, :, :]), 4, axis = 1),
@@ -610,13 +567,13 @@ pltools.hide_border('tr')
 
 # C: model
 plt.subplot(spec[4:6, 2])
-plt.title('C1 Model', loc = 'left')
+plt.title('\\textbf{{C3}} Model definition', loc = 'left')
 pltools.hide_ticks()
 
 gatingax = plt.subplot(spec[4, 1])
 cmdax = plt.subplot(spec[5, 1])
 pltools.join_plots(gatingax, cmdax)
-gatingax.set_title('C2 Gating response of model', loc = 'left')
+gatingax.set_title('\\textbf{{C2}} Gating response of model', loc = 'left')
 gatingax.plot(simulated_g['m'], '-', color = m_color, linewidth = simlinewidth)
 gatingax.plot(simulated_g['h'], '-', color = h_color, linewidth = simlinewidth)
 gatingax.plot(simulated_g['n'], '-', color = n_color, linewidth = simlinewidth)
@@ -633,7 +590,7 @@ pltools.hide_border()
 Iax = plt.subplot(spec[4, 0])
 cmdax = plt.subplot(spec[5, 0])
 pltools.join_plots(Iax, cmdax)
-Iax.set_title('C3 Simulated voltage step', loc = 'left')
+Iax.set_title('\\textbf{{C1}} Simulated voltage step', loc = 'left')
 Iax.plot(np.arange(0, len(simulated_Vclamp[1]) / 10., 0.1), simulated_Vclamp[1] * 1e3, 'k-', linewidth = simlinewidth)
 Iax.text(0, 0,
 'Simulated neuron parameters:'
