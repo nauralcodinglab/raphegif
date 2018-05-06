@@ -5,6 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.gridspec as gridspec
 import pandas as pd
 import scipy.stats as stats
 
@@ -58,26 +59,32 @@ IMG_PATH = './figs/ims/'
 
 plt.figure(figsize = (14.67, 10))
 
-grid_dims = (3, 4)
+spec = gridspec.GridSpec(4, 4, height_ratios = (1, 0.75, 0.25, 1), left = 0.05,
+                         right = 0.95, top = 0.95, bottom = 0.05,
+                         hspace = 0.4)
+
+#grid_dims = (3, 4)
 hist_color = 'gray'
 
-plt.subplot2grid(grid_dims, (0, 0), colspan = 2)
+plt.subplot(spec[0, :2])
 plt.title('\\textbf{{A1}} Motivation', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid(grid_dims, (0, 2))
+plt.subplot(spec[0, 2])
 plt.title('\\textbf{{A2}} DRN inputs', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid(grid_dims, (0, 3))
+plt.subplot(spec[0, 3])
 plt.title('\\textbf{{A3}} DRN outputs', loc = 'left')
 pltools.hide_ticks()
 
-plt.subplot2grid(grid_dims, (1, 0), colspan = 2)
+plt.subplot(spec[1:3, :2])
 plt.title('\\textbf{{B}} Identification of DRN 5HT neurons', loc = 'left')
 pltools.hide_ticks()
 
-Iax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 2), ratio = 4)
+Iax = plt.subplot(spec[1, 2])
+cmdax = plt.subplot(spec[2, 2])
+pltools.join_plots(Iax, cmdax)
 xlim = (2000, 4500)
 Iax.set_title('\\textbf{{C1}} Spiking', loc = 'left')
 sweeps_to_use = [0, 4, 9, 19]
@@ -85,7 +92,7 @@ Iax.set_xlim(xlim)
 Iax.plot(
 np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_steps.shape[1], len(sweeps_to_use))),
 curr_steps[0, :, sweeps_to_use].T - curr_steps[0, 20000:20500, sweeps_to_use].mean(axis = 1),
-'k-', linewidth = 0.5
+'k-', linewidth = 2
 )
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.95, 0.3), text_spacing = (0.02, -0.05), bar_spacing = 0, ax = Iax)
 
@@ -93,20 +100,22 @@ cmdax.set_xlim(xlim)
 cmdax.plot(
 np.broadcast_to(np.arange(0, curr_steps.shape[1]/10, 0.1)[:, np.newaxis], (curr_steps.shape[1], len(sweeps_to_use))),
 curr_steps[1, :, sweeps_to_use].T - curr_steps[1, 20000:20500, sweeps_to_use].mean(axis = 1),
-'k-', linewidth = 0.5
+'k-', linewidth = 2
 )
 pltools.add_scalebar(y_units = 'pA', anchor = (0.95, 0.3), omit_x = True)
 
-Vax, cmdax = pltools.subplots_in_grid(grid_dims, (1, 3), ratio = 4)
+Vax = plt.subplot(spec[1, 3])
+cmdax = plt.subplot(spec[2, 3])
+pltools.join_plots(Vax, cmdax)
 xlim = (1750, 2750)
 Vax.set_title('\\textbf{{C2}} Voltage steps', loc = 'left')
 Vax.set_xlim(xlim)
-Vax.set_ylim(-50, 1200)
+Vax.set_ylim(-100, 1200)
 sweeps_to_use = [0, 3, 6, 9]
 Vax.plot(
 np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.shape[1], len(sweeps_to_use))),
 v_steps[0, :, sweeps_to_use].T,
-'k-', linewidth = 0.5
+'k-', linewidth = 2
 )
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.5), text_spacing = (0.02, -0.05), bar_spacing = 0, ax = Vax)
 
@@ -114,7 +123,7 @@ cmdax.set_xlim(xlim)
 cmdax.plot(
 np.broadcast_to(np.arange(0, v_steps.shape[1]/10, 0.1)[:, np.newaxis], (v_steps.shape[1], len(sweeps_to_use))),
 v_steps[1, :, sweeps_to_use].T,
-'k-', linewidth = 0.5
+'k-', linewidth = 2
 )
 pltools.hide_ticks(ax = cmdax)
 pltools.hide_border(ax = cmdax)
@@ -123,7 +132,7 @@ pltools.hide_border(ax = cmdax)
 ### Passive membrane parameters subplots
 
 # Leak conductance
-ax = plt.subplot2grid(grid_dims, (2, 0))
+ax = plt.subplot(spec[3, 0])
 plt.title('\\textbf{{D1}} Leak conductance', loc = 'left')
 plt.hist(1e3/params_5HT['R'], color = hist_color)
 pltools.hide_border(sides = 'rlt')
@@ -139,7 +148,7 @@ plt.text(0.5, 0.02,
 verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Capacitance
-ax = plt.subplot2grid(grid_dims, (2, 1))
+ax = plt.subplot(spec[3, 1])
 plt.title('\\textbf{{D2}} Capacitance', loc = 'left')
 plt.hist(params_5HT['C'], color = hist_color)
 pltools.hide_border(sides = 'rlt')
@@ -155,7 +164,7 @@ plt.text(0.5, 0.02,
 verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Membrane time constant
-ax = plt.subplot2grid(grid_dims, (2, 2))
+ax = plt.subplot(spec[3, 2])
 plt.title('\\textbf{{D3}} Time constant', loc = 'left')
 plt.hist(params_5HT['R'] * params_5HT['C'] * 1e-3, color = hist_color)
 pltools.hide_border(sides = 'rlt')
@@ -171,7 +180,7 @@ plt.text(0.5, 0.02,
 verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
 # Estimated resting membrane potential
-ax = plt.subplot2grid(grid_dims, (2, 3))
+ax = plt.subplot(spec[3, 3])
 plt.title('\\textbf{{D4}} Equilibrium potential', loc = 'left')
 plt.hist(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])], color = hist_color)
 pltools.hide_border(sides = 'rlt')
@@ -186,7 +195,7 @@ plt.text(0.5, 0.02,
 '$N = {}$ cells'.format(len(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])])),
 verticalalignment = 'bottom', horizontalalignment = 'center', transform = ax.transAxes)
 
-plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05)
+#plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05)
 
 plt.savefig(IMG_PATH + 'fig1_physiology.png', dpi = 300)
 plt.show()
