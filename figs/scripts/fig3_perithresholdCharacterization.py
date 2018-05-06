@@ -391,6 +391,15 @@ simulated_Vclamp[0], gatingGIF.nInf(simulated_Vclamp[0]), gatingGIF_params['n_ta
 )
 }
 
+#%% MAKE LATEX MODEL DEFINITION
+
+gkfast_latex = '$g_{{Kfast}} = \\bar{{g}}_{{Kfast}}mh \\times (V(t) - E_k)$'
+gkslow_latex = '$g_{{Kslow}} = \\bar{{g}}_{{Kslow}}n \\times (V(t) - E_k)$'
+
+minf_latex = '$m_{{\infty}}(V) = \\frac{{m_{{max}}}}{{1 + \exp{{[-k(V - V_0)]}}}}$'
+mdot_latex = '$\dot{{m}}(t) = \\frac{{m(t) - m_{{\infty}}(V)}}{{\\tau_m}}$'
+
+
 #%% MAKE FIGURE
 
 mpl.rcParams['text.latex.preamble'] = [
@@ -429,7 +438,7 @@ wspace = 0.3, hspace = 0.9
 m_color = (0.2, 0.2, 0.8)
 h_color = (0.2, 0.8, 0.2)
 n_color = (0.8, 0.2, 0.2)
-simlinewidth = 0.9
+simlinewidth = 2
 
 # A: pharmacology
 
@@ -444,13 +453,13 @@ Iax.set_ylim(-10, 170)
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 baseline_sweep,
-'k-', linewidth = 0.5,
+'k-', linewidth = 2,
 label = 'TTX (baseline)'
 )
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_sweep,
-'-', linewidth = 0.5, color = n_color,
+'-', linewidth = 2, color = n_color,
 label = 'TTX + TEA'
 )
 Iax.legend()
@@ -458,7 +467,7 @@ pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.6), text_s
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
-'k-', linewidth = 0.5
+'-', linewidth = 2, color = 'gray'
 )
 pltools.hide_border()
 pltools.hide_ticks()
@@ -473,13 +482,13 @@ Iax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 baseline_sweep,
-'k-', linewidth = 0.5,
+'k-', linewidth = 2,
 label = 'TTX (baseline)'
 )
 Iax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 TEA_4AP_sweep,
-'-', linewidth = 0.5, color = m_color,
+'-', linewidth = 2, color = m_color,
 label = 'TTX + 4AP + TEA'
 )
 pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.4), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax)
@@ -487,7 +496,7 @@ Iax.legend()
 cmdax.plot(
 np.arange(0, len(baseline_sweep)/10, 0.1),
 cmd_sweep,
-'k-', linewidth = 0.5
+'-', linewidth = 2, color = 'gray'
 )
 cmdax.set_xlim(inset_pos_ll[0], inset_pos_ur[0])
 pltools.hide_border()
@@ -601,22 +610,33 @@ pltools.hide_border('tr')
 # C: model
 plt.subplot(spec[4:6, 2])
 plt.title('\\textbf{{C3}} Model definition', loc = 'left')
+plt.text(
+0, 0.5,
+'\n'.join([gkfast_latex, gkslow_latex,
+'Where $m$, $n$, $h$ have the form:',
+minf_latex,
+mdot_latex]),
+transform = plt.gca().transAxes
+)
 pltools.hide_ticks()
 
 gatingax = plt.subplot(spec[4, 1])
 cmdax = plt.subplot(spec[5, 1])
 pltools.join_plots(gatingax, cmdax)
-gatingax.set_title('\\textbf{{C2}} Gating response of model', loc = 'left')
-gatingax.plot(simulated_g['m'], '-', color = m_color, linewidth = simlinewidth)
-gatingax.plot(simulated_g['h'], '-', color = h_color, linewidth = simlinewidth)
-gatingax.plot(simulated_g['n'], '-', color = n_color, linewidth = simlinewidth)
+gatingax.set_title('\\textbf{{C2}} Model gating dynamics', loc = 'left')
+x = np.arange(0, int(len(simulated_g['m']) * 0.1), 0.1)
+gatingax.plot(x, simulated_g['m'], '-', color = m_color, linewidth = simlinewidth, label = 'm ($K_{{fast}}$ activation)')
+gatingax.plot(x, simulated_g['h'], '-', color = h_color, linewidth = simlinewidth, label = 'h ($K_{{fast}}$ inactivation)')
+gatingax.plot(x, simulated_g['n'], '-', color = n_color, linewidth = simlinewidth, label = 'n ($K_{{slow}}$ activation)')
 gatingax.set_ylim(-0.05, 1.05)
+pltools.add_scalebar(x_units = 'ms', omit_y = True, remove_frame = False, anchor = (0.98, 0.35), ax = gatingax)
 gatingax.set_xticks([])
 gatingax.set_ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
 pltools.hide_border('rtb', ax = gatingax)
+gatingax.legend()
 
-cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], 'k-', linewidth = simlinewidth)
-cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
+cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], '-', color = 'gray', linewidth = simlinewidth)
+#cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
 pltools.hide_ticks()
 pltools.hide_border()
 
@@ -625,6 +645,7 @@ cmdax = plt.subplot(spec[5, 0])
 pltools.join_plots(Iax, cmdax)
 Iax.set_title('\\textbf{{C1}} Simulated voltage step', loc = 'left')
 Iax.plot(np.arange(0, len(simulated_Vclamp[1]) / 10., 0.1), simulated_Vclamp[1] * 1e3, 'k-', linewidth = simlinewidth)
+"""
 Iax.text(0, 0,
 'Simulated neuron parameters:'
 '\n$C = {C}$pF'
@@ -633,17 +654,18 @@ Iax.text(0, 0,
 '\n$\\tau_m = {m_tau}$ms'
 '\n$\\tau_h = {h_tau}$ms'
 '\n$\\tau_n = {n_tau}$ms'.format(**gatingGIF_params))
-pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.3), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax, remove_frame = False)
+"""
+pltools.add_scalebar(x_units = 'ms', y_units = 'pA', anchor = (0.9, 0.2), text_spacing = (0.02, -0.02), bar_spacing = 0, ax = Iax, remove_frame = False)
 pltools.hide_border(ax = Iax)
 Iax.set_xticks([])
 Iax.set_yticks([])
-Iax.set_ylabel('Simulated $I$', rotation = 'horizontal')
+#Iax.set_ylabel('Simulated $I$', rotation = 'horizontal')
 
-cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], 'k-', linewidth = simlinewidth)
-cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
+cmdax.plot(np.arange(0, len(simulated_Vclamp[0]) / 10, 0.1), simulated_Vclamp[0], '-', color = 'gray', linewidth = simlinewidth)
+#cmdax.set_ylabel('Simulated $V_{{cmd}}$', rotation = 'horizontal')
 pltools.hide_ticks()
 pltools.hide_border()
 
 #plt.subplots_adjust(left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.4, wspace = 0.4)
-plt.savefig(IMG_PATH + 'fig3_perithresholdCharacterization.png', dpi = 300)
+plt.savefig(IMG_PATH + 'fig3_perithresholdCharacterization2.png', dpi = 300)
 plt.show()
