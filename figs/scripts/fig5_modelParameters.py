@@ -89,31 +89,39 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 plt.figure(figsize = (14.67, 5))
 
+spec = mpl.gridspec.GridSpec(2, 4, height_ratios = (0.15, 0.85))
 outliers = [3, 12]
 
-plt.subplot(141)
+plt.subplot(spec[:, 0])
 plt.title('\\textbf{{A1}} Leak conductance', loc = 'left')
 corr_plot(1e3/testpulse_params['R'], 1e3/np.array(gk2_mod_coeffs['R']), outliers)
 plt.ylabel('Model $g_l$ (pS)')
 plt.xlabel('Test-pulse $g_l$ (pS)')
 pltools.hide_border('tr')
 
-plt.subplot(142)
+plt.subplot(spec[:, 1])
 plt.title('\\textbf{{A2}} Capacitance', loc = 'left')
 corr_plot(testpulse_params['C'], 1e3 * np.array(gk2_mod_coeffs['C']), outliers)
 plt.ylabel('Model $C$ (pF)')
 plt.xlabel('Test-pulse $C$ (pF)')
 pltools.hide_border('tr')
 
-plt.subplot(143)
-plt.title('\\textbf{{A3}} Leak conductance', loc = 'left')
-corr_plot(testpulse_params['El_est'], np.array(gk2_mod_coeffs['El']), outliers)
+top_p = plt.subplot(spec[0, 2])
+top_p.set_title('\\textbf{{A3}} Leak conductance', loc = 'left')
+top_p.plot(testpulse_params['El_est'][3], gk2_mod_coeffs['El'][3], 'o', color = 'gray')
+bottom_p = plt.subplot(spec[1, 2])
+corr_plot(testpulse_params['El_est'].drop(index = 'DRN235'), np.delete(np.array(gk2_mod_coeffs['El']), 3), [12])
+xlim = (-86, -38)
+top_p.set_xlim(xlim)
+bottom_p.set_xlim(xlim)
+top_p.set_xticks([])
+pltools.hide_border('trb', top_p)
 plt.ylabel('Model $E_l$ (mV)')
-plt.xlabel('Test-pulse $\hat{{E}}_l$ (pS)')
+plt.xlabel('Test-pulse $\hat{{E}}_l$ (mV)')
 pltools.hide_border('tr')
 
 gk2_color = (0.9, 0.2, 0.2)
-plt.subplot(144)
+plt.subplot(spec[:, 3])
 plt.title('\\textbf{{B1}} $\\bar{{g}}_{{Kslow}}$', loc = 'left')
 plt.hist(
 1e3 * np.array(gk2_mod_coeffs['gbar_K2'])[[i not in outliers for i in range(len(gk2_mod_coeffs['gbar_K2']))]],
