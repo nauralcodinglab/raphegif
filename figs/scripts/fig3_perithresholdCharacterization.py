@@ -412,9 +412,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -427,7 +427,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = './figs/ims/'
 
-plt.figure(figsize = (14.67, 12))
+plt.figure(figsize = (16, 12))
 
 spec = gridspec.GridSpec(
 6, 3, height_ratios = (0.75, 0.25, 0.75, 0.25, 0.75, 0.25),

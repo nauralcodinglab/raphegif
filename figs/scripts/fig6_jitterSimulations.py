@@ -97,9 +97,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -109,11 +109,11 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-plt.figure(figsize = (14.67, 12))
+plt.figure(figsize = (16, 16))
 
 gk2_color = [(0.7, 0, 0), (0.9, 0.2, 0.2)]
-spec = mpl.gridspec.GridSpec(5, 3, height_ratios = (4, 1, 4, 1, 6), width_ratios = (2, 2, 1),
-left = 0.05, bottom = 0.05, right = 0.95, top = 0.95)
+spec = mpl.gridspec.GridSpec(5, 3, height_ratios = (4, 1, 4, 1, 8), width_ratios = (2, 2, 1),
+left = 0.05, bottom = 0.05, right = 0.95, top = 0.95, hspace = 0.6)
 
 # Col 1: example traces
 Vax = plt.subplot(spec[0, 0])
@@ -255,6 +255,7 @@ X_gk2s = np.broadcast_to(sim_for_3D['gk2s'], Z_amp.shape)
 gs00 = mpl.gridspec.GridSpecFromSubplotSpec(1, 2, spec[4, :])
 
 ax0 = plt.subplot(gs00[0, 0], projection = '3d')
+plt.title('\\textbf{{C1}} Title title', loc = 'left')
 ax0.plot_surface(1e3 * X_gk2s, Y_V, Z_amp, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
 ax0.invert_yaxis()
 ax0.set_xticks([0, 5, 10, 15, 20])
@@ -266,6 +267,7 @@ ax0.set_zlabel('Mean amplitude (mV)')
 
 
 plt.subplot(gs00[0, 1])
+plt.title('\\textbf{{C2}} Title title title', loc = 'left')
 #Make plot for lower right.
 
 

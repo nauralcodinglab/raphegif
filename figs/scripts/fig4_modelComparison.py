@@ -147,10 +147,11 @@ def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, a
 
 #%% MAKE SOME LATEX TEXT FOR MODEL DEFINITIONS
 
-ohmic_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l)$'
-gk1_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{Kfast}}mh\\times(V(t) - E_k)$'
-gk2_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - \\bar{{g}}_{{Kslow}}n\\times(V(t) - E_k)$'
-full_latex = '$C\dot{{V}}(t) = I(t) - g_l\\times(V(t) - E_l) - (\\bar{{g}}_{{Kfast}}mh + \\bar{{g}}_{{Kslow}}n)\\times(V(t) - E_k)$'
+ohmic_shorthand = '$\omega = I(t)- g_l\\times(V(t) - E_l)$'
+ohmic_latex = '$C\dot{{V}}(t) = \omega$'
+gk1_latex = '$C\dot{{V}}(t) = \omega - \\bar{{g}}_{{Kfast}}mh\\times(V(t) - E_k)$'
+gk2_latex = '$C\dot{{V}}(t) = \omega - \\bar{{g}}_{{Kslow}}n\\times(V(t) - E_k)$'
+full_latex = '$C\dot{{V}}(t) = \omega - (\\bar{{g}}_{{Kfast}}mh + \\bar{{g}}_{{Kslow}}n)\\times(V(t) - E_k)$'
 
 #%% ASSEMBLE FIGURE
 
@@ -167,9 +168,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -181,17 +182,17 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = './figs/ims/'
 
-plt.figure(figsize = (14.67, 18))
+plt.figure(figsize = (16, 18))
 
 spec = gridspec.GridSpec(12, 5,
-left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 1.5, wspace = 0.4)
+left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 1.7, wspace = 0.5)
 
 
 plt.subplot(spec[0, :2])
 plt.title('\\textbf{{A1}} Model definitions', loc = 'left')
-plt.text(0, 0.5,
-'\n'.join([ohmic_latex, gk1_latex]),
-horizontalalignment = 'left', verticalalignment = 'center')
+plt.text(0, 0.9,
+'\n'.join(['$\mathrm{{H}}_0$: ' + ohmic_latex, '$\mathrm{{H}}_a$: ' + gk1_latex, 'Where ' + ohmic_shorthand]),
+horizontalalignment = 'left', verticalalignment = 'top')
 pltools.hide_border()
 pltools.hide_ticks()
 
@@ -199,8 +200,8 @@ plt.subplot(spec[1:4, :2])
 plt.title('\\textbf{{A2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs, 13,
-null_mod_label = 'Linear model',
-alt_mod_label = 'Linear model + $g_{{Kfast}}$'
+null_mod_label = 'Lin. mod.',
+alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$'
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
@@ -246,9 +247,9 @@ pltools.hide_border('tr')
 # B: gk2 vs ohmic
 plt.subplot(spec[4, :2])
 plt.title('\\textbf{{B1}} Model definitions', loc = 'left')
-plt.text(0, 0.5,
-'\n'.join([ohmic_latex, gk2_latex]),
-horizontalalignment = 'left', verticalalignment = 'center')
+plt.text(0, 0.9,
+'\n'.join(['$\mathrm{{H}}_0$: ' + ohmic_latex, '$\mathrm{{H}}_a$: ' + gk2_latex, 'Where ' + ohmic_shorthand]),
+horizontalalignment = 'left', verticalalignment = 'top')
 pltools.hide_border()
 pltools.hide_ticks()
 
@@ -256,8 +257,8 @@ plt.subplot(spec[5:8, :2])
 plt.title('\\textbf{{B2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs, 13,
-null_mod_label = 'Linear model',
-alt_mod_label = 'Linear model + $g_{{Kslow}}$'
+null_mod_label = 'Lin. mod.',
+alt_mod_label = 'Lin. mod. + $g_{{Kslow}}$'
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
@@ -302,9 +303,9 @@ pltools.hide_border('tr')
 # C: gk1 given gk2
 plt.subplot(spec[8, :2])
 plt.title('\\textbf{{C1}} Model definitions', loc = 'left')
-plt.text(0.0, 0.5,
-'\n'.join([gk2_latex, full_latex]),
-horizontalalignment = 'left', verticalalignment = 'center')
+plt.text(0.0, 0.9,
+'\n'.join(['$\mathrm{{H}}_0$: ' + gk2_latex, '$\mathrm{{H}}_a$: ' + full_latex, 'Where ' + ohmic_shorthand]),
+horizontalalignment = 'left', verticalalignment = 'top')
 pltools.hide_border()
 pltools.hide_ticks()
 
@@ -312,8 +313,8 @@ plt.subplot(spec[9:12, :2])
 plt.title('\\textbf{{C2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 gk2_mod_coeffs, full_mod_coeffs, 13,
-null_mod_label = 'Linear model + $g_{{Kslow}}$',
-alt_mod_label = 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$'
+null_mod_label = 'Lin. mod. + $g_{{Kslow}}$',
+alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$ \& $g_{{Kslow}}$'
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(

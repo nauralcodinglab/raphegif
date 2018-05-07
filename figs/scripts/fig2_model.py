@@ -45,9 +45,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -57,26 +57,25 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-plt.figure(figsize = (14.67, 10))
+plt.figure(figsize = (16, 12))
 
-spec = gridspec.GridSpec(4, 4, height_ratios = [1, 1, 1.5, 0.5],
+spec = gridspec.GridSpec(4, 4, height_ratios = [1, 1.5, 1.5, 0.5],
 left = 0.05, right = 0.95, top = 0.95, bottom = 0.05, hspace = 0.3, wspace = 0.4)
 
 plt.subplot(spec[0, :2])
-plt.title('A1 Neuron as RC circuit', loc = 'left')
+plt.title('\\textbf{{A1}} Neurons as RC circuits', loc = 'left')
 pltools.hide_ticks()
+pltools.hide_border()
 
 plt.subplot(spec[0, 2:])
-plt.title('A2 Model definition', loc = 'left')
+plt.title('\\textbf{{A2}} Linear model definition of RC circuit dynamics', loc = 'left')
 pltools.hide_ticks()
+pltools.hide_border()
 
-plt.subplot(spec[1, :2])
-plt.title('B1 Fitting model', loc = 'left')
+plt.subplot(spec[1, :])
+plt.title('\\textbf{{B}} Experimental approach', loc = 'left')
 pltools.hide_ticks()
-
-plt.subplot(spec[1, 2:])
-plt.title('B2 Using model to predict cellular responses on hold-out data', loc = 'left')
-pltools.hide_ticks()
+pltools.hide_border()
 
 ax0 = plt.subplot(spec[2, :2])
 plt.title('\\textbf{{C1}} Sample model performance on test data', loc = 'left')

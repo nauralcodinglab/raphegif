@@ -43,9 +43,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -57,10 +57,10 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = './figs/ims/'
 
-plt.figure(figsize = (14.67, 10))
+plt.figure(figsize = (16, 10))
 
 spec = gridspec.GridSpec(4, 4, height_ratios = (1, 0.75, 0.25, 1), left = 0.05,
-                         right = 0.95, top = 0.95, bottom = 0.05,
+                         right = 0.95, top = 0.95, bottom = 0.1,
                          hspace = 0.4)
 
 #grid_dims = (3, 4)
@@ -141,7 +141,7 @@ plt.xlabel('$g_l$ (pS)')
 plt.ylim(0, plt.ylim()[1] * 1.1)
 shapiro_w, shapiro_p = stats.shapiro(1e3/params_5HT['R'])
 plt.text(0.98, 0.98,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+'Normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 plt.text(0.5, 0.02,
 '$N = {}$ cells'.format(len(1e3/params_5HT['R'])),
@@ -157,7 +157,7 @@ plt.xlabel('$C_m$ (pF)')
 plt.ylim(0, plt.ylim()[1] * 1.1)
 shapiro_w, shapiro_p = stats.shapiro(params_5HT['C'])
 plt.text(0.98, 0.98,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+'Normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 plt.text(0.5, 0.02,
 '$N = {}$ cells'.format(len(params_5HT['C'])),
@@ -169,11 +169,11 @@ plt.title('\\textbf{{D3}} Time constant', loc = 'left')
 plt.hist(params_5HT['R'] * params_5HT['C'] * 1e-3, color = hist_color)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
-plt.xlabel('$\\tau_m$ (ms)')
+plt.xlabel('$\\tau$ (ms)')
 plt.ylim(0, plt.ylim()[1] * 1.1)
 shapiro_w, shapiro_p = stats.shapiro(params_5HT['R'] * params_5HT['C'] * 1e-3)
 plt.text(0.98, 0.98,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+'Normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 plt.text(0.5, 0.02,
 '$N = {}$ cells'.format(len(params_5HT['R'] * params_5HT['C'] * 1e-3)),
@@ -189,7 +189,7 @@ plt.xlabel('$\hat{{E}}_l$ (mV)')
 plt.ylim(0, plt.ylim()[1] * 1.1)
 shapiro_w, shapiro_p = stats.shapiro(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])])
 plt.text(0.98, 0.98,
-'Shapiro normality test {}'.format(pltools.p_to_string(shapiro_p)),
+'Normality test {}'.format(pltools.p_to_string(shapiro_p)),
 verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 plt.text(0.5, 0.02,
 '$N = {}$ cells'.format(len(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])])),

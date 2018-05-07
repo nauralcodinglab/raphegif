@@ -74,9 +74,9 @@ mpl.rcParams['text.latex.preamble'] = [
 mpl.rc('text', usetex = True)
 mpl.rc('svg', fonttype = 'none')
 
-SMALL_SIZE = 14
-MEDIUM_SIZE = 18
-BIGGER_SIZE = 22
+SMALL_SIZE = 16
+MEDIUM_SIZE = 20
+BIGGER_SIZE = 26
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)    # fontsize of the axes title
@@ -87,7 +87,7 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
 
-plt.figure(figsize = (14.67, 5))
+plt.figure(figsize = (16, 5))
 
 spec = mpl.gridspec.GridSpec(2, 4, height_ratios = (0.15, 0.85))
 outliers = [3, 12]
@@ -128,7 +128,7 @@ plt.hist(
 facecolor = gk2_color, edgecolor = gk2_color
 )
 plt.text(
-0.95, 0.95, 'Shapiro normality test {}'.format(pltools.p_to_string(
+0.95, 0.95, 'Normality test {}'.format(pltools.p_to_string(
 stats.shapiro(np.array(gk2_mod_coeffs['gbar_K2'])[[i not in outliers for i in range(len(gk2_mod_coeffs['El']))]])[1]
 )),
 horizontalalignment = 'right',
