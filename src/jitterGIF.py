@@ -201,19 +201,22 @@ class jitterGIF(GIF) :
         plt.show()
 
 
-    def simulateSynaptic(self, spiking = False):
+    def simulateSynaptic(self, V_rest, current_offset = None, spiking = False):
 
         """
         Essentially a switch to select between jitterGIF.simulate (for subthreshold simulations) and jitterGIF._simulateHardThreshold (for spiking simulations).
         """
 
+        if current_offset is None:
+            current_offset = 0
+
         if not spiking:
 
-            return self.simulate(self.getSummatedSynapticInput(), self.El)
+            return self.simulate(self.getSummatedSynapticInput() + current_offset, V_rest)
 
         else:
 
-            return self._simulateHardThreshold(self.getSummatedSynapticInput(), self.El)
+            return self._simulateHardThreshold(self.getSummatedSynapticInput() + current_offset, V_rest)
 
 
     def _simulateHardThreshold(self, I, V0):
@@ -377,24 +380,25 @@ class jitterGIF(GIF) :
         return (time, V, m, h, n, spks)
 
 
-    def multiSim(self, jitters, gk2s, no_reps = 50, duration = 800,
+    def multiSim(self, jitters, gk2s, Els, no_reps = 50, duration = 800,
                  arrival_time = 150, tau_rise = 1, tau_decay = 15,
                  ampli = 0.010, no_syn = 10, verbose = False):
 
         """
-        sample_syn[t, syn, jitter]
-        Vsub[t, rep, jitter, gk2]
-        pspk[t, jitter, gk2]
-        no_spks[rep, jitter, gk2]
+        sample_syn[t, syn, rep, jitter]
+        Vsub[t, rep, jitter, gk2, El]
+        n[t, rep, jitter, gk2, El]
         """
 
         sim_output = {
         'jitters': jitters,
         'gk2s': gk2s,
-        'sample_syn': np.empty((int(duration/ self.dt), no_syn, len(jitters)), dtype = np.float64),
-        'Vsub': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s)), dtype = np.float64),
-        'pspk': np.zeros((int(duration / self.dt), len(jitters), len(gk2s)), dtype = np.float64),
-        'no_spks': np.empty((no_reps, len(jitters), len(gk2s)), dtype = np.int32)
+        'Els': Els,
+        'sample_syn': np.empty((int(duration/ self.dt), no_syn, no_reps, len(jitters)), dtype = np.float64),
+        'Vsub': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype = np.float64),
+        'n': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype = np.float64)
+        #'pspk': np.zeros((int(duration / self.dt), len(jitters), len(gk2s)), dtype = np.float64),
+        #'no_spks': np.empty((no_reps, len(jitters), len(gk2s)), dtype = np.int32)
         }
 
         simJGIF = deepcopy(self)
@@ -408,22 +412,37 @@ class jitterGIF(GIF) :
 
                 simJGIF.initializeSynapses(no_syn, ampli, tau_rise, tau_decay, duration, arrival_time, jitters[j_], r_)
 
-                if r_ == 0:
-                    sim_output['sample_syn'][:, :, j_] = simJGIF.synaptic_input
+                sim_output['sample_syn'][:, :, r_, j_] = simJGIF.synaptic_input
 
                 for g_ in range(len(gk2s)):
 
                     simJGIF.gbar_K2 = gk2s[g_]
 
-                    _, _, _, _, _, spks_tmp = simJGIF.simulateSynaptic(True)
-                    _, Vsub_tmp, _, _, _ = simJGIF.simulateSynaptic(False)
+                    for e_ in range(len(Els)):
 
-                    sim_output['no_spks'][r_, j_, g_] = spks_tmp.sum()
-                    sim_output['pspk'][:, j_, g_] += spks_tmp / no_reps
+                        #simJGIF.El = Els[e_]
 
-                    sim_output['Vsub'][:, r_, j_, g_] = Vsub_tmp
+                        _, Vsub_tmp, m_tmp, h_tmp, n_tmp = simJGIF.simulateSynaptic(Els[e_], simJGIF.I_to_inject(Els[e_]), False)
+
+                        #sim_output['no_spks'][r_, j_, g_] = spks_tmp.sum()
+                        #sim_output['pspk'][:, j_, g_] += spks_tmp / no_reps
+
+                        sim_output['Vsub'][:, r_, j_, g_, e_] = Vsub_tmp
+                        sim_output['n'][: , r_, j_, g_, e_] = n_tmp
+
 
         return sim_output
+
+
+    def I_to_inject(self, V):
+
+        """
+        Compute the amount of constant current to inject to obtain a steady-state voltage of V
+        """
+
+        I = V * (self.gl + self.gbar_K2 * self.nInf(V)) - (self.gl * self.El + self.gbar_K2 * self.nInf(V) * self.E_K)
+
+        return float(I)
 
 
     ########################################################################################################
