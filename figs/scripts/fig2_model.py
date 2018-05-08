@@ -57,6 +57,8 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
+linear_color = (.83, .43, .14)
+
 plt.figure(figsize = (16, 12))
 
 spec = gridspec.GridSpec(4, 4, height_ratios = [1, 1.5, 1.5, 0.5],
@@ -68,7 +70,7 @@ pltools.hide_ticks()
 pltools.hide_border()
 
 plt.subplot(spec[0, 2:])
-plt.title('\\textbf{{A2}} Linear model definition of RC circuit dynamics', loc = 'left')
+plt.title('\\textbf{{A2}} Linear model of RC circuit dynamics', loc = 'left')
 pltools.hide_ticks()
 pltools.hide_border()
 
@@ -116,7 +118,7 @@ label = 'Real neuron'
 )
 plt.plot(
 t, sim,
-'-', color = (0.9, 0.2, 0.2), linewidth = 2,
+'-', color = linear_color, linewidth = 2,
 label = 'Linear model'
 )
 plt.annotate(
@@ -145,12 +147,12 @@ plt.title('\\textbf{{C2}} Test error is voltage-dependent', loc = 'left')
 plt.plot(
 np.delete(ohmic_mod_coeffs['binned_e2_centres'], cell_no, axis = 1),
 np.delete(ohmic_mod_coeffs['binned_e2_values'], cell_no, axis = 1),
-'-', linewidth = 0.7, color = (0.2, 0.2, 0.2), alpha = 0.5
+'-', linewidth = 0.7, color = linear_color, alpha = 0.5
 )
 plt.plot(
 ohmic_mod_coeffs['binned_e2_centres'][:, cell_no],
 ohmic_mod_coeffs['binned_e2_values'][:, cell_no],
-'-', linewidth = 0.7, color = (0.2, 0.2, 0.2), alpha = 0.5,
+'-', linewidth = 0.7, color = linear_color, alpha = 0.5,
 label = 'Individual neuron'
 )
 
@@ -178,7 +180,7 @@ for i in range(7, ohmic_mod_coeffs['binned_e2_centres'].shape[0]):
 plt.plot(
 np.nanmedian(ohmic_mod_coeffs['binned_e2_centres'], axis = 1),
 np.nanmedian(ohmic_mod_coeffs['binned_e2_values'], axis = 1),
-'-', linewidth = 2, color = (0.2, 0.2, 0.2),
+'-', linewidth = 2, color = linear_color,
 label = 'Median'
 )
 plt.legend()

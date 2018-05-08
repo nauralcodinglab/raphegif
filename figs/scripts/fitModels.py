@@ -134,6 +134,61 @@ for i in range(len(experiments)):
 
 print '\nDone!\n'
 
+#%% EXPORT A TRACE FOR FIG 2
+
+"""
+This saves an svg of training and test set traces to use in fig. 2
+"""
+
+sys.path.append('./figs/scripts')
+import pltools
+
+import matplotlib as mpl
+
+IMG_PATH = './figs/ims/'
+
+plt.figure(figsize = (10, 3))
+
+spec = mpl.gridspec.GridSpec(2, 2, height_ratios = (4, 1), width_ratios = (6, 1),
+wspace = 0.1, top = 0.95, bottom = 0.05, left = 0.05, right = 0.95)
+
+Vax = plt.subplot(spec[0, 0])
+V = experiments[1].trainingset_traces[0].V
+I = experiments[1].trainingset_traces[0].I
+t = np.arange(0, int(len(V) * 0.1), 0.1) / 1e3
+plt.axhline(-70, linestyle = '--', dashes = (10, 10), color = 'k')
+plt.plot(t, V, 'k-', linewidth = 2)
+ylim0 = plt.ylim()
+pltools.add_scalebar(x_units = 's', y_units = 'mV', bar_spacing = 0, text_spacing = (0.02, -0.05), anchor = (0.25, 0.15))
+
+Iax = plt.subplot(spec[1, 0])
+plt.plot(t, 1e3 * I, '-', color = 'gray', linewidth = 2)
+ylim1 = plt.ylim()
+pltools.add_scalebar(y_units = 'pA', omit_x = True)
+pltools.join_plots(Vax, Iax)
+
+Vax = plt.subplot(spec[0, 1])
+V = experiments[1].testset_traces[0].V
+I = experiments[1].testset_traces[0].I
+t = np.arange(0, int(len(V) * 0.1), 0.1) / 1e3
+plt.axhline(-70, linestyle = '--', dashes = (10, 10), color = 'k')
+plt.plot(t, V, 'k-', linewidth = 2)
+plt.ylim(ylim0)
+pltools.hide_ticks()
+pltools.hide_border()
+#pltools.add_scalebar(x_units = 's', y_units = 'mV')
+
+Iax = plt.subplot(spec[1, 1])
+plt.plot(t, 1e3 * I, '-', color = 'gray', linewidth = 2)
+plt.ylim(ylim1)
+#pltools.add_scalebar(y_units = 'pA', omit_x = True)
+pltools.hide_ticks()
+pltools.hide_border()
+pltools.join_plots(Vax, Iax)
+
+plt.savefig(IMG_PATH + 'experiment.svg', dpi = 300)
+
+plt.show()
 
 #%% INITIALIZE KGIF MODEL
 

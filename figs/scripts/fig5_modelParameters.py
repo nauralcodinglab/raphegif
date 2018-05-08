@@ -60,8 +60,8 @@ def corr_plot(x, y, outliers = None, ax = None):
     plt.plot(x_masked, y_masked, 'ko')
     plt.plot(x[~outlier_mask], y[~outlier_mask], 'o', color = 'gray')
     plt.plot(np.unique(x_masked), np.poly1d(np.polyfit(x_masked, y_masked, 1))(np.unique(x_masked)), 'k-')
-    plt.text(0.9, 0.1, '$r = {:.2f}$'.format(stats.pearsonr(x_masked, y_masked)[0]),
-    horizontalalignment = 'right', transform = ax.transAxes)
+    plt.text(0.6, 0.1, '$r = {:.2f}$\n$N = {}$ cells'.format(stats.pearsonr(x_masked, y_masked)[0], len(x_masked)),
+    horizontalalignment = 'left', transform = ax.transAxes)
 
 
 mpl.rcParams['text.latex.preamble'] = [
@@ -87,27 +87,27 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
 
-plt.figure(figsize = (16, 5))
+plt.figure(figsize = (16, 4.5))
 
-spec = mpl.gridspec.GridSpec(2, 4, height_ratios = (0.15, 0.85))
+spec = mpl.gridspec.GridSpec(2, 3, height_ratios = (0.15, 0.85))
 outliers = [3, 12]
 
 plt.subplot(spec[:, 0])
-plt.title('\\textbf{{A1}} Leak conductance', loc = 'left')
+plt.title('\\textbf{{A}} Leak conductance', loc = 'left')
 corr_plot(1e3/testpulse_params['R'], 1e3/np.array(gk2_mod_coeffs['R']), outliers)
 plt.ylabel('Model $g_l$ (pS)')
 plt.xlabel('Test-pulse $g_l$ (pS)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[:, 1])
-plt.title('\\textbf{{A2}} Capacitance', loc = 'left')
+plt.title('\\textbf{{B}} Capacitance', loc = 'left')
 corr_plot(testpulse_params['C'], 1e3 * np.array(gk2_mod_coeffs['C']), outliers)
 plt.ylabel('Model $C$ (pF)')
 plt.xlabel('Test-pulse $C$ (pF)')
 pltools.hide_border('tr')
 
 top_p = plt.subplot(spec[0, 2])
-top_p.set_title('\\textbf{{A3}} Leak conductance', loc = 'left')
+top_p.set_title('\\textbf{{C}} Equilibrium potential', loc = 'left')
 top_p.plot(testpulse_params['El_est'][3], gk2_mod_coeffs['El'][3], 'o', color = 'gray')
 bottom_p = plt.subplot(spec[1, 2])
 corr_plot(testpulse_params['El_est'].drop(index = 'DRN235'), np.delete(np.array(gk2_mod_coeffs['El']), 3), [12])
@@ -119,25 +119,6 @@ pltools.hide_border('trb', top_p)
 plt.ylabel('Model $E_l$ (mV)')
 plt.xlabel('Test-pulse $\hat{{E}}_l$ (mV)')
 pltools.hide_border('tr')
-
-gk2_color = (0.9, 0.2, 0.2)
-plt.subplot(spec[:, 3])
-plt.title('\\textbf{{B1}} $\\bar{{g}}_{{Kslow}}$', loc = 'left')
-plt.hist(
-1e3 * np.array(gk2_mod_coeffs['gbar_K2'])[[i not in outliers for i in range(len(gk2_mod_coeffs['gbar_K2']))]],
-facecolor = gk2_color, edgecolor = gk2_color
-)
-plt.text(
-0.95, 0.95, 'Normality test {}'.format(pltools.p_to_string(
-stats.shapiro(np.array(gk2_mod_coeffs['gbar_K2'])[[i not in outliers for i in range(len(gk2_mod_coeffs['El']))]])[1]
-)),
-horizontalalignment = 'right',
-transform = plt.gca().transAxes
-)
-plt.ylim(0, plt.ylim()[1] * 1.1)
-pltools.hide_border('ltr')
-plt.yticks([])
-plt.xlabel('$\\bar{{g}}_{{Kslow}}$ (pS)')
 
 
 plt.subplots_adjust(left = 0.1, top = 0.85, right = 0.95, bottom = 0.15, wspace = 0.4)

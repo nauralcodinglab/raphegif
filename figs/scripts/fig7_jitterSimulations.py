@@ -108,6 +108,7 @@ plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
+plt.rc('axes', linewidth = 0.8)
 
 plt.figure(figsize = (16, 16))
 
@@ -119,11 +120,11 @@ left = 0.05, bottom = 0.05, right = 0.95, top = 0.95, hspace = 0.6)
 Vax = plt.subplot(spec[0, 0])
 plt.title('\\textbf{{A1}} Simulated response to synaptic input', loc = 'left')
 plt.axhline(El_var[0], color = 'k', linestyle = '--', dashes = (10, 10))
-plt.text(250, El_var[0] + 0.2, '$V_m = {}$mV'.format(El_var[0]), ha = 'center')
+plt.text(320, El_var[0] + 0.2, '$V_m = {}$mV'.format(El_var[0]), ha = 'center')
 t = np.arange(0, duration, dt)
-plt.plot(t, sim_output['Vsub'][:, 0, 0, 0, 0], label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[0]))
-plt.plot(t, sim_output['Vsub'][:, 0, 0, 1, 0], label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[1]))
-plt.legend()
+plt.plot(t, sim_output['Vsub'][:, 0, 0, 0, 0], label = 'Lo $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[0]), color = gk2_color[0])
+plt.plot(t, sim_output['Vsub'][:, 0, 0, 1, 0], label = 'Hi $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[1]), color = gk2_color[1])
+plt.legend().set_zorder(1e4)
 pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.25), bar_spacing = 0, text_spacing = (0.02, -0.02))
 
 cmdax = plt.subplot(spec[1, 0])
@@ -136,16 +137,16 @@ pltools.join_plots(Vax, cmdax)
 Vax = plt.subplot(spec[2, 0])
 plt.title('\\textbf{{B1}} Simulated response to synaptic input', loc = 'left')
 plt.axhline(El_var[1], color = 'k', linestyle = '--', dashes = (10, 10))
-plt.text(250, El_var[1] + 0.2, '$V_m = {}$mV'.format(El_var[1]), ha = 'center')
+plt.text(320, El_var[1] + 0.2, '$V_m = {}$mV'.format(El_var[1]), ha = 'center')
 t = np.arange(0, duration, dt)
-plt.plot(t, sim_output['Vsub'][:, 0, 0, 0, 1], label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[0]))
-plt.plot(t, sim_output['Vsub'][:, 0, 0, 1, 1], label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[1]))
-plt.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.25), bar_spacing = 0, text_spacing = (0.02, -0.02))
+plt.plot(t, sim_output['Vsub'][:, 0, 0, 0, 1], label = 'Lo $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[0]), color = gk2_color[0])
+plt.plot(t, sim_output['Vsub'][:, 0, 0, 1, 1], label = 'Hi $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[1]), color = gk2_color[1])
+plt.legend().set_zorder(1e4)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.4), bar_spacing = 0, text_spacing = (0.02, -0.02))
 
 cmdax = plt.subplot(spec[3, 0])
 plt.plot(t, 1e3 * sim_output['sample_syn'][:, :, 0, 0].sum(axis = 1), '-', color = 'gray', linewidth = 2)
-pltools.add_scalebar(y_units = 'pA', omit_x = True, anchor = (0.98, 0.1))
+pltools.add_scalebar(y_units = 'pA', omit_x = True, anchor = (0.98, 0.2))
 
 pltools.join_plots(Vax, cmdax)
 
@@ -167,18 +168,18 @@ def mean_pm_sd(x, y_arr, color, zorder, label = None):
 Vax = plt.subplot(spec[0, 1])
 plt.title('\\textbf{{A2}} Mean response to random inputs', loc = 'left')
 plt.axhline(El_var[0], color = 'k', linestyle = '--', dashes = (10, 10))
-plt.text(250, El_var[0] + 0.2, '$V_m = {}$mV'.format(El_var[0]), ha = 'center')
+plt.text(320, El_var[0] + 0.2, '$V_m = {}$mV'.format(El_var[0]), ha = 'center')
 t = np.arange(0, duration, dt)
 mean_pm_sd(
 t, sim_output['Vsub'][:, :, 0, 0, 0],
 color = gk2_color[0], zorder = 1,
-label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[0]))
+label = 'Lo $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[0]))
 mean_pm_sd(
 t, sim_output['Vsub'][:, :, 0, 1, 0],
 color = gk2_color[1], zorder = 2,
-label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[1]))
-plt.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.25), bar_spacing = 0, text_spacing = (0.02, -0.02))
+label = 'Hi $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[1]))
+plt.legend().set_zorder(1e4)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.3), bar_spacing = 0, text_spacing = (0.02, -0.02))
 
 cmdax = plt.subplot(spec[1, 1])
 mean_pm_sd(
@@ -193,20 +194,20 @@ pltools.join_plots(Vax, cmdax)
 Vax = plt.subplot(spec[2, 1])
 plt.title('\\textbf{{B2}} Mean response to random inputs', loc = 'left')
 plt.axhline(El_var[1], color = 'k', linestyle = '--', dashes = (10, 10))
-plt.text(250, El_var[1] + 0.2, '$V_m = {}$mV'.format(El_var[1]), ha = 'center')
-plt.axhline(-45, color = 'k', linestyle = '--', dashes = (10, 10))
-plt.text(250, -44.8, 'Spike threshold $\\approx -45$mV', ha = 'center')
+plt.text(320, El_var[1] + 0.2, '$V_m = {}$mV'.format(El_var[1]), ha = 'center')
+#plt.axhline(-45, color = 'k', linestyle = '--', dashes = (10, 10))
+#plt.text(250, -44.8, 'Spike threshold $\\approx -45$mV', ha = 'center')
 t = np.arange(0, duration, dt)
 mean_pm_sd(
 t, sim_output['Vsub'][:, :, 0, 0, 1],
 color = gk2_color[0], zorder = 10,
-label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[0]))
+label = 'Lo $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[0]))
 mean_pm_sd(
 t, sim_output['Vsub'][:, :, 0, 1, 1],
 color = gk2_color[1], zorder = 11,
-label = '$\\bar{{g}}_{{Kslow}} = {}$pS'.format(1e3 * gk2_var[1]))
-plt.legend()
-pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.25), bar_spacing = 0, text_spacing = (0.02, -0.02))
+label = 'Hi $K_{{Slow}}$ ({}pS)'.format(1e3 * gk2_var[1]))
+plt.legend().set_zorder(1e4)
+pltools.add_scalebar(x_units = 'ms', y_units = 'mV', anchor = (0.98, 0.4), bar_spacing = 0, text_spacing = (0.02, -0.02))
 
 cmdax = plt.subplot(spec[3, 1])
 mean_pm_sd(
@@ -214,6 +215,8 @@ t, 1e3 * sim_output['sample_syn'][:, :, :, 0].sum(axis = 1),
 color = 'gray', zorder = 1
 )
 pltools.add_scalebar(y_units = 'pA', omit_x = True, anchor = (0.98, 0.1))
+
+pltools.join_plots(Vax, cmdax)
 
 
 # Bar charts of peak amplitude
@@ -248,14 +251,14 @@ pltools.hide_border('tr')
 
 
 # 3D plot
-Z_amp = np.squeeze(sim_for_3D['Vsub'].max(axis = 0).mean(axis = 0))
+Z_amp = np.squeeze(sim_for_3D['Vsub'].max(axis = 0).mean(axis = 0)).T
 Y_V = np.broadcast_to(sim_for_3D['Els'].reshape((-1, 1)), Z_amp.shape)
 X_gk2s = np.broadcast_to(sim_for_3D['gk2s'], Z_amp.shape)
 
 gs00 = mpl.gridspec.GridSpecFromSubplotSpec(1, 2, spec[4, :])
 
 ax0 = plt.subplot(gs00[0, 0], projection = '3d')
-plt.title('\\textbf{{C1}} Title title', loc = 'left')
+plt.title('\\textbf{{C1}} Synaptic integration depends on $V_m$ and $\\bar{{g}}_{{Kslow}}$ \nthroughout the physiological range', loc = 'left')
 ax0.plot_surface(1e3 * X_gk2s, Y_V, Z_amp, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
 ax0.invert_yaxis()
 ax0.set_xticks([0, 5, 10, 15, 20])
@@ -265,11 +268,34 @@ ax0.set_xlabel('$\\bar{{g}}_{{Kslow}}$ (pS)')
 ax0.set_ylabel('$V_m$ (mV)')
 ax0.set_zlabel('Mean amplitude (mV)')
 
+ax0.xaxis.labelpad = 12
+ax0.yaxis.labelpad = 12
+ax0.zaxis.labelpad = 12
+
 
 plt.subplot(gs00[0, 1])
-plt.title('\\textbf{{C2}} Title title title', loc = 'left')
-#Make plot for lower right.
+plt.title('\\textbf{{C2}} $K_{{Slow}}$ attenuates synaptic inputs \nonly at depolarized potentials', loc = 'left')
 
+plt.plot(
+1e3 * sim_for_3D['gk2s'],
+np.squeeze(sim_for_3D['Vsub'][:, :, 0, :, 6].max(axis = 0).mean(axis = 0)).T,
+':', color = gk2_color[1], label = '$V_m = -70$mV'
+)
+plt.plot(
+1e3 * sim_for_3D['gk2s'],
+np.squeeze(sim_for_3D['Vsub'][:, :, 0, :, 19].max(axis = 0).mean(axis = 0)).T,
+'--', color = gk2_color[1], label = '$V_m = -60$mV'
+)
+plt.plot(
+1e3 * sim_for_3D['gk2s'],
+np.squeeze(sim_for_3D['Vsub'][:, :, 0, :, -8].max(axis = 0).mean(axis = 0)).T,
+'-', color = gk2_color[1], label = '$V_m = -50$mV'
+)
+plt.legend().set_zorder(1e4)
+plt.xticks([0, 5, 10, 15, 20])
+plt.xlabel('$\\bar{{g}}_{{Kslow}}$ (pS)')
+plt.ylabel('Mean amplitude (mV)')
+pltools.hide_border('tr')
 
 plt.savefig(IMG_PATH + 'fig6_jitterSimulations.png', dpi = 300)
 plt.show()

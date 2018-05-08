@@ -63,8 +63,8 @@ def binned_e_comparison_plot(null_mod, alt_mod, null_mod_label = None, alt_mod_l
 
 
 def single_bin_e_comparison_plot(null_mod, alt_mod, V, null_mod_label = None, alt_mod_label = None,
-                                 null_markeredgecolor = (0.1, 0.1, 0.1), null_markerfacecolor = (0.5, 0.5, 0.5),
-                                 alt_markeredgecolor = (0.9, 0.1, 0.1), alt_markerfacecolor = (0.9, 0.5, 0.5),
+                                 null_markeredgecolor = (0.2, 0.2, 0.2), null_markerfacecolor = (0.5, 0.5, 0.5),
+                                 alt_markeredgecolor = (0.2, 0.2, 0.2), alt_markerfacecolor = (0.9, 0.5, 0.5),
                                  ax = None):
 
     if ax is None:
@@ -155,8 +155,9 @@ full_latex = '$C\dot{{V}}(t) = \omega - (\\bar{{g}}_{{Kfast}}mh + \\bar{{g}}_{{K
 
 #%% ASSEMBLE FIGURE
 
-Kfast_color = (0.2, 0.2, 0.8)
-Kslow_color = (0.8, 0.2, 0.2)
+linear_color = (.93, .53, .14)
+Kfast_color = (0.3, 0.3, 0.9)
+Kslow_color = (0.9, 0.2, 0.2)
 
 mpl.rcParams['text.latex.preamble'] = [
        r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
@@ -201,7 +202,9 @@ plt.title('\\textbf{{A2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs, 13,
 null_mod_label = 'Lin. mod.',
-alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$'
+alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$',
+null_color = linear_color,
+alt_color = Kfast_color
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
@@ -218,7 +221,10 @@ plt.subplot(spec[0:4, 2:4])
 plt.title('\\textbf{{A3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk1_mod_coeffs,
-'Linear model', 'Linear model + $g_{{Kfast}}$')
+'Linear model', 'Linear model + $g_{{Kfast}}$',
+null_color = linear_color,
+alt_color = Kfast_color
+)
 
 plt.text(-60, 80, 'A4', horizontalalignment = 'center')
 plt.text(-45, 140, 'A5', horizontalalignment = 'center')
@@ -232,14 +238,18 @@ pltools.hide_border('tr')
 plt.subplot(spec[0:2, 4])
 plt.title('\\textbf{{A4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -60,
-                             'Linear', 'Linear + $g_{{Kfast}}$')
+                             'Linear', 'Linear + $g_{{Kfast}}$',
+                             null_markerfacecolor = linear_color,
+                             alt_markerfacecolor = Kfast_color)
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[2:4, 4])
 plt.title('\\textbf{{A5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk1_mod_coeffs, -45,
-                             'Linear', 'Linear + $g_{{Kfast}}$')
+                             'Linear', 'Linear + $g_{{Kfast}}$',
+                             null_markerfacecolor = linear_color,
+                             alt_markerfacecolor = Kfast_color)
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
@@ -258,7 +268,9 @@ plt.title('\\textbf{{B2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs, 13,
 null_mod_label = 'Lin. mod.',
-alt_mod_label = 'Lin. mod. + $g_{{Kslow}}$'
+alt_mod_label = 'Lin. mod. + $g_{{Kslow}}$',
+null_color = linear_color,
+alt_color = Kslow_color
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
@@ -274,7 +286,10 @@ plt.subplot(spec[4:8, 2:4])
 plt.title('\\textbf{{B3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 ohmic_mod_coeffs, gk2_mod_coeffs,
-'Linear model', 'Linear model + $g_{{Kslow}}$')
+'Linear model', 'Linear model + $g_{{Kslow}}$',
+null_color = linear_color,
+alt_color = Kslow_color
+)
 
 plt.text(-60, 100, 'B4', horizontalalignment = 'center')
 plt.text(-45, 140, 'B5', horizontalalignment = 'center')
@@ -288,14 +303,18 @@ pltools.hide_border('tr')
 plt.subplot(spec[4:6, 4])
 plt.title('\\textbf{{B4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -60,
-                             'Linear', 'Linear + $g_{{Kslow}}$')
+                             'Linear', 'Linear + $g_{{Kslow}}$',
+                             null_markerfacecolor = linear_color,
+                             alt_markerfacecolor = Kslow_color)
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[6:8, 4])
 plt.title('\\textbf{{B5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(ohmic_mod_coeffs, gk2_mod_coeffs, -45,
-                             'Linear', 'Linear + $g_{{Kslow}}$')
+                             'Linear', 'Linear + $g_{{Kslow}}$',
+                             null_markerfacecolor = linear_color,
+                             alt_markerfacecolor = Kslow_color)
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
@@ -314,7 +333,9 @@ plt.title('\\textbf{{C2}} Sample predictions on test set', loc = 'left')
 testset_traces_plot(
 gk2_mod_coeffs, full_mod_coeffs, 13,
 null_mod_label = 'Lin. mod. + $g_{{Kslow}}$',
-alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$ \& $g_{{Kslow}}$'
+alt_mod_label = 'Lin. mod. + $g_{{Kfast}}$ \& $g_{{Kslow}}$',
+null_color = Kslow_color,
+alt_color = np.mean([Kfast_color, Kslow_color], axis = 0)
 )
 plt.axhline(-70, color = 'k', linestyle = '--', dashes = (10, 10), zorder = 0)
 plt.text(
@@ -330,7 +351,10 @@ plt.subplot(spec[8:12, 2:4])
 plt.title('\\textbf{{C3}} Model error according to voltage', loc = 'left')
 binned_e_comparison_plot(
 gk2_mod_coeffs, full_mod_coeffs,
-'Linear model + $g_{{Kslow}}$', 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$')
+'Linear model + $g_{{Kslow}}$', 'Linear model + $g_{{Kfast}}$ \& $g_{{Kslow}}$',
+null_color = Kslow_color,
+alt_color = np.mean([Kfast_color, Kslow_color], axis = 0)
+)
 
 plt.text(-60, 90, 'C4', horizontalalignment = 'center')
 plt.text(-45, 80, 'C5', horizontalalignment = 'center')
@@ -344,14 +368,18 @@ pltools.hide_border('tr')
 plt.subplot(spec[8:10, 4])
 plt.title('\\textbf{{C4}} Error at -60mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -60,
-                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$')
+                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$',
+                             null_markerfacecolor = Kslow_color,
+                             alt_markerfacecolor = np.mean([Kfast_color, Kslow_color], axis = 0))
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
 plt.subplot(spec[10:12, 4])
 plt.title('\\textbf{{C5}} Error at -45mV', loc = 'left')
 single_bin_e_comparison_plot(gk2_mod_coeffs, full_mod_coeffs, -45,
-                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$')
+                             '$g_{{Kslow}}$', '$g_{{Kfast}} + g_{{Kslow}}$',
+                             null_markerfacecolor = Kslow_color,
+                             alt_markerfacecolor = np.mean([Kfast_color, Kslow_color], axis = 0))
 plt.ylabel('MSE ($\mathrm{{mV}}^2$)')
 pltools.hide_border('tr')
 
