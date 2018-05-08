@@ -1,7 +1,7 @@
 import numpy as np
 
 import sys
-sys.path.append('../')
+sys.path.append('./src')
 
 from Experiment import *
 from AEC_Badel import *
@@ -21,10 +21,10 @@ This file tests whether the K_conductances added to SubthreshGIF work.
 ############################################################################################################
 myExp = Experiment('Fully subthreshold K test', 0.1)
 
-PATH = '../../data/subthreshold_gif_test/'
+PATH = './data/subthreshold_gif_test/'
 
 # Load AEC data
-myExp.setAECTrace(FILETYPE = 'Axon', 
+myExp.setAECTrace(FILETYPE = 'Axon',
                   fname = PATH + 'subthresh_AEC.abf', V_channel = 0, I_channel = 1)
 
 # Load training set data
@@ -49,12 +49,12 @@ myAEC = AEC_Badel(myExp.dt)
 
 # Define metaparametres
 myAEC.K_opt.setMetaParameters(length=150.0, binsize_lb=myExp.dt, binsize_ub=2.0, slope=30.0, clamp_period=1.0)
-myAEC.p_expFitRange = [3.0,150.0]  
-myAEC.p_nbRep = 15     
+myAEC.p_expFitRange = [3.0,150.0]
+myAEC.p_nbRep = 15
 
 # Assign myAEC to myExp and compensate the voltage recordings
-myExp.setAEC(myAEC)  
-myExp.performAEC()  
+myExp.setAEC(myAEC)
+myExp.performAEC()
 
 # Plot AEC filters (Kopt and Ke)
 myAEC.plotKopt()
@@ -92,7 +92,7 @@ print('Success!\n')
 # STEP 4: TEST K_CONDUCTANCES
 ############################################################################################################
 
-# Create a new object GIF 
+# Create a new object GIF
 myGIF = SubthreshGIF_K(0.1)
 
 # Define parameters
@@ -172,7 +172,7 @@ print '\nSuccessful model fit!\n'
 
 # Plot the model parameters
 myGIF.printParameters()
-myGIF.plotParameters()   
+myGIF.plotParameters()
 
 # Plot the model fit on the training data.
 myGIF.plotFit()
@@ -221,14 +221,14 @@ plt.ylabel('Holding current (nA)')
 plt.xlabel('Time (ms)')
 
 for V in np.arange(-60, -20, 10):
-    
+
     I_vec = myGIF.simulateVClamp(500, V, -90, True)[1]
     t_vec = np.arange(0, int(np.round(len(I_vec) * myGIF.dt)), myGIF.dt)
-    
+
     plt.plot(t_vec, I_vec, label = str(V) + 'mV')
-    
+
 plt.legend()
-    
+
 
 ############################################################################################################
 # STEP 4A (OPTIONAL): PLAY A BIT WITH THE FITTED MODEL
