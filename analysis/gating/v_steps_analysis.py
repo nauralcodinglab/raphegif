@@ -1,365 +1,283 @@
-"""
-This script extracts the kinetics, activation, and inactivation curves of
-subthreshold conductances in 5HT cells.
-"""
-
 #%% IMPORT MODULES
+
+from __future__ import division
+
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.optimize as opt
-import matplotlib as mpl
+import pandas as pd
+import scipy.stats as stats
+import scipy.optimize as optimize
 
 import sys
 sys.path.append('./analysis/gating/')
 
-import cell_class as ce
+from cell_class import Cell, Recording
 
 
-#%% READ IN FILES
+#%% HANDY FUNCTIONS
+
+max_normalize = lambda cell_channel: cell_channel / cell_channel.max(axis = 0)
+
+def subtract_baseline(cell, baseline_range, channel):
+
+    """
+    Subtracts baseline from the selected channel of a Cell-like np.ndarray.
+
+    Inputs:
+
+    cell: Cell-like
+    --  [c, t, s] array where c is channels, t is time (in timesteps), and s is sweeps
+
+    baseline_range: slice
+    --  Baseline time slice in timesteps
+
+    channel: int
+    --  Index of channel from which to subtract baseline. Not guaranteed to work with multiple channels.
+
+    Returns:
+
+        Copy of cell with baseline subtracted from the relevant channel.
+    """
+
+    cell = cell.copy()
+
+    cell[channel, :, :] -= cell[channel, baseline_range, :].mean(axis = 0)
+
+    return cell
+
+
+def subtract_leak(cell, baseline_range, test_range, V_channel = 1, I_channel = 0):
+
+    """
+    Subtracts leak conductance from the I channel of a Cell-like np.ndarray.
+
+    Calculates leak conductance based on Rm, which is extracted from test pulse.
+    Assumes test pulse is the same in each sweep.
+
+    Inputs:
+
+        cell: Cell-like
+        --  [c, t, s] array where c is channels, t is time (in timesteps), and s is sweeps
+
+        baseline_range: slice
+        --  baseline time slice in timesteps
+
+        test_range: slice
+        --  test pulse time slice in timesteps
+
+        V_channel: int
+
+        I_channel: int
+
+    Returns:
+
+        Leak-subtracted array.
+    """
+
+    Vtest_step = (
+    cell[V_channel, baseline_range, :].mean(axis = 0)
+    - cell[V_channel, test_range, :].mean(axis = 0)
+    ).mean()
+    Itest_step = (
+    cell[I_channel, baseline_range, :].mean(axis = 0)
+    - cell[I_channel, test_range, :].mean(axis = 0)
+    ).mean()
+
+    Rm = Vtest_step/Itest_step
+
+    I_leak = (cell[V_channel, :, :] - cell[V_channel, baseline_range, :].mean()) / Rm
+
+    leak_subtracted = cell.copy()
+    leak_subtracted[I_channel, :, :] -= I_leak
+
+    return leak_subtracted
+
+
+#%% LOAD DATA
+
+FIGDATA_PATH = './figs/figdata/'
+GATING_PATH = './data/gating/'
+
+# Load V-steps files for sample pharma traces.
+baseline = Cell().read_ABF('./figs/figdata/18411010.abf')[0]
+TEA = Cell().read_ABF('./figs/figdata/18411013.abf')[0]
+TEA_4AP = Cell().read_ABF('./figs/figdata/18411015.abf')[0]
+
+# Load drug washin files
+TEA_washin = Cell().read_ABF([FIGDATA_PATH + '18411020.abf',
+                              FIGDATA_PATH + '18411012.abf',
+                              FIGDATA_PATH + '18412002.abf'])
+TEA_4AP_washin = Cell().read_ABF([FIGDATA_PATH + '18411022.abf',
+                                  FIGDATA_PATH + '18411014.abf'])
+XE_washin = Cell().read_ABF([GATING_PATH + '18619021.abf',
+                             GATING_PATH + '18614035.abf'])
+
+# Load gating data
+gating = Cell().read_ABF([GATING_PATH + '18411002.abf',
+                          GATING_PATH + '18411010.abf',
+                          GATING_PATH + '18411017.abf',
+                          GATING_PATH + '18411019.abf',
+                          GATING_PATH + 'c0_inact_18201021.abf',
+                          GATING_PATH + 'c1_inact_18201029.abf',
+                          GATING_PATH + 'c2_inact_18201034.abf',
+                          GATING_PATH + 'c3_inact_18201039.abf',
+                          GATING_PATH + 'c4_inact_18213011.abf',
+                          GATING_PATH + 'c5_inact_18213017.abf',
+                          GATING_PATH + 'c6_inact_18213020.abf',
+                          GATING_PATH + '18619018.abf',
+                          GATING_PATH + '18614032.abf'])
+
+beautiful_gating_1 = Cell().read_ABF([GATING_PATH + '18619018.abf',
+                                      GATING_PATH + '18619019.abf',
+                                      GATING_PATH + '18619020.abf'])
+beautiful_gating_1 = Recording(np.array(beautiful_gating_1).mean(axis = 0))
+
+beautiful_gating_2 = Cell().read_ABF([GATING_PATH + '18614032.abf',
+                                      GATING_PATH + '18614033.abf',
+                                      GATING_PATH + '18614034.abf'])
+beautiful_gating_2 = Recording(np.array(beautiful_gating_2).mean(axis = 0))
+
+
+t_gating_bl = Cell().read_ABF([GATING_PATH + '18619038.abf',
+                               GATING_PATH + '18619039.abf'])
+t_gating_bl = Recording(np.array(t_gating_bl).mean(axis = 0))
+
+#t_gating_washon = Cell().read_ABF([GATING_PATH + '18619049.abf'])[0] # High and changing Ra
+
+#%% INSPECT RECORDINGS
+
+%matplotlib qt5
+beautiful_gating_1.plot(downsample = 1)
+
+beautiful_gating_2.plot(downsample = 1)
+
+t_gating_washon.plot(downsample = 1)
+
+t_gating_washon.fit_test_pulse((2240, 2248), (3250, 3300))
+
+# Look at XE991 (M-current blocker) washin
+XE_washin_tmp = XE_washin[1]
+XE_washin_tmp = subtract_baseline(XE_washin_tmp, slice(1000, 2000), 0)
+XE_washin_tmp = subtract_leak(XE_washin_tmp, slice(1000, 2000), slice(3000, 3400))
+
+plt.figure()
+plt.plot(XE_washin_tmp[0, 60000:61000, :].mean(axis = 0))
+plt.show()
 
 """
-As of Feb. 5, 2018 all cells are positively identified 5HT neurons.
+M-current blocker doesn't seem to affect leak- and baseline-subtracted current at -30mV.
 """
 
-path = './data/gating/'
+#%% PROCESS PHARMACOLOGY DATA
+
+# Example traces.
+sweep_to_use        = 10
+xrange              = slice(25000, 45000)
+xrange_baseline     = slice(24500, 25200)
+baseline_sweep      = baseline[0, xrange, sweep_to_use] - baseline[0, xrange_baseline, sweep_to_use].mean()
+TEA_sweep           = TEA[0, xrange, sweep_to_use] - TEA[0, xrange_baseline, sweep_to_use].mean()
+TEA_4AP_sweep       = TEA_4AP[0, xrange, sweep_to_use] - TEA_4AP[0, xrange_baseline, sweep_to_use].mean()
+cmd_sweep           = baseline[1, xrange, sweep_to_use] + TEA[1, xrange, sweep_to_use] / 2.
 
-rec_fnames = {
-        'hyperpol_act':     ['c0_hyperpol_18213022.abf',
-                             'c1_hyperpol_18214003.abf',
-                             'c2_hyperpol_18214006.abf',
-                             'c3_hyperpol_18214009.abf',
-                             'c4_hyperpol_18214012.abf',
-                             'c5_hyperpol_18214017.abf',
-                             'c6_hyperpol_18214023.abf',
-                             'c7_hyperpol_18214026.abf'],
+# TEA washin.
+xrange_baseline     = slice(1000, 2000)
+xrange_testpulse    = slice(3000, 3500)
+xrange_ss           = slice(50000, 51000)
+TEA_washin_pdata    = np.empty((len(TEA_washin), TEA_washin[0].shape[1], 44))
+TEA_washin_pdata[:, :] = np.NAN
 
-        'depol_act':        ['c0_depol_18214000.abf',
-                             'c1_depol_18214001.abf',
-                             'c2_depol_18214004.abf',
-                             'c3_depol_18214007.abf',
-                             'c4_depol_18214010.abf',
-                             'c5_depol_18214015.abf',
-                             'c6_depol_18214018.abf',
-                             'c7_depol_18214021.abf'],
+for i, cell in enumerate(TEA_washin):
 
-        'depol_inact':      ['c0_inact_18201021.abf',
-                             'c1_inact_18201029.abf',
-                             'c2_inact_18201034.abf',
-                             'c3_inact_18201039.abf',
-                             'c4_inact_18213011.abf',
-                             'c5_inact_18213017.abf',
-                             'c6_inact_18213020.abf']
+    # Estimate Rm from test pulse and use to compute leak current.
 
-        }
+    TEA_washin_pdata[i, :, :cell.shape[2]] = subtract_leak(cell, xrange_baseline, xrange_testpulse)[0, :, :]
+    TEA_washin_pdata[i, :, :] -= np.nanmean(TEA_washin_pdata[i, xrange_baseline, :], axis = 0)
+    #TEA_washin_pdata[i, :, :] /= np.nanmean(TEA_washin_pdata[i, xrange_ss, :6])
 
-# Create dict to hold loaded recordings.
-ce_dict = {}
+TEA_washin_pdata = np.nanmean(TEA_washin_pdata[:, xrange_ss, :], axis = 1).T
 
-for cat in rec_fnames.keys():
+# Remove data where there is no conductance left after subtracting leak.
+# (TEA can't have an effect if there's nothing to block.)
+TEA_washin_pdata = np.delete(
+TEA_washin_pdata,
+np.where(TEA_washin_pdata[:7, :].mean(axis = 0) <= 0)[0],
+axis = 1
+)
 
-    ce_dict[cat] = []
+# 4AP washin
+# Probably won't use...
+xrange_baseline         = slice(1000, 2000)
+xrange_testpulse        = slice(3000, 3500)
+xrange_ss               = slice(21770, 21800)
+TEA_4AP_washin_pdata    = np.empty((len(TEA_4AP_washin), TEA_4AP_washin[0].shape[1], 44))
+TEA_4AP_washin_pdata[:, :] = np.NAN
 
-    for fname in rec_fnames[cat]:
+for i, cell in enumerate(TEA_4AP_washin):
+    TEA_4AP_washin_pdata[i, :, :cell.shape[2]] = subtract_leak(cell, xrange_baseline, xrange_testpulse)[0, :, :]
+    TEA_4AP_washin_pdata[i, :, :] -= np.nanmean(TEA_4AP_washin_pdata[i, xrange_baseline, :], axis = 0)
+    #TEA_4AP_washin_pdata[i, :, :] /= np.nanmean(TEA_4AP_washin_pdata[i, xrange_ss, :6])
 
-        ce_dict[cat].append( ce.Cell(fname[:8], V_steps = path + fname) )
+TEA_4AP_washin_pdata = np.nanmean(TEA_4AP_washin_pdata[:, xrange_ss, :], axis = 1).T
 
+#%% PROCESS RAW GATING DATA
 
+# Define time intervals from which to grab data.
+xrange_baseline     = slice(0, 2000)
+xrange_test         = slice(3500, 4000)
+xrange_peakact      = slice(26140, 26160)
+xrange_ss           = slice(55000, 56000)
+xrange_peakinact    = slice(56130, 56160)
 
-#%% INSPECT AND EXTRACT TEST PULSE PARAMS
+# Format will be [channel, sweep, cell]
+# Such that we can use plt.plot(pdata[0, :, :], pdata[1, :, :], '-') to plot I over V by cell.
 
-"""
-Note that as of Feb. 5, 2018 all recordings use whole-cell capacitance
-correction and Rs compensation. Therefore, R_a measurements are not meaningful.
-"""
+shape_pdata = (2, gating[0].shape[2], len(gating))
 
-### Set script parameters
+peakact_pdata       = np.empty(shape_pdata)
+ss_pdata            = np.empty(shape_pdata)
+peakinact_pdata     = np.empty(shape_pdata)
 
-make_plots = True
-extract_R_in = True
+for i, cell in enumerate(gating):
 
-R_in_baseline_dict = {
-        'depol_inact': (750, 1000),
-        'hyperpol_act': (1000, 1500),
-        'depol_act': (1000, 1500)
-        }
+    cell = subtract_baseline(cell, xrange_baseline, 0)
+    cell = subtract_leak(cell, xrange_baseline, xrange_test)
 
-R_in_ss_dict = {
-        'depol_inact': (3750, 4000),
-        'hyperpol_act': (2500, 3000),
-        'depol_act': (2500, 3000)
-        }
+    # Average time windows to get leak-subtracted IA and KSlow currents
+    peakact_pdata[:, :, i]      = cell[:, xrange_peakact, :].mean(axis = 1)
+    ss_pdata[:, :, i]           = cell[:, xrange_ss, :].mean(axis = 1)
 
-# Create dict to hold R_input.
-Rin_dict = {}
+    # Get prepulse voltage for peakinact
+    peakinact_pdata[0, :, i]    = cell[0, xrange_peakinact, :].mean(axis = 0)
+    peakinact_pdata[1, :, i]    = cell[1, xrange_peakact, :].mean(axis = 0)
 
+peakact_pdata[0, :, :]      /= peakact_pdata[1, :, :] - -101
+ss_pdata[0, :, :]           /= ss_pdata[1, :, :] - -101
+peakinact_pdata[0, :, :]    /= peakinact_pdata[1, :, :] - -101
 
-for cat in ce_dict.keys():
+# Average out small differences in cmd between cells due to Rs comp
+peakact_pdata[1, :, :]      = peakact_pdata[1, :, :].mean(axis = 1, keepdims = True)
+ss_pdata[1, :, :]           = ss_pdata[1, :, :].mean(axis = 1, keepdims = True)
+peakinact_pdata[1, :, :]    = peakinact_pdata[1, :, :].mean(axis = 1, keepdims = True)
 
-    Rin_dict[cat] = []
+# Remove contribution of KSlow to apparent inactivation peak.
+peakinact_pdata[0, :, :] -= ss_pdata[0, :, :]
 
-    R_in_baseline = R_in_baseline_dict[cat]
-    R_in_ss = R_in_ss_dict[cat]
+# Pickle in case needed.
 
-    cnt = 0
-    for cell_ in ce_dict[cat]:
+with open(FIGDATA_PATH + 'peakact_pdata.pyc', 'wb') as f:
+    pickle.dump(peakact_pdata, f)
 
-        if make_plots:
-            cell_.V_steps[0].plot()
-            plt.suptitle('{} - cell {}'.format(cat, cnt))
-            plt.subplots_adjust(top = 0.85)
+with open(FIGDATA_PATH + 'ss_pdata.pyc', 'wb') as f:
+    pickle.dump(ss_pdata, f)
 
-        if extract_R_in:
-            Rin_dict[cat].append(
-                    cell_.V_steps[0].fit_test_pulse(
-                            R_in_baseline, R_in_ss,
-                            verbsose = False
-                            )['R_input'].mean())
+with open(FIGDATA_PATH + 'peakinact_pdata.pyc', 'wb') as f:
+    pickle.dump(peakinact_pdata, f)
 
-        cnt += 1
 
-    if make_plots:
+#%% FIG SIGMOID CURVES TO GATING DATA
 
-        plt.figure()
-        plt.subplot(111)
-        plt.title('{} - R_input'.format(cat))
-        plt.plot(Rin_dict[cat], 'k.')
-        plt.ylabel('R_input (MOhm)')
-        plt.xlabel('Cell no.')
-
-del (R_in_baseline, R_in_ss, cat, cell_, make_plots, extract_R_in)
-
-
-#%% REMOVE CRAPPY CELLS
-
-crappy_cell_dict = {
-        'depol_inact': None,
-        'hyperpol_act': None,
-        'depol_act': {3, 4}
-        }
-
-for cat in ce_dict.keys():
-
-    if crappy_cell_dict[cat] is not None:
-
-        inds = set([j for j in range(len(ce_dict[cat]))])
-        inds -= crappy_cell_dict[cat]
-
-        ce_dict[cat] = [i for j, i in enumerate(ce_dict[cat]) if j in inds]
-
-
-#%% EXTRACT CONDUCTANCE CURVES
-
-"""
-This block subtracts leak conductance from current traces and converts current
-to conductance (assuming the current is mediated by K).
-
-Voltage-conductance relationships for I_A (peak current and inactivation) and
-delayed rectifier (activation only) are extracted and placed in `cond_vals` and
-`V_vals` dicts. Each measurement category is stored separately in the dict.
-Measurements of the same category are stored in np.arrays with dimensionality
-[V, cell].
-"""
-
-### Set script parameters.
-
-V_channel = 1
-I_channel = 0
-
-normalize = True
-truncate = 13 # Only include this number of V_values. Set to None to skip.
-
-baseline_range = (750, 1000)
-prepulse_bl_range = {
-        'depol_inact': (2350, 2600),
-        'depol_act': (30000, 31000)
-        }
-presumed_reversal = -101 # Reversal for K.
-
-make_plots = {
-        'conductance': False,
-        'I': False,
-        'curve': True
-        }
-
-ss_range = {
-        'depol_inact': (54750, 55000),
-        'depol_act': (42000, 43000)
-        }
-peak_range = {
-        'depol_inact': (56130, 56140),
-        'depol_act': (33100, 33200)
-        }
-
-
-### Allocate arrays for output
-
-cond_traces = []
-
-if truncate is None:
-    ss_no_pts = ce_dict['depol_act'][0].V_steps[0].shape[2]
-    peak_no_pts = ce_dict['depol_act'][0].V_steps[0].shape[2]
-    inact_no_pts = ce_dict['depol_inact'][0].V_steps[0].shape[2]
-else:
-    ss_no_pts = truncate
-    peak_no_pts = truncate
-    inact_no_pts = truncate
-
-
-cond_vals = {
-        'steady_state': np.empty((ss_no_pts,
-                                  len(ce_dict['depol_act']))),
-        'peak': np.empty((peak_no_pts,
-                                  len(ce_dict['depol_act']))),
-        'inactivation': np.empty((inact_no_pts,
-                                  len(ce_dict['depol_inact'])))
-        }
-
-
-V_vals = {
-        'steady_state': np.empty((ss_no_pts,
-                                  len(ce_dict['depol_act']))),
-        'peak': np.empty((peak_no_pts,
-                                  len(ce_dict['depol_act']))),
-        'inactivation': np.empty((inact_no_pts,
-                                  len(ce_dict['depol_inact'])))
-        }
-
-
-### Main
-
-for cat in ['depol_inact', 'depol_act']:
-
-    for i in range(len(ce_dict[cat])):
-
-        # Make local copy of recording and params.
-        cell_tmp = ce_dict[cat][i].V_steps[0].copy()
-        R_in = Rin_dict[cat]
-
-        # Remove Ohmic component.
-        baseline_V = cell_tmp[V_channel, slice(*baseline_range), :].mean()
-        delta_V_b = cell_tmp[V_channel, :, :] - baseline_V
-
-        delta_I = 1000 * delta_V_b / R_in[i]
-
-        cell_tmp[I_channel, :, :] -= delta_I
-
-        # Subtract baselines, using pre-pulse as baseline.
-        baseline_I = cell_tmp[I_channel, slice(*prepulse_bl_range[cat]), :]
-        baseline_I = baseline_I.mean(axis = 0)
-        cell_tmp[I_channel, :, :] -= baseline_I
-
-        if make_plots['I']:
-            plt.figure(figsize = (10, 5))
-            plt.subplot(111)
-            plt.title('Leak-subtracted currents - {} {}'.format(cat, i))
-
-            plt.plot(cell_tmp[I_channel, :, :], 'k-', linewidth = 0.5, alpha = 0.3)
-
-            plt.ylabel('I (pA)')
-            plt.xlabel('Time (steps)')
-            plt.tight_layout()
-            plt.show()
-
-        # Convert current measurements to conductance.
-        # That is, divide out changes in voltage relative to presumed reversal.
-        delta_V_con = cell_tmp[V_channel, :, :] - presumed_reversal
-
-        conductance = ce.Recording(cell_tmp[I_channel, :, :][np.newaxis, :, :])
-        conductance[0, :, :] /= delta_V_con
-
-        # Save conductance traces.
-        cond_traces.append(conductance)
-
-        if make_plots['conductance']:
-            conductance.plot()
-
-        if cat == 'depol_act':
-
-            # Extract V-dependence of steady-state current.
-            ss_con = conductance[0, slice(*ss_range[cat]), :].mean(axis = 0)
-            ss_V = cell_tmp[V_channel, slice(*ss_range[cat]), :].mean(axis = 0)
-
-            peak_con = conductance[0, slice(*peak_range[cat]), :].mean(axis = 0)
-            peak_V = cell_tmp[V_channel, slice(*peak_range[cat]), :].mean(axis = 0)
-
-
-            if truncate is not None:
-
-                ss_con = ss_con[:truncate]
-                ss_V = ss_V[:truncate]
-
-                peak_con = peak_con[:truncate]
-                peak_V = peak_V[:truncate]
-
-            if normalize:
-
-                ss_con -= ss_con.min()
-                ss_con /= ss_con.max()
-
-                peak_con -= peak_con.min()
-                peak_con /= peak_con.max()
-
-
-            # Save results.
-            cond_vals['steady_state'][:, i] = ss_con
-            V_vals['steady_state'][:, i] = ss_V
-
-            cond_vals['peak'][:, i] = peak_con
-            V_vals['peak'][:, i] = peak_V
-
-        if cat == 'depol_inact':
-
-            # Extract V-dependence of steady-state current.
-            ss_con = conductance[0, slice(*ss_range[cat]), :].mean(axis = 0)
-            ss_V = cell_tmp[V_channel, slice(*ss_range[cat]), :].mean(axis = 0)
-
-            inac_con = conductance[0, slice(*peak_range[cat]), :].mean(axis = 0)
-            inac_con -= ss_con
-            inac_V = ss_V
-
-            if truncate is not None:
-
-                inac_con = inac_con[:truncate]
-                inac_V = inac_V[:truncate]
-
-            if normalize:
-
-                inac_con -= inac_con.min()
-                inac_con /= inac_con.max()
-
-            cond_vals['inactivation'][:, i] = inac_con
-            V_vals['inactivation'][:, i] = inac_V
-
-
-        if make_plots['curve']:
-
-            plt.figure(figsize = (7, 7))
-            plt.subplot(111)
-
-            plt.plot(ss_V, ss_con, '.',
-                     label = 'Steady-state conductance')
-            plt.plot(peak_V, peak_con, '.',
-                     label = 'Peak conductance (activation)')
-            plt.plot(inac_V, inac_con, '.',
-                     label = 'Peak conductance (inactivation)')
-
-            plt.ylabel('Conductance')
-            plt.xlabel('Vm (mV)')
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
-
-
-
-#%% DEFINE FITTING FUNCTIONS
-
-"""
-This block defines functions to be used in fitting activation/inactivation
-curves.
-"""
-
-# Sigmoid curve for fitting activation curves.
 def sigmoid_curve(p, V):
 
     """Three parameter logit.
@@ -378,65 +296,7 @@ def sigmoid_curve(p, V):
 
     return A / (1 + np.exp(-k * (V - V0)))
 
-# Single exponential for fitting activation curves.
-def exp_curve(p, V):
 
-    """Three parameter exponential curve.
-
-    p = [A, k, V0]
-
-    y = A * np.exp(k * (V - V0))
-    """
-
-    if len(p) != 3:
-        raise ValueError('p must be vector-like with len 3.')
-
-    A = p[0]
-    k = p[1]
-    V0 = p[2]
-
-    return A * np.exp(k * (V - V0))
-
-
-# Multiexponential for fitting kinetics.
-def multiexp_curve(p, X):
-
-    """N three-parameter exponentials and offset.
-
-    p = [B, A_1, k_1, x0_1, A_2, k_2, x0_2, ...]
-
-    Y = sum( A_i * exp(k_i * (V - x0_i)) ) + B
-    """
-
-    if type(X) is not np.ndarray:
-        raise TypeError('X must be provided as a numpy array.')
-
-    if (len(p) - 1) % 3 != 0:
-        raise ValueError('len p - 1 % 3 must be 0.')
-
-    B = p[0]
-    coeffs = p[1:]
-
-    # Variable to hold sum of exponential term value.
-    exp_terms = np.zeros(X.shape, dtype = np.float64)
-
-    # Iterate over three-parameter exponential terms.
-    for i in range(0, len(coeffs), 3):
-
-        A_i = coeffs[i]
-        k_i = coeffs[i + 1]
-        x0_i = coeffs[i + 2]
-
-        exp_terms += A_i * np.exp(k_i * (X - x0_i))
-
-    return exp_terms + B
-
-"""
-(1 - A exp(-t/tau)) - A exp(-t/tau)
-"""
-
-
-# General function for computing residuals.
 def compute_residuals(p, func, Y, X):
 
     """Compute residuals of a fitted curve.
@@ -459,172 +319,56 @@ def compute_residuals(p, func, Y, X):
     return Y - Y_hat
 
 
-#%% FIT CURVES
+def optimizer_wrapper(pdata, p0, max_norm = True):
 
-"""This block fits activation/inactivation curves.
-"""
+    """
+    Least-squares optimizer
 
-### Set script parameters.
-verbose = True
-funcs_to_use = {
-        'steady_state': sigmoid_curve,
-        'peak': sigmoid_curve,
-        'inactivation': sigmoid_curve
-        }
-p0 = {
-      'steady_state': [12, 1, -25],
-      'peak': [12, 1, -30],
-      'inactivation': [12, -1, -60]}
+    Uses `compute_residuals` as the loss function to optimize `sigmoid_curve`
 
-### Create dicts to hold outputs.
-fitted_params = {}
-fitted_points = {}
+    Returns:
 
+    Tupple of parameters and corresponding curve.
+    Curve is stored as a [channel, sweep] np.ndarray; channels 0 and 1 should correspond to I and V, respectively.
+    Curve spans domain of data used for fitting.
+    """
 
-### Main
-for key in V_vals.keys():
+    X = pdata[1, :, :].flatten()
 
-    V = np.broadcast_to(V_vals[key].mean(axis = 1)[:, np.newaxis],
-                        V_vals[key].shape)
-    V = V.flatten()
-    Y = cond_vals[key].flatten()
+    if max_norm:
+        y = max_normalize(pdata[0, :, :]).flatten()
+    else:
+        y = pdata[0, :, :].flatten()
 
-    p = opt.least_squares(compute_residuals, p0[key], kwargs = {
-            'func': funcs_to_use[key], 'X': V, 'Y': Y
-            })['x']
-    fitted = funcs_to_use[key](p, V)
+    p = optimize.least_squares(compute_residuals, p0, kwargs = {
+    'func': sigmoid_curve,
+    'X': X,
+    'Y': y
+    })['x']
 
-    fitted_params[key] = p
-    fitted_points[key] = fitted
+    no_pts = 500
 
-    if verbose:
-        print('\n\nFitted params for {} using {}:\n'
-              'A = {:0.2f} \nk = {:0.2f} \nV0 = {:0.2f}'.format(
-                      key, funcs_to_use[key].__name__, p[0], p[1], p[2]))
+    fitted_points = np.empty((2, no_pts))
+    x_min = pdata[1, :, :].mean(axis = 1).min()
+    x_max = pdata[1, :, :].mean(axis = 1).max()
+    fitted_points[1, :] = np.linspace(x_min, x_max, no_pts)
+    fitted_points[0, :] = sigmoid_curve(p, fitted_points[1, :])
+
+    return p, fitted_points
 
 
+peakact_params, peakact_fittedpts       = optimizer_wrapper(peakact_pdata, [12, 1, -30])
+peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12, -1, -60])
+ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
 
-#%% PLOT FITTED CONDUCTANCE CURVES
+param_pickle_df = pd.DataFrame(
+{
+'m': peakact_params,
+'h': peakinact_params,
+'n': ss_params
+},
+index = ('A', 'k', 'V_half')
+)
 
-"""This block makes a pretty plot of the raw conductance data, its average,
-and the fitted curves.
-
-Activation/inactivation/delayed rectifier curves.
-"""
-
-### Set script parameters
-
-plt.figure(figsize = (12, 7))
-
-# Activation subplot.
-plt.subplot(131)
-plt.title('I_A activation')
-x = np.broadcast_to(V_vals['peak'].mean(axis = 1)[:, np.newaxis],
-                    V_vals['peak'].shape)
-plt.plot(x,
-         cond_vals['peak'],
-         'ko', markerfacecolor = 'none', alpha = 0.5)
-plt.plot(x.mean(axis = 1),
-         cond_vals['peak'].mean(axis = 1),
-         'ro', label = 'Mean')
-x = np.arange(-65, 10, 0.1)
-plt.plot(x,
-         funcs_to_use['peak'](
-                 fitted_params['peak'],
-                 x),
-         'b-',
-         linewidth = 0.5,
-         label = 'Fitted')
-plt.ylabel('Conductance (pA/mV)')
-plt.xlabel('Vm (mV)')
-plt.legend()
-
-# Inactivation subplot.
-plt.subplot(132)
-plt.title('I_A inactivation')
-x = np.broadcast_to(V_vals['inactivation'].mean(axis = 1)[:, np.newaxis],
-                    V_vals['inactivation'].shape)
-plt.plot(x,
-         cond_vals['inactivation'],
-         'ko', markerfacecolor = 'none', alpha = 0.5)
-plt.plot(x.mean(axis = 1),
-         cond_vals['inactivation'].mean(axis = 1),
-         'ro', label = 'Mean')
-x = np.arange(-90, -17, 0.1)
-plt.plot(x,
-         funcs_to_use['inactivation'](
-                 fitted_params['inactivation'],
-                 x),
-         'b-',
-         linewidth = 0.5,
-         label = 'Fitted')
-plt.ylabel('Conductance (pA/mV)')
-plt.xlabel('Vm (mV)')
-plt.legend()
-
-# Steady-state subplot.
-plt.subplot(133)
-plt.title('Delayed rectifier')
-x = np.broadcast_to(V_vals['steady_state'].mean(axis = 1)[:, np.newaxis],
-                    V_vals['steady_state'].shape)
-plt.plot(x,
-         cond_vals['steady_state'],
-         'ko', markerfacecolor = 'none', alpha = 0.5)
-plt.plot(x.mean(axis = 1),
-         cond_vals['steady_state'].mean(axis = 1),
-         'ro', label = 'Mean')
-x = np.arange(-65, 10, 0.1)
-plt.plot(x,
-         funcs_to_use['steady_state'](
-                 fitted_params['steady_state'],
-                 x),
-         'b-',
-         linewidth = 0.5,
-         label = 'Fitted')
-plt.ylabel('Conductance (pA/mV)')
-plt.xlabel('Vm (mV)')
-plt.legend()
-
-plt.tight_layout()
-
-
-#%%
-
-plt.figure()
-
-for key in ['steady_state', 'inactivation', 'peak']:
-    plt.plot(x.mean(axis = 1),
-             funcs_to_use[key](
-                     fitted_params[key],
-                     x))
-
-#%% KINETIC FITTING FUNCTIONS
-
-"""Hard to get a good fit, esp. on trough. Previous work has experimentally
-separated Ia and Ik before fitting.
-"""
-
-exp_fit_range = (26500, 30000)
-p0 = [0, 1, -1/50, 2633, 1, 1/500, 3000]
-
-p_fitted = []
-
-plt.figure()
-
-for i in range(len(cond_traces)):
-
-    X = np.arange(exp_fit_range[0]/10, exp_fit_range[1]/10, 0.1)
-    Y = cond_traces[i][0, slice(*exp_fit_range), -1]
-    p_fitted.append(opt.least_squares(compute_residuals, p0, kwargs = {
-            'func': multiexp_curve, 'X': X, 'Y': Y
-            })['x'])
-
-    plt.plot(X, multiexp_curve(p_fitted[i], X),
-             color = mpl.cm.viridis(i / len(cond_traces)),
-             linewidth = 1, alpha = 0.5,
-             label = i)
-    plt.plot(X, Y,
-             color = mpl.cm.viridis(i / len(cond_traces)),
-             linewidth = 0.5, alpha = 0.5)
-
-plt.legend()
+with open(FIGDATA_PATH + 'gating_params.pyc', 'wb') as f:
+    pickle.dump(param_pickle_df, f)
