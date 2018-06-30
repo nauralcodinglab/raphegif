@@ -1,0 +1,283 @@
+#%% IMPORT MODULES
+
+from __future__ import division
+
+from copy import deepcopy
+import multiprocessing as mp
+
+import numpy as np
+import numba as nb
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+
+
+#%% DEFINE MODEL CLASS
+
+class IAmod(object):
+
+    def __init__(self, ga, tau_h, sigma_noise):
+
+        self.ga = ga
+
+        self.El = -60
+        self.Ea = -101
+
+        self.m_Vhalf = -27
+        self.m_k = 0.113
+
+        self.h_Vhalf = -59.9
+        self.h_k = -0.166
+        self.h_tau = tau_h
+
+        self.sigma_noise = sigma_noise
+
+        self.theta = -45
+        self.vreset = -55
+
+
+    def simulate(self, V0, Vin, dt = 1e-3, random_seed = 42):
+
+        # Define functions
+        @nb.vectorize(['f8(f8)'], cache = True)
+        def m_inf(V):
+            return 1 / (1 + np.exp( -self.m_k * (V - self.m_Vhalf) ))
+
+        @nb.vectorize(['f8(f8)'], cache = True)
+        def h_inf(V):
+            return 1 / (1 + np.exp( -self.h_k * (V - self.h_Vhalf) ))
+
+        # Locally define variables.
+        tau_h       = deepcopy(self.h_tau)
+        ga          = deepcopy(self.ga)
+        El          = deepcopy(self.El)
+        Ea          = deepcopy(self.Ea)
+        theta       = deepcopy(self.theta)
+        vreset      = deepcopy(self.vreset)
+
+        # Allocate arrays for output
+        V_mat = np.empty(Vin.shape, dtype = np.float64)
+        m_mat = np.empty_like(V_mat)
+        h_mat = np.empty_like(V_mat)
+        spks_mat = np.zeros_like(V_mat, dtype = np.bool)
+
+        # Set initial conditions.
+        V_mat[0, :] = V0
+        m_mat[0, :] = m_inf(V0)
+        h_mat[0, :] = h_inf(V0)
+
+        # Generate random values for noise in the dynamics.
+        np.random.seed(random_seed)
+        V_noise = self.sigma_noise * np.random.normal(size = Vin.shape)
+
+        for t in range(1, len(V_mat)):
+
+            # Integrate gates.
+            m_mat[t] = m_inf(V_mat[t-1, :])
+
+            dh = (h_inf(V_mat[t-1, :]) - h_mat[t-1, :]) / tau_h
+            h_mat[t] = h_mat[t-1, :] + dh * dt
+
+            # Integrate voltage.
+            dV = -(V_mat[t-1, :] - El) - ga * m_mat[t-1, :] * h_mat[t-1, :] * (V_mat[t-1, :] - Ea) + Vin[t-1, :]
+            V_mat[t] = V_mat[t-1, :] + dV * dt + V_noise[t-1, :] * np.sqrt(dt)
+
+            # Detect spiking neurons, log spikes, and reset voltage where applicable.
+            spiking_neurons = V_mat[t-1, :] >= theta
+            spks_mat[t-1, spiking_neurons] = True
+            V_mat[t, spiking_neurons] = vreset
+
+        return V_mat, spks_mat, m_mat, h_mat
+
+
+class Simulation(object):
+
+    def __init__(self, mod, V0, Vin, dt = 1e-3, random_seed = 42):
+
+        V_mat, spks_mat, m_mat, h_mat = mod.simulate(V0, Vin, dt, random_seed)
+
+        self.V      = V_mat
+        self.spks   = spks_mat
+        self.m      = m_mat
+        self.h      = h_mat
+
+        self.dt     = dt
+
+
+    @property
+    def no_neurons(self):
+        return self.V.shape[1]
+
+    @property
+    def t_vec(self):
+        return np.arange(0, (self.V.shape[0] - 0.5) * self.dt, self.dt)
+
+    @property
+    def t_mat(self):
+        return np.tile(self.t_vec[:, np.newaxis], (1, self.no_neurons))
+
+
+    def get_spk_latencies(self):
+
+        first_spk = np.zeros(self.no_neurons)
+
+        for i in range(self.no_neurons):
+            first_spk[i] = np.where(self.spks[:, i])[0][0] * self.dt
+
+        return first_spk
+
+
+    def simple_plot(self):
+
+        alpha = min([5/self.no_neurons, 1])
+
+        fig = plt.figure()
+
+        v_ax = fig.add_subplot(312)
+        v_ax.set_title('Subthreshold voltage')
+        v_ax.plot(self.t_mat, self.V, 'k-', alpha = alpha)
+        v_ax.set_ylabel('$V$ (mV)')
+
+        raster_ax = fig.add_subplot(311, sharex = v_ax)
+        raster_ax.set_title('Spike raster')
+        where_spks = np.where(self.spks)
+        raster_ax.plot(where_spks[0] * self.dt, where_spks[1], 'k|', markersize = 0.5)
+        raster_ax.set_ylabel('Repetition number')
+
+        gating_ax = fig.add_subplot(313, sharex = v_ax)
+        gating_ax.set_title('$I_A$ gating variables')
+        gating_ax.plot(self.t_vec, self.m[:, 0], '-', color = (0.8, 0.2, 0.2), alpha = alpha, label = 'm')
+        gating_ax.plot(self.t_mat[:, 1:], self.m[:, 1:], '-', color = (0.8, 0.2, 0.2), alpha = alpha)
+        gating_ax.plot(self.t_vec, self.h[:, 0], '-', color = (0.2, 0.8, 0.2), alpha = alpha, label = 'h')
+        gating_ax.plot(self.t_mat[:, 1:], self.h[:, 1:], '-', color = (0.2, 0.8, 0.2), alpha = alpha)
+        gating_ax.legend()
+        gating_ax.set_ylabel('$g/g_{{max}}$')
+
+        fig.tight_layout()
+
+
+#%% TEST
+
+no_neurons = 100
+pulse_ampli = 50
+tau_h_prime = 1.5
+
+V_baseline = np.zeros((1000, no_neurons))
+V_pulse = np.ones((4000, no_neurons)) * pulse_ampli
+Vin = np.concatenate((V_baseline, V_pulse), axis = 0)
+
+high_IA = IAmod(10, tau_h_prime, 2)
+low_IA = IAmod(1, tau_h_prime, 2)
+
+hi_IA_sim = Simulation(high_IA, -60, Vin)
+lo_IA_sim = Simulation(low_IA, -60, Vin)
+
+plt.rcdefaults()
+plt.rc('text', usetex = True)
+
+hi_IA_sim.simple_plot()
+plt.suptitle('$\\bar{{g}}_a^\prime = 10$, $\\tau_h^\prime = 1.5$')
+plt.subplots_adjust(top = 0.85)
+plt.savefig('./figs/ims/hi_IA.png', dpi = 300)
+
+lo_IA_sim.simple_plot()
+plt.suptitle('$\\bar{{g}}_a^\prime = 1$, $\\tau_h^\prime = 1.5$')
+plt.subplots_adjust(top = 0.85)
+plt.savefig('./figs/ims/lo_IA.png', dpi = 300)
+
+#%%
+
+no_neurons = 200
+pulse_ampli = 50
+tau_h_prime = 1.5
+
+V_baseline = np.zeros((1000, no_neurons))
+V_pulse = np.ones((4000, no_neurons)) * pulse_ampli
+Vin = np.concatenate((V_baseline, V_pulse), axis = 0)
+
+no_points = 25
+
+ga_vec = np.linspace(0, 15, num = no_points)
+tau_h_vec = np.linspace(0.5, 2, num = no_points)
+
+
+def generate_in_dict_ls(ga_vec, tau_h_vec):
+
+    in_dict_ls = []
+
+    for ga in ga_vec:
+        for tau_h in tau_h_vec:
+            in_dict_ls.append({'ga': ga, 'tau_h': tau_h})
+
+    return in_dict_ls
+
+
+def worker(in_dict):
+
+    print('Simulating ga = {:.1f}, tau_h = {:.1f}'.format(in_dict['ga'], in_dict['tau_h']))
+
+    tmp_mod = IAmod(in_dict['ga'], in_dict['tau_h'], 2)
+    tmp_sim = Simulation(tmp_mod, -60, Vin)
+
+    return tmp_sim.get_spk_latencies().std()
+
+
+in_dict_ls = generate_in_dict_ls(ga_vec, tau_h_vec)
+
+if __name__ == '__main__':
+    p = mp.Pool(8)
+
+    latencies = p.map(worker, in_dict_ls)
+
+    p.close()
+
+print('Done!')
+
+#%% PREPATE DATA FOR 3D PLOT
+
+stds = np.empty((len(ga_vec), len(tau_h_vec)), dtype = np.float64)
+tiled_ga_vec = np.tile(ga_vec[:, np.newaxis], (1, len(tau_h_vec)))
+tiled_tau_h_vec = np.tile(tau_h_vec[np.newaxis, :], (len(ga_vec), 1))
+
+cnt = 0
+for i in range(len(ga_vec)):
+    for j in range(len(tau_h_vec)):
+        stds[i, j] = latencies[cnt]
+        cnt += 1
+
+
+#%%
+
+save_path = './figs/ims/'
+
+plt.rc('text', usetex = True)
+
+SMALL_SIZE = 10
+MEDIUM_SIZE = 14
+BIGGER_SIZE = 16
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)     # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
+plt.figure(figsize = (6, 6))
+
+ax = plt.subplot(111, projection = '3d')
+ax.set_title('Effect of $I_A$ on spike time jitter')
+ax.plot_surface(tiled_ga_vec, tiled_tau_h_vec, stds, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
+ax.set_xlabel('$\\bar{{g}}_a^\prime$')
+ax.set_ylabel('$\\tau_h^\prime$')
+ax.set_zlabel('Spike jitter ($\\tau_m$)')
+ax.set_xlim3d(ax.get_xlim3d()[1], ax.get_xlim3d()[0])
+ax.xaxis.labelpad = 15
+ax.yaxis.labelpad = 15
+ax.zaxis.labelpad = 15
+
+if save_path is not None:
+    plt.savefig(save_path + 'IA_jitter_3D.png', dpi = 300)
+
+plt.show()
