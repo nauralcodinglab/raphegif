@@ -119,7 +119,13 @@ class Simulation(object):
         first_spk = np.zeros(self.no_neurons)
 
         for i in range(self.no_neurons):
-            first_spk[i] = np.where(self.spks[:, i])[0][0] * self.dt
+
+            spk_locs = np.where(self.spks[:, i])[0]
+
+            if len(spk_locs) > 0:
+                first_spk[i] = spk_locs[0] * self.dt
+            else:
+                first_spk[i] = np.NaN
 
         return first_spk
 
