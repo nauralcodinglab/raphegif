@@ -23,8 +23,8 @@ class IAmod(object):
         self.m_Vhalf = -27
         self.m_k = 0.113
 
-        self.h_Vhalf = -59.9
-        self.h_k = -0.166
+        self.h_Vhalf = -74.7
+        self.h_k = -0.11
         self.h_tau = tau_h
 
         self.sigma_noise = sigma_noise
@@ -162,14 +162,14 @@ class Simulation(object):
 #%% TEST
 
 no_neurons = 100
-pulse_ampli = 50
-tau_h_prime = 1.5
+pulse_ampli = 30
+tau_h_prime = 2.5
 
 V_baseline = np.zeros((1000, no_neurons))
 V_pulse = np.ones((4000, no_neurons)) * pulse_ampli
 Vin = np.concatenate((V_baseline, V_pulse), axis = 0)
 
-high_IA = IAmod(10, tau_h_prime, 2)
+high_IA = IAmod(15, tau_h_prime, 2)
 low_IA = IAmod(1, tau_h_prime, 2)
 
 hi_IA_sim = Simulation(high_IA, -60, Vin)
@@ -181,9 +181,11 @@ plt.rc('text', usetex = True)
 hi_IA_sim.simple_plot()
 plt.suptitle('$\\bar{{g}}_a^\prime = 10$, $\\tau_h^\prime = 1.5$')
 plt.subplots_adjust(top = 0.85)
-plt.savefig('./figs/ims/hi_IA.png', dpi = 300)
+#plt.savefig('./figs/ims/hi_IA.png', dpi = 300)
+plt.show()
 
 lo_IA_sim.simple_plot()
 plt.suptitle('$\\bar{{g}}_a^\prime = 1$, $\\tau_h^\prime = 1.5$')
 plt.subplots_adjust(top = 0.85)
-plt.savefig('./figs/ims/lo_IA.png', dpi = 300)
+#plt.savefig('./figs/ims/lo_IA.png', dpi = 300)
+plt.show()
