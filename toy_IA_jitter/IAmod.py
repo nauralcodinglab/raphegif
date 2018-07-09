@@ -32,6 +32,12 @@ class IAmod(object):
         self.theta = -45
         self.vreset = -55
 
+    def m_inf(self, V):
+        return 1 / (1 + np.exp( -self.m_k * (V - self.m_Vhalf) ))
+
+    def h_inf(self, V):
+        return 1 / (1 + np.exp( -self.h_k * (V - self.h_Vhalf) ))
+
 
     def simulate(self, V0, Vin, dt = 1e-3, random_seed = 42):
 
@@ -85,6 +91,14 @@ class IAmod(object):
             V_mat[t, spiking_neurons] = vreset
 
         return V_mat, spks_mat, m_mat, h_mat
+
+    def ss_clamp(self, V):
+
+        """
+        Return the amount of input voltage required to keep the cell at a specified target voltage at steady-state.
+        """
+
+        return (V - self.El) + self.ga * self.m_inf(V) * self.h_inf(V) * (V - self.Ea)
 
 
 class Simulation(object):

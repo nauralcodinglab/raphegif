@@ -13,17 +13,23 @@ from IAmod import IAmod, Simulation
 
 no_neurons = 100
 pulse_ampli = 30
+baseline_voltage = -60
 tau_h_prime = 2.5
 
-V_baseline = np.zeros((1000, no_neurons))
-V_pulse = np.ones((4000, no_neurons)) * pulse_ampli
-Vin = np.concatenate((V_baseline, V_pulse), axis = 0)
-
 high_IA = IAmod(15, tau_h_prime, 2)
-low_IA = IAmod(1, tau_h_prime, 2)
+high_IA.El = -70
+Vin_hi = np.empty((5000, no_neurons), dtype = np.float64)
+Vin_hi[:1000, :] = high_IA.ss_clamp(baseline_voltage)
+Vin_hi[1000:, :] = high_IA.ss_clamp(baseline_voltage + pulse_ampli)
 
-hi_IA_sim = Simulation(high_IA, -60, Vin)
-lo_IA_sim = Simulation(low_IA, -60, Vin)
+low_IA = IAmod(1, tau_h_prime, 2)
+low_IA.El = -70
+Vin_lo = np.empty((5000, no_neurons), dtype = np.float64)
+Vin_lo[:1000, :] = low_IA.ss_clamp(baseline_voltage)
+Vin_lo[1000:, :] = low_IA.ss_clamp(baseline_voltage + pulse_ampli)
+
+hi_IA_sim = Simulation(high_IA, -60, Vin_hi)
+lo_IA_sim = Simulation(low_IA, -60, Vin_lo)
 
 plt.rcdefaults()
 plt.rc('text', usetex = True)
