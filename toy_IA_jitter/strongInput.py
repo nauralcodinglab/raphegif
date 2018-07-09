@@ -18,12 +18,9 @@ from IAmod import IAmod, Simulation
 #%% PERFORM SIMULATIONS
 
 no_neurons = 200
-pulse_ampli = 50
+baseline_voltage = -60
+pulse_ampli = 25
 tau_h_prime = 1.5
-
-V_baseline = np.zeros((1000, no_neurons))
-V_pulse = np.ones((4000, no_neurons)) * pulse_ampli
-Vin = np.concatenate((V_baseline, V_pulse), axis = 0)
 
 no_points = 25
 
@@ -47,9 +44,13 @@ def worker(in_dict):
     print('Simulating ga = {:.1f}, tau_h = {:.1f}'.format(in_dict['ga'], in_dict['tau_h']))
 
     tmp_mod = IAmod(in_dict['ga'], in_dict['tau_h'], 2)
-    tmp_sim = Simulation(tmp_mod, -60, Vin)
+    tmp_Vin = np.empty((6000, no_neurons), dtype = np.float64)
+    tmp_Vin[:1000, :] = tmp_mod.ss_clamp(baseline_voltage)
+    tmp_Vin[1000:, :] = tmp_mod.ss_clamp(baseline_voltage + pulse_ampli)
 
-    return tmp_sim.get_spk_latencies().std()
+    tmp_sim = Simulation(tmp_mod, baseline_voltage, tmp_Vin)
+
+    return np.nanstd(tmp_sim.get_spk_latencies())
 
 
 in_dict_ls = generate_in_dict_ls(ga_vec, tau_h_vec)
@@ -97,7 +98,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 plt.figure(figsize = (6, 6))
 
 ax = plt.subplot(111, projection = '3d')
-ax.set_title('Effect of $I_A$ on spike time jitter')
+ax.set_title('Effect of $I_A$ on spike-time jitter in response to 25mV step')
 ax.plot_surface(tiled_ga_vec, tiled_tau_h_vec, stds, rstride = 1, cstride = 1, cmap = cm.coolwarm, linewidth = 0, antialiased = False)
 ax.set_xlabel('$\\bar{{g}}_a^\prime$')
 ax.set_ylabel('$\\tau_h^\prime$')
