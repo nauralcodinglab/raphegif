@@ -7,8 +7,9 @@ import numpy as np
 
 # Function to make a set of scalebars for a mpl plot
 def add_scalebar(x_units = None, y_units = None, anchor = (0.98, 0.02),
-text_spacing = (0.02, 0.02), bar_spacing = 0.06, linewidth = 5,
-remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
+y_label_space = 0.02, x_label_space = -0.02, bar_space = 0.06, x_on_left = True,
+linewidth = 3, remove_frame = True, omit_x = False, omit_y = False, round = True,
+usetex = True, ax = None):
 
     """
     Automagically add a set of x and y scalebars to a matplotlib plot
@@ -25,7 +26,7 @@ remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
         text_spacing: tuple of floats
         --  amount to offset labels from respective scalebars (in axis units)
 
-        bar_spacing: float
+        bar_space: float
         --  amount to separate bars from eachother (in axis units)
 
         linewidth: numeric
@@ -45,7 +46,6 @@ remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
     """
 
     # Basic input processing.
-    text_spacer_point = (anchor[0] - text_spacing[0], anchor[1] + text_spacing[1])
 
     if ax is None:
         ax = plt.gca()
@@ -67,14 +67,19 @@ remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
 
         # y-scalebar label
 
-        if text_spacing[0] <= 0:
+        if y_label_space <= 0:
             horizontalalignment = 'left'
         else:
             horizontalalignment = 'right'
 
+        if usetex:
+            y_label_text = '${}${}'.format(y_length, y_units)
+        else:
+            y_label_text = '{}{}'.format(y_length, y_units)
+
         ax.text(
-        text_spacer_point[0], anchor[1] + y_length_ax / 2 + bar_spacing,
-        '{}{}'.format(y_length, y_units),
+        anchor[0] - y_label_space, anchor[1] + y_length_ax / 2 + bar_space,
+        y_label_text,
         verticalalignment = 'center', horizontalalignment = horizontalalignment,
         transform = ax.transAxes
         )
@@ -82,9 +87,9 @@ remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
         # y scalebar
         ax.plot(
         [anchor[0], anchor[0]],
-        [anchor[1] + bar_spacing, anchor[1] + y_length_ax + bar_spacing],
+        [anchor[1] + bar_space, anchor[1] + y_length_ax + bar_space],
         'k-', linewidth = linewidth,
-        transform = ax.transAxes
+        clip_on = False, transform = ax.transAxes
         )
 
     # Do x scalebar.
@@ -97,25 +102,37 @@ remove_frame = True, omit_x = False, omit_y = False, round = True, ax = None):
         if round:
             x_length = int(np.round(x_length))
 
-        if text_spacing[1] <= 0:
+        # x-scalebar label
+        if x_label_space <= 0:
             verticalalignment = 'top'
         else:
             verticalalignment = 'bottom'
 
-        # x-scalebar label
+        if x_on_left:
+            Xx_text_coord = anchor[0] - x_length_ax / 2 - bar_space
+            Xx_bar_coords = [anchor[0] - x_length_ax - bar_space, anchor[0] - bar_space]
+        else:
+            Xx_text_coord = anchor[0] + x_length_ax / 2 + bar_space
+            Xx_bar_coords = [anchor[0] + x_length_ax + bar_space, anchor[0] + bar_space]
+
+        if usetex:
+            x_label_text = '${}${}'.format(x_length, x_units)
+        else:
+            x_label_text = '{}{}'.format(x_length, x_units)
+
         ax.text(
-        anchor[0] - x_length_ax / 2 - bar_spacing, text_spacer_point[1],
-        '{}{}'.format(x_length, x_units),
+        Xx_text_coord, anchor[1] + x_label_space,
+        x_label_text,
         verticalalignment = verticalalignment, horizontalalignment = 'center',
         transform = ax.transAxes
         )
 
         # x scalebar
         ax.plot(
-        [anchor[0] - x_length_ax - bar_spacing, anchor[0] - bar_spacing],
+        Xx_bar_coords,
         [anchor[1], anchor[1]],
         'k-', linewidth = linewidth,
-        transform = ax.transAxes
+        clip_on = False, transform = ax.transAxes
         )
 
     if remove_frame:
