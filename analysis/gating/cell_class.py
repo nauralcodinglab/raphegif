@@ -15,6 +15,7 @@ Compatible with python 2 and 3 as of Feb. 5, 2018.
 # Built-ins.
 from __future__ import division
 from warnings import warn
+from copy import deepcopy
 
 # Third-party.
 import numpy as np
@@ -236,6 +237,9 @@ class Recording(np.ndarray):
         which to take measurements on each sweep.
 
         Set `verbose` to False to prevent printing results.
+
+        tau: 3 tuple, optional
+        --  Tuple of test pulse start and range over which to calculate tau in *indexes*.
         """
 
         ### Inputs ###
@@ -245,6 +249,7 @@ class Recording(np.ndarray):
         kwargs.setdefault('I_chan', 0)
         kwargs.setdefault('V_clamp', True)
         kwargs.setdefault('verbose', True)
+        kwargs.setdefault('tau', None)
 
         # Check for correct inputs.
         if type(baseline) is not tuple:
@@ -316,6 +321,34 @@ class Recording(np.ndarray):
             R_a = 1000 * delta_V_ss / (I_peak - I_baseline)
             output['R_a'] = R_a
 
+        if kwargs['tau'] is not None:
+            try:
+                self.dt
+            except NameError:
+                raise RuntimeError('dt (timestep) must be set to fit tau')
+
+            if not kwargs['V_clamp']:
+
+                V_copy = deepcopy(self[kwargs['V_chan'], :, :])
+                V_copy = V_copy.mean(axis = 1)
+
+                V_copy -= V_copy[slice(*steady_state)].mean()
+                V0 = V_copy[slice(*baseline)].mean()
+
+                pulse_start = kwargs['tau'][0]
+                fitting_range = kwargs['tau'][1:3]
+
+                t = (np.arange(fitting_range[0], fitting_range[1]) - pulse_start) * self.dt
+                x = np.log(V_copy[slice(*fitting_range)] / V0)
+
+                mask = np.isnan(x)
+
+                tau = - np.sum(x[~mask] * t[~mask]) / np.sum(x[~mask] * x[~mask])
+
+                output['tau'] = tau
+
+            else:
+                raise NotImplementedError('Tau fitting for V-clamp is not implemented.')
 
         # Optionally, print results.
         if kwargs['verbose']:
