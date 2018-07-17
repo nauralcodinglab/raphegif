@@ -7,9 +7,9 @@ import numpy as np
 
 # Function to make a set of scalebars for a mpl plot
 def add_scalebar(x_units = None, y_units = None, anchor = (0.98, 0.02),
-y_label_space = 0.02, x_label_space = -0.02, bar_space = 0.06, x_on_left = True,
-linewidth = 3, remove_frame = True, omit_x = False, omit_y = False, round = True,
-usetex = True, ax = None):
+x_size = None, y_size = None, y_label_space = 0.02, x_label_space = -0.02,
+bar_space = 0.06, x_on_left = True, linewidth = 3, remove_frame = True,
+omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
 
     """
     Automagically add a set of x and y scalebars to a matplotlib plot
@@ -22,6 +22,12 @@ usetex = True, ax = None):
 
         anchor: tuple of floats
         --  bottom right of the bbox (in axis coordinates)
+
+        x_size: float or None
+        --  Manually set size of x scalebar (or None for automatic sizing)
+
+        y_size: float or None
+        --  Manually set size of y scalebar (or None for automatic sizing)
 
         text_spacing: tuple of floats
         --  amount to offset labels from respective scalebars (in axis units)
@@ -57,10 +63,15 @@ usetex = True, ax = None):
 
     # Do y scalebar.
     if not omit_y:
-        y_span = ax.get_yticks()[:2]
-        y_length = y_span[1] - y_span[0]
-        y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[:, 1]
-        y_length_ax = y_span_ax[1] - y_span_ax[0]
+
+        if y_size is None:
+            y_span = ax.get_yticks()[:2]
+            y_length = y_span[1] - y_span[0]
+            y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[:, 1]
+            y_length_ax = y_span_ax[1] - y_span_ax[0]
+        else:
+            y_length = y_size
+            y_length_ax = ax.transLimits.transform([0, y_size])[1]
 
         if round:
             y_length = int(np.round(y_length))
@@ -94,10 +105,15 @@ usetex = True, ax = None):
 
     # Do x scalebar.
     if not omit_x:
-        x_span = ax.get_xticks()[:2]
-        x_length = x_span[1] - x_span[0]
-        x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[:, 0]
-        x_length_ax = x_span_ax[1] - x_span_ax[0]
+
+        if x_size is None:
+            x_span = ax.get_xticks()[:2]
+            x_length = x_span[1] - x_span[0]
+            x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[:, 0]
+            x_length_ax = x_span_ax[1] - x_span_ax[0]
+        else:
+            x_length = x_size
+            x_length_ax = ax.transLimits.transform([x_size, 0])[0]
 
         if round:
             x_length = int(np.round(x_length))
