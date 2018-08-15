@@ -68,10 +68,10 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
             y_span = ax.get_yticks()[:2]
             y_length = y_span[1] - y_span[0]
             y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[:, 1]
-            y_length_ax = y_span_ax[1] - y_span_ax[0]
         else:
             y_length = y_size
-            y_length_ax = ax.transLimits.transform([0, y_size])[1]
+            y_span_ax = ax.transLimits.transform(np.array([[0, 0], [0, y_size]]))[:, 1]
+        y_length_ax = y_span_ax[1] - y_span_ax[0]
 
         if round:
             y_length = int(np.round(y_length))
@@ -92,7 +92,7 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
         anchor[0] - y_label_space, anchor[1] + y_length_ax / 2 + bar_space,
         y_label_text,
         verticalalignment = 'center', horizontalalignment = horizontalalignment,
-        transform = ax.transAxes
+        size = 'small', transform = ax.transAxes
         )
 
         # y scalebar
@@ -110,10 +110,10 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
             x_span = ax.get_xticks()[:2]
             x_length = x_span[1] - x_span[0]
             x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[:, 0]
-            x_length_ax = x_span_ax[1] - x_span_ax[0]
         else:
             x_length = x_size
-            x_length_ax = ax.transLimits.transform([x_size, 0])[0]
+            x_span_ax = ax.transLimits.transform(np.array([[0, 0], [x_size, 0]]))[:, 0]
+        x_length_ax = x_span_ax[1] - x_span_ax[0]
 
         if round:
             x_length = int(np.round(x_length))
@@ -140,7 +140,7 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
         Xx_text_coord, anchor[1] + x_label_space,
         x_label_text,
         verticalalignment = verticalalignment, horizontalalignment = 'center',
-        transform = ax.transAxes
+        size = 'small', transform = ax.transAxes
         )
 
         # x scalebar
