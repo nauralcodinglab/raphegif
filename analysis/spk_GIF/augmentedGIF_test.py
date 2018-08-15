@@ -129,7 +129,7 @@ for i, expt in enumerate(experiments):
 
 
             tmp_GIF.gamma = Filter_Rect_LogSpaced()
-            tmp_GIF.gamma.setMetaParameters(length=500.0, binsize_lb=5.0, binsize_ub=1000.0, slope=5.0)
+            tmp_GIF.gamma.setMetaParameters(5000., 150, 2000., slope = 2)
 
             # Define the ROI of the training set to be used for the fit
             for tr in expt.trainingset_traces:
@@ -151,8 +151,37 @@ with open(DATA_PATH + '5HT_aug_fast.pyc', 'wb') as f:
     obj = {'GIFs': GIFs, 'AugmentedGIFs': AugmentedGIFs}
     pickle.dump(obj, f)
 
+#%%
+with open(DATA_PATH + '5HT_aug_fast.pyc', 'rb') as f:
+    obj = pickle.load(f)
+    GIFs = obj['GIFs']
+    AugmentedGIFs = obj['AugmentedGIFs']
+
+    del obj
+
+#%%
+
+ex_cell = 6
+
+ISIs = []
+for tr in experiments[ex_cell].trainingset_traces:
+    ISIs.extend(np.diff(tr.getSpikeTimes()))
+
+ISIs = np.array(ISIs)
+
+GIFs[ex_cell].gamma.plot()
+
+plt.figure()
+plt.hist(ISIs)
+plt.show()
 
 
+
+#%%
+
+test_filt = Filter_Rect_LogSpaced(5000., 150, 2000., slope = 2)
+test_filt.setFilter_Function(lambda x: 100 * np.exp(-x / 1000.))
+test_filt.plot()
 
 #%% EVALUATE PERFORMANCE
 
@@ -214,7 +243,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = None#'./figs/ims/thesis/'
 
-ex_cell = 5
+ex_cell = 0
 xrange = (500, 14000)
 
 predictions_GIF[ex_cell].spks_data
@@ -318,7 +347,8 @@ if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'sert_cell.png', dpi = 300)
 
 plt.show()
-
+#%%
+GIFs[ex_cell].gamma.plot()
 
 #%% MD DISTRIBUTION FIGURE
 
