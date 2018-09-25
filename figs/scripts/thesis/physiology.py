@@ -175,3 +175,12 @@ if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'physiology.png')
 
 plt.show()
+
+
+#%% SUMMARY STATISTICS FOR PASSIVE PARAMETERS
+
+print('{:>10}: {:>10.2f} +/- {:>6.2f} GOhm'.format('Rm', np.mean(1e-3 * params_5HT['R']), np.std(1e-3 * params_5HT['R'])))
+print('{:>10}: {:>10.2f} +/- {:>6.2f} nS'.format('gl', np.mean(1e3 / params_5HT['R']), np.std(1e3 / params_5HT['R'])))
+print('{:>10}: {:>10.1f} +/- {:>6.1f} pF'.format('C', np.mean(params_5HT['C']), np.std(params_5HT['C'])))
+print('{:>10}: {:>10.1f} +/- {:>6.1f} ms'.format('tau', np.mean(params_5HT['R'] * params_5HT['C'] * 1e-3), np.std(params_5HT['R'] * params_5HT['C'] * 1e-3)))
+print('{:>10}: {:>10.1f} +/- {:>6.1f} mV'.format('El_est', np.nanmean(params_5HT['El_est']), np.nanstd(params_5HT['El_est'])))

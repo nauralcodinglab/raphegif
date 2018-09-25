@@ -272,7 +272,31 @@ peakinact_params, peakinact_fittedpts   = optimizer_wrapper(peakinact_pdata, [12
 ss_params, ss_fittedpts                 = optimizer_wrapper(ss_pdata, [12, 1, -25])
 
 
+#%% SUBTRACT BASELINE & LEAK
+
+beautiful_gating_1 = subtract_baseline(beautiful_gating_1, slice(1000, 2000), 0)
+beautiful_gating_1 = subtract_leak(beautiful_gating_1, slice(1000, 2000), slice(3000, 3400))
+beautiful_gating_1.set_dt(0.1)
+
+baseline = subtract_baseline(baseline, slice(1000, 2000), 0)
+baseline = subtract_leak(baseline, slice(1000, 2000), slice(3000, 3400))
+baseline.set_dt(0.1)
+
+TEA_4AP = subtract_baseline(TEA_4AP, slice(1000, 2000), 0)
+TEA_4AP = subtract_leak(TEA_4AP, slice(1000, 2000), slice(3000, 3400))
+TEA_4AP.set_dt(0.1)
+
 #%% MAKE FIGURE
+
+def dashed_border(ax = None):
+
+    if ax is None:
+        ax = plt.gca()
+
+    for side in ['right', 'left', 'top', 'bottom']:
+        ax.spines[side].set_linestyle('--')
+        ax.spines[side].set_linewidth(0.5)
+        ax.spines[side].set_edgecolor('gray')
 
 IA_color = (0.2, 0.2, 0.9)
 IA_inact_color = (0.1, 0.65, 0.1)
@@ -282,90 +306,136 @@ plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
 
 IMG_PATH = './figs/ims/thesis/'
 
-spec_outer          = gs.GridSpec(2, 1, top = 0.95, bottom = 0.1, right = 0.95)
+spec_outer          = gs.GridSpec(2, 1, top = 0.95, bottom = 0.1, right = 0.98, left = 0.1, hspace = 0.4)
 spec_traces         = gs.GridSpecFromSubplotSpec(2, 3, spec_outer[0, :], height_ratios = [1, 0.2], hspace = 0)
-spec_gating_outer   = gs.GridSpecFromSubplotSpec(1, 2, spec_outer[1, :])
-spec_gating_IA      = gs.GridSpecFromSubplotSpec(1, 2, spec_gating_outer[:, 0], width_ratios = [1, 0.2])
-spec_gating_Kslow   = gs.GridSpecFromSubplotSpec(1, 2, spec_gating_outer[:, 1], width_ratios = [1, 0.2])
+spec_gating_outer   = gs.GridSpecFromSubplotSpec(1, 2, spec_outer[1, :], wspace = 0.4)
+spec_gating_IA      = gs.GridSpecFromSubplotSpec(1, 2, spec_gating_outer[:, 0], width_ratios = [1, 0.2], wspace = 0.35)
+spec_gating_Kslow   = gs.GridSpecFromSubplotSpec(1, 2, spec_gating_outer[:, 1], width_ratios = [1, 0.2], wspace = 0.35)
 
-plt.figure()
+plt.figure(figsize = (6.5, 5))
 
-act_ax = plt.subplot(spec_traces[0, 0])
-plt.title('\\textbf{{A1}} Activation', loc = 'left')
-Kslow_xlim = (2500, 5500)
+act_ax = plt.subplot(spec_traces[0, :2])
+plt.title('\\textbf{{A}} Outward currents in 5HT neurons', loc = 'left')
+Kslow_xlim = (2450, 8500)
 plt.plot(
-    beautiful_gating_1.t_mat[0, :, -3::-3],
-    beautiful_gating_1[0, :, -3::-3], 'k-',
+    beautiful_gating_1.t_mat[0, :, -2::-3],
+    beautiful_gating_1[0, :, -2::-3], 'k-',
     linewidth = 0.5
 )
+plt.text(4500, 200, '+TTX', ha = 'center', va = 'center', size = 'small')
+plt.annotate(
+    '$n$', (5500, 170),
+    xytext = (-10, 20), textcoords = 'offset points', ha = 'center',
+    arrowprops = {'arrowstyle': '->'}
+)
 plt.xlim(Kslow_xlim)
-plt.ylim(-100, 650)
+plt.ylim(-100, 800)
 pltools.add_scalebar(
-    'ms', 'pA', anchor = (1, 0.4),
+    'ms', 'pA', anchor = (0.8, 0.1),
     x_label_space = -0.02, y_size = 100, x_size = 500, bar_space = 0
 )
 
-act_ins = inset_axes(act_ax, '50%', '40%', loc = 'upper center')
+act_ins = inset_axes(act_ax, '20%', '40%', loc = 'upper left', borderpad = 2)
 act_ins.plot(
-    beautiful_gating_1.t_mat[0, :, -3::-3],
-    beautiful_gating_1[0, :, -3::-3], 'k-',
+    beautiful_gating_1.t_mat[0, :, -2::-3],
+    beautiful_gating_1[0, :, -2::-3], 'k-',
     linewidth = 0.5
 )
-for side in ['right', 'left', 'top', 'bottom']:
-    act_ins.spines[side].set_linestyle('--')
-    act_ins.spines[side].set_linewidth(0.5)
-    act_ins.spines[side].set_edgecolor('gray')
+plt.annotate(
+    '$m$', (2625, 705),
+    xytext = (15, -10), textcoords = 'offset points',
+    arrowprops = {'arrowstyle': '->'}
+)
+dashed_border(act_ins)
 #pltools.add_scalebar(y_units = 'pA', x_units = 'ms', remove_frame = False, ax = act_ins)
 pltools.hide_ticks()
-plt.xlim(2590, 2700)
-plt.ylim(-50, 600)
-mark_inset(act_ax, act_ins, loc1 = 2, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
+plt.xlim(2590, 2750)
+plt.ylim(-50, 780)
+mark_inset(act_ax, act_ins, loc1 = 1, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
 
-plt.subplot(spec_traces[1, 0])
-plt.plot(
-    beautiful_gating_1.t_mat[1, :, -3::-3],
-    beautiful_gating_1[1, :, -3::-3], '-',
-    color = 'gray', linewidth = 0.5
-)
-plt.xlim(Kslow_xlim)
-
-inact_ax = plt.subplot(spec_traces[0, 1])
-plt.title('\\textbf{{A2}} Inactivation', loc = 'left')
-IA_tr_xlim = (5400, 8400)
-#baseline_subtracted = subtract_baseline(deepcopy(beautiful_gating_1), slice(56000, 56050),0)
-#baseline_subtracted.set_dt(0.1)
-plt.plot(
-    beautiful_gating_1.t_mat[0, :, -3::-4],
-    beautiful_gating_1[0, :, -3::-4], 'k-',
-    linewidth = 0.5)
-plt.xlim(IA_tr_xlim)
-plt.ylim(-100, 750)
-pltools.add_scalebar(
-    'ms', 'pA', x_on_left = False, anchor = (0.65, 0.5), x_label_space = 0.02,
-    y_size = 300, bar_space = 0
-)
-
-inact_ins = inset_axes(inact_ax, '50%', '40%', loc = 'upper center')
+inact_ins = inset_axes(act_ax, '20%', '40%', loc = 'upper right', borderpad = 2)
 inact_ins.plot(
     beautiful_gating_1.t_mat[0, :, -3::-3],
     beautiful_gating_1[0, :, -3::-3], 'k-',
     linewidth = 0.5
 )
-for side in ['right', 'left', 'top', 'bottom']:
-    inact_ins.spines[side].set_linestyle('--')
-    inact_ins.spines[side].set_linewidth(0.5)
-    inact_ins.spines[side].set_edgecolor('gray')
+plt.annotate(
+    '$h$', (5630, 600),
+    xytext = (15, -10), textcoords = 'offset points',
+    arrowprops = {'arrowstyle': '->'}
+)
+dashed_border(inact_ins)
 #pltools.add_scalebar(y_units = 'pA', x_units = 'ms', remove_frame = False, ax = inact_ins)
 pltools.hide_ticks()
-plt.xlim(5550, 6200)
-plt.ylim(-50, 600)
-mark_inset(inact_ax, inact_ins, loc1 = 2, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
+plt.xlim(5550, 5800)
+plt.ylim(-50, 750)
+mark_inset(act_ax, inact_ins, loc1 = 1, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
 
-plt.subplot(spec_traces[0, 2])
+plt.subplot(spec_traces[1, :2])
+plt.plot(
+    beautiful_gating_1.t_mat[1, :, -2::-3],
+    beautiful_gating_1[1, :, -2::-3], '-',
+    color = 'gray', linewidth = 0.5
+)
+plt.xlim(Kslow_xlim)
+plt.text(Kslow_xlim[1], -22, '$-20$mV', ha = 'right', va = 'top', size = 'small')
+pltools.add_scalebar(y_units = 'mV', omit_x = True, anchor = (0.8, 0.1))
+
+pharm_ax = plt.subplot(spec_traces[0, 2])
 plt.title('\\textbf{{B}} Pharmacology', loc = 'left')
+plt.plot(
+    baseline.t_mat[0, :, -3],
+    baseline[0, :, -3],
+    linewidth = 0.5, color = 'k',
+    label = 'Baseline'
+)
+plt.plot(
+    TEA_4AP.t_mat[0, :, -3],
+    TEA_4AP[0, :, -3],
+    linewidth = 0.5, color = (0.9, 0.2, 0.2),
+    label = 'TEA + 4AP'
+)
+plt.text(3800, 200, '+TTX', ha = 'center', va = 'center', size = 'small')
+plt.axhline(0, ls = '--', lw = 0.5, color = 'k', dashes = (10, 10))
+plt.xlim(Kslow_xlim[0], 4500)
+plt.ylim(-100, 550)
+pltools.add_scalebar(
+    'ms', 'pA', anchor = (1, 0.35), y_size = 100, x_size = 500,
+    bar_space = 0, x_label_space = -0.02
+)
+plt.legend()
+
+pharm_ins = inset_axes(pharm_ax, '30%', '50%', loc = 'upper left', borderpad = 2.2)
+plt.plot(
+    baseline.t_mat[0, :, -3],
+    baseline[0, :, -3],
+    linewidth = 0.5, color = 'k',
+    label = 'Baseline'
+)
+plt.plot(
+    TEA_4AP.t_mat[0, :, -3],
+    TEA_4AP[0, :, -3],
+    linewidth = 0.5, color = (0.9, 0.2, 0.2),
+    label = 'TEA + 4AP'
+)
+plt.xlim(Kslow_xlim[0] + 100, Kslow_xlim[0] + 300)
+plt.ylim(-70, 500)
+dashed_border(pharm_ins)
+pltools.hide_ticks()
+mark_inset(pharm_ax, pharm_ins, loc1 = 1, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
+
+plt.subplot(spec_traces[1, 2])
+plt.plot(
+    baseline.t_mat[1, :, -3],
+    baseline[1, :, -3],
+    linewidth = 0.5, color = 'gray'
+)
+pltools.add_scalebar(y_units = 'mV', anchor = (0.5, 0.1), omit_x = True, y_size = 25)
+plt.text(4500, -32, '$-30$mV', ha = 'right', va = 'top', size = 'small')
+plt.xlim(Kslow_xlim[0], 4500)
 
 plt.subplot(spec_gating_IA[:, 0])
-plt.title('\\textbf{{C1}} Ia gating', loc = 'left')
+plt.title('\\textbf{{C1}} $I_A$ gating', loc = 'left')
 
 x_act = peakact_pdata[1, :, :].mean(axis = 1)
 y_mean_act = np.mean(peakact_pdata[0, :, :] / peakact_pdata[0, -1, :], axis = 1)
@@ -420,7 +490,7 @@ pltools.hide_border('trb')
 plt.ylabel('$g_\mathrm{{ref}}$ (nS)')
 
 plt.subplot(spec_gating_Kslow[:, 0])
-plt.title('\\textbf{{D1}} Kslow gating', loc = 'left')
+plt.title('\\textbf{{D1}} $K_\mathrm{{slow}}$ gating', loc = 'left')
 
 x_ss = ss_pdata[1, :, :].mean(axis = 1)
 y_mean_ss = np.mean(ss_pdata[0, :, :] / ss_pdata[0, -1, :], axis = 1)
@@ -455,227 +525,80 @@ plt.gca().set_yticks([0, 1, 2])
 pltools.hide_border('trb')
 plt.ylabel('$g_\mathrm{{ref}}$ (nS)')
 
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'perithresh_cond_char.png')
+
 plt.show()
 
-#%%
 
-spec = gs.GridSpec(2, 1, hspace = 0.45, top = 0.95, bottom = 0.08, right = 0.95)
-spec_Kslow = gs.GridSpecFromSubplotSpec(2, 1, spec[0, :], hspace = 0.4)
-spec_Kslow_traces = gs.GridSpecFromSubplotSpec(2, 2, spec_Kslow[0, :], height_ratios = [4, 1], wspace = 0.3)
-spec_Kslow_gating = gs.GridSpecFromSubplotSpec(1, 2, spec_Kslow[1, :], width_ratios = [4, 1])
+#%% PRINT SUMMARY STATISTICS
 
-spec_IA = gs.GridSpecFromSubplotSpec(2, 1, spec[1, :], hspace = 0.4)
-spec_IA_traces = gs.GridSpecFromSubplotSpec(2, 2, spec_IA[0, :], height_ratios = [4, 1], wspace = 0.3)
-spec_IA_gating = gs.GridSpecFromSubplotSpec(1, 2, spec_IA[1, :], width_ratios = [4, 1])
+def printconf(label, data, units = None):
+    print(
+        '{:>10}: {:>10.2f} +- {:>10.2f} {}; Shapiro W={:>5.3f} p={:>5.3f}'.format(
+            label,
+            np.nanmean(data),
+            np.nanstd(data),
+            units,
+            stats.shapiro(data)[0],
+            stats.shapiro(data)[1]
+        )
+    )
 
-plt.figure(figsize = (6, 6))
+stats.pearsonr(peakact_pdata[0, -1, :], ss_pdata[0, -1, :])
+printconf('gA', peakact_pdata[0, -1, :], 'nS')
+printconf('gslow', ss_pdata[0, -1, :], 'nS')
 
-plt.subplot(spec_Kslow_traces[0, 0])
-plt.title('\\textbf{{A1}} Non-inactivating K-current', loc = 'left')
-Kslow_xlim = (2500, 5500)
-plt.plot(
-    beautiful_gating_1.t_mat[0, :, -3::-4],
-    beautiful_gating_1[0, :, -3::-4], 'k-',
-    linewidth = 0.5)
-plt.xlim(Kslow_xlim)
-plt.ylim(-100, 600)
-pltools.add_scalebar(
-    'ms', 'pA', x_on_left = False, anchor = (0.3, 0.4),
-    x_label_space = 0.02, y_size = 250, bar_space = 0
+#%% MAKE SUPPLEMENTARY FIGURE
+
+def plot_best_fit(x, y):
+
+    x = np.unique(x)
+    y = np.poly1d(np.polyfit(x, y, 1))(np.unique(x))
+
+    plt.plot(x, y, 'k-', label = 'Best fit')
+
+supp_spec = gs.GridSpec(1, 2, wspace = 0.4)
+
+plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
+
+plt.figure(figsize = (6, 3))
+
+plt.subplot(supp_spec[:, 0])
+plt.title('\\textbf{{A}} Correlation at --20mV', loc = 'left')
+
+plot_best_fit(ss_pdata[0, -1, :], peakact_pdata[0, -1, :])
+plt.text(
+    0.95, 0.05,
+    '$R = {:.3f}$'.format(stats.pearsonr(peakact_pdata[0, -1, :], ss_pdata[0, -1, :])[0]),
+    ha = 'right', transform = plt.gca().transAxes
 )
-
-plt.subplot(spec_Kslow_traces[1, 0])
-plt.plot(
-    beautiful_gating_1.t_mat[1, :, -3::-4],
-    beautiful_gating_1[1, :, -3::-4],
-    color = 'gray',
-    linewidth = 0.5
-)
-plt.xlim(Kslow_xlim)
-plt.annotate('-30mV', (5500, -28), ha = 'right', va = 'bottom')
-pltools.add_scalebar(y_units = 'mV', omit_x = True, anchor = (-0.03, 0.2))
-
-
-plt.subplot(spec_Kslow_traces[0, 1])
-plt.title('\\textbf{{A2}} Block by TEA', loc = 'left')
-plt.plot(
-    baseline.t_mat[0, :, -3],
-    baseline[0, :, -3],
-    linewidth = 0.5, color = 'k',
-    label = 'TTX'
-)
-plt.plot(
-    TEA.t_mat[0, :, -3],
-    TEA[0, :, -3],
-    linewidth = 0.5, color = (0.9, 0.2, 0.2),
-    label = 'TTX + TEA'
-)
-plt.xlim(Kslow_xlim)
-plt.ylim(-100, 550)
-pltools.add_scalebar(
-    'ms', 'pA', x_on_left = False, anchor = (0.3, 0.35), y_size = 250,
-    bar_space = 0, x_label_space = 0.02
-)
-plt.legend()
-
-plt.subplot(spec_Kslow_traces[1, 1])
-plt.plot(
-    baseline.t_mat[1, :, -3],
-    baseline[1, :, -3],
-    linewidth = 0.5, color = 'gray'
-)
-plt.xlim(Kslow_xlim)
-plt.annotate('-30mV', (5500, -28), ha = 'right', va = 'bottom')
-pltools.add_scalebar(omit_x = True, y_units = 'mV', anchor = (-0.03, 0.2))
-
-
-plt.subplot(spec_Kslow_gating[0, 0])
-plt.title('\\textbf{{B1}} Steady-state conductance', loc = 'left')
-
-x_ss = ss_pdata[1, :, :].mean(axis = 1)
-y_mean_ss = np.mean(ss_pdata[0, :, :] / ss_pdata[0, -1, :], axis = 1)
-y_std_ss = np.std(ss_pdata[0, :, :] / ss_pdata[0, -1, :], axis = 1)
-plt.fill_between(
-    x_ss, y_mean_ss - y_std_ss, y_mean_ss + y_std_ss,
-    color = (0.9, 0.2, 0.2), alpha = 0.5
-)
-plt.plot(
-    x_ss, y_mean_ss,
-    color = (0.9, 0.2, 0.2), linewidth = 2,
-    label = 'Activation ($n$)'
-)
-plt.plot(
-    ss_fittedpts[1, :],
-    ss_fittedpts[0, :],
-    color = 'gray', lw = 2, ls = '--', dashes = (5, 2), alpha = 0.8
-)
-plt.legend()
-plt.ylabel('$g/g_{{-20\mathrm{{mV}}}}$')
-plt.xlabel('Voltage (mV)')
-pltools.hide_border('tr')
-
-plt.subplot(spec_Kslow_gating[0, 1])
-plt.title('\\textbf{{B2}} $g_{{\mathrm{{max}}}}$', loc = 'left')
-sns.swarmplot(y = ss_pdata[0, -1, :], color = (0.9, 0.2, 0.2))
-plt.ylim(0, plt.ylim()[1])
-plt.ylabel('$g_{{-20\mathrm{{mV}}}}$')
-pltools.hide_border('trb')
-plt.gca().set_xticks([])
-
-
-
-plt.subplot(spec_IA_traces[0, 0])
-plt.title('\\textbf{{C1}} A-type K-current', loc = 'left')
-IA_tr_xlim = (5600, 5800)
-baseline_subtracted = subtract_baseline(deepcopy(beautiful_gating_1), slice(56000, 56050),0)
-baseline_subtracted.set_dt(0.1)
-plt.plot(
-    baseline_subtracted.t_mat[0, :, -3::-4],
-    baseline_subtracted[0, :, -3::-4], 'k-',
-    linewidth = 0.5)
-plt.xlim(IA_tr_xlim)
-plt.ylim(-100, 750)
-pltools.add_scalebar(
-    'ms', 'pA', x_on_left = False, anchor = (0.65, 0.5), x_label_space = 0.02,
-    y_size = 300, bar_space = 0
-)
-
-plt.subplot(spec_IA_traces[1, 0])
-plt.plot(
-    beautiful_gating_1.t_mat[1, :, -3::-4],
-    beautiful_gating_1[1, :, -3::-4],
-    color = 'gray',
-    linewidth = 0.5
-)
-plt.xlim(IA_tr_xlim)
-plt.annotate('-20mV', (5800, -18), ha = 'right', va = 'bottom')
-pltools.add_scalebar(y_units = 'mV', omit_x = True, anchor = (-0.03, 0.2))
-
-
-plt.subplot(spec_IA_traces[0, 1])
-plt.title('\\textbf{{C2}} Block by TEA', loc = 'left')
-IA_pharm_xlim = (2600, 2750)
-plt.plot(
-    baseline.t_mat[0, :, -2],
-    baseline[0, :, -2],
-    linewidth = 0.5, color = 'k',
-    label = 'TTX'
-)
-plt.plot(
-    TEA_4AP.t_mat[0, :, -2],
-    TEA_4AP[0, :, -2],
-    linewidth = 0.5, color = (0.2, 0.2, 0.9),
-    label = 'TTX + TEA/4AP'
-)
-plt.xlim(IA_pharm_xlim)
-plt.ylim(-100, plt.ylim()[1])
-pltools.add_scalebar('ms', 'pA', x_on_left = False, anchor = (-0.03, 0))
-plt.legend()
-
-plt.subplot(spec_IA_traces[1, 1])
-plt.plot(
-    baseline.t_mat[1, :, -1],
-    baseline[1, :, -1],
-    linewidth = 0.5, color = 'gray'
-)
-plt.xlim(IA_pharm_xlim)
-plt.annotate('-20mV', (2750, -18), ha = 'right', va = 'bottom')
-pltools.add_scalebar(omit_x = True, y_units = 'mV', anchor = (-0.03, 0.2))
-
-
-plt.subplot(spec_IA_gating[0, 0])
-plt.title('\\textbf{{D1}} Steady-state conductance', loc = 'left')
-
-x_act = peakact_pdata[1, :, :].mean(axis = 1)
-y_mean_act = np.mean(peakact_pdata[0, :, :] / peakact_pdata[0, -1, :], axis = 1)
-y_std_act = np.std(peakact_pdata[0, :, :] / peakact_pdata[0, -1, :], axis = 1)
-
-x_inact = peakinact_pdata[1, :, :].mean(axis = 1)
-y_mean_inact = np.mean(peakinact_pdata[0, :, :] / peakinact_pdata[0, 0, :], axis = 1)
-y_std_inact = np.std(peakinact_pdata[0, :, :] / peakinact_pdata[0, 0, :], axis = 1)
-
-plt.fill_between(
-    x_act, y_mean_act - y_std_act, y_mean_act + y_std_act,
-    color = (0.2, 0.2, 0.9), alpha = 0.5
-)
-plt.fill_between(
-    x_inact, y_mean_inact - y_std_inact, y_mean_inact + y_std_inact,
-    color = (0.2, 0.8, 0.2), alpha = 0.5
-)
-plt.plot(
-    x_act, y_mean_act,
-    color = (0.2, 0.2, 0.9), linewidth = 2,
-    label = 'Activation ($m$)'
-)
-plt.plot(
-    peakact_fittedpts[1, :],
-    peakact_fittedpts[0, :],
-    color = 'gray', lw = 2, ls = '--', dashes = (5, 2), alpha = 0.8
-)
-plt.plot(
-    x_inact, y_mean_inact,
-    color = (0.2, 0.8, 0.2), linewidth = 2,
-    label = 'Inactivation ($h$)'
-)
-plt.plot(
-    peakinact_fittedpts[1, :],
-    peakinact_fittedpts[0, :],
-    color = 'gray', lw = 2, ls = '--', dashes = (5, 2), alpha = 0.8
-)
-plt.legend()
-plt.ylabel('$g/g_{{\mathrm{{ref}}}}$')
-plt.xlabel('Voltage (mV)')
-pltools.hide_border('tr')
-
-plt.subplot(spec_IA_gating[0, 1])
-plt.title('\\textbf{{D2}} $g_{{\mathrm{{max}}}}$', loc = 'left')
-sns.swarmplot(y = peakact_pdata[0, -1, :], color = (0.2, 0.2, 0.9))
+plt.plot(ss_pdata[0, -1, :], peakact_pdata[0, -1, :], 'o', color = 'gray', markeredgecolor = 'k')
 plt.ylim(0, plt.ylim()[1] * 1.1)
-plt.ylabel('$g_{{-20\mathrm{{mV}}}}$')
-pltools.hide_border('tbr')
-plt.gca().set_xticks([])
+plt.xlim(0, plt.xlim()[1] * 1.1)
+plt.ylabel('$I_A$ conductance (nS)')
+plt.xlabel('$K_\mathrm{{slow}}$ conductance (nS)')
+pltools.hide_border('tr')
+plt.legend(loc = 'upper left')
+
+
+plt.subplot(supp_spec[:, 1])
+plt.title('\\textbf{{B}} Correlation at --40mV', loc = 'left')
+
+plot_best_fit(ss_pdata[0, -5, :], peakact_pdata[0, -5, :])
+plt.text(
+    0.95, 0.05,
+    '$R = {:.3f}$'.format(stats.pearsonr(peakact_pdata[0, -5, :], ss_pdata[0, -5, :])[0]),
+    ha = 'right', transform = plt.gca().transAxes
+)
+plt.plot(ss_pdata[0, -5, :], peakact_pdata[0, -5, :], 'o', color = 'gray', markeredgecolor = 'k')
+plt.ylim(0, plt.ylim()[1] * 1.1)
+plt.ylabel('$I_A$ conductance (nS)')
+plt.xlabel('$K_\mathrm{{slow}}$ conductance (nS)')
+pltools.hide_border('tr')
+plt.legend()
 
 if IMG_PATH is not None:
-    plt.savefig(IMG_PATH + 'perithresh_cond_characterization.png', dpi = 300)
+    plt.savefig(IMG_PATH + 'cond_corr.png')
 
 plt.show()
