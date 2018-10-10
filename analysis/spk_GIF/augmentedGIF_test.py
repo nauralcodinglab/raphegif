@@ -148,7 +148,7 @@ for i, expt in enumerate(experiments):
 
 #%%
 with open(DATA_PATH + '5HT_aug_fast.pyc', 'wb') as f:
-    obj = {'GIFs': GIFs, 'AugmentedGIFs': AugmentedGIFs}
+    obj = {'GIFs': GIFs, 'AugmentedGIFs': AugmentedGIFs, 'experiments': experiments}
     pickle.dump(obj, f)
 
 #%%
@@ -156,6 +156,7 @@ with open(DATA_PATH + '5HT_aug_fast.pyc', 'rb') as f:
     obj = pickle.load(f)
     GIFs = obj['GIFs']
     AugmentedGIFs = obj['AugmentedGIFs']
+    experiments = obj['experiments']
 
     del obj
 
@@ -243,7 +244,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 
 IMG_PATH = None#'./figs/ims/thesis/'
 
-ex_cell = 0
+ex_cell = 3
 xrange = (500, 14000)
 
 predictions_GIF[ex_cell].spks_data

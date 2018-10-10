@@ -253,7 +253,7 @@ plt.plot(
 plt.text(5200, -69, '$-70$mV', ha = 'center')
 plt.text(4250, -50, '+TTX', ha = 'center')
 plt.annotate(
-    'Model error binned\naccording to $V$', (4850, -38), ha = 'right', va = 'center',
+    'Model error shaded\naccording to $V$', (4850, -38), ha = 'right', va = 'center',
     xytext = (-10, 20), textcoords = 'offset points',
     arrowprops = {'arrowstyle': '->'}
 )
@@ -319,6 +319,14 @@ plt.plot(
     coeff_containers['sert'].ohmic_mod['binned_e2_values'][-4, :],
     'o', color = 'gray', markeredgecolor = 'k'
 )
+plt.text(
+    0.5, 1,
+    pltools.p_to_string(sp.stats.wilcoxon(
+        coeff_containers['sert'].ohmic_mod['binned_e2_values'][-7, :],
+        coeff_containers['sert'].ohmic_mod['binned_e2_values'][-4, :]
+    )[1]),
+    ha = 'center', va = 'top', transform = plt.gca().transAxes
+)
 plt.xticks(
     [0, 1],
     ['Subthreshold\n(${:.0f}$mV)'.format(coeff_containers['sert'].ohmic_mod['binned_e2_centres'][-7, 0]),
@@ -326,6 +334,7 @@ plt.xticks(
     rotation = 45
 )
 plt.ylabel('Mean squared error ($\mathrm{{mV}}^2$)')
+plt.ylim(plt.ylim()[0], plt.ylim()[1] * 1.1)
 plt.xlim(-0.3, 1.3)
 pltools.hide_border('tr')
 
@@ -333,6 +342,10 @@ if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'sert_vanilla_subthresh.png')
 
 plt.show()
+
+# Check for voltage-dependence of model error over -80mV to -45mV range.
+# p = 0.00074, N = 14 as of 2018.09.25
+sp.stats.friedmanchisquare(*[coeff_containers['sert'].ohmic_mod['binned_e2_values'][i, :] for i in range(-11, -3)])
 
 #%% MAKE PYR FIGURE
 

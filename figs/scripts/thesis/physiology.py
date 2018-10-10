@@ -1,5 +1,7 @@
 #%% IMPORT MODULES
 
+from __future__ import division
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -27,6 +29,12 @@ v_steps = Cell().read_ABF([GATING_PATH + '18619018.abf',
                                       GATING_PATH + '18619020.abf'])
 v_steps = Recording(np.array(v_steps).mean(axis = 0))
 
+# Load 5CT washon file and extract holding current over time.
+# One sweep every 10s?
+ser_1A = Cell().read_ABF(FIGDATA_PATH + '18420005.abf')[0]
+fct_washon = ser_1A[0, 10000:20000, :].mean(axis = 0)
+fct_support = np.arange(0, len(fct_washon)/6, 1/6)
+
 # Import passive membrane parameter data.
 params = pd.read_csv('data/DRN_membrane_parameters.csv')
 
@@ -53,11 +61,11 @@ hist_color = 'gray'
 plt.figure(figsize = (6, 5))
 
 plt.subplot(spec[0, :2])
-plt.title('\\textbf{{A}} Schematic', loc = 'left')
+plt.title('\\textbf{{A}} Long-range connectivity', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot(spec[0, 2:])
-plt.title('\\textbf{{B}} Image', loc = 'left')
+plt.title('\\textbf{{B}} Identification of 5HT cells', loc = 'left')
 pltools.hide_ticks()
 
 Vax = plt.subplot(spec_curr_steps[0, :])
@@ -129,8 +137,13 @@ pltools.hide_border(ax = cmdax)
 spec_5HT1A = gridspec.GridSpecFromSubplotSpec(2, 2, spec[1, 3], height_ratios = [1, 0.2], width_ratios = [0.2, 1])
 plt.subplot(spec_5HT1A[0, 1])
 plt.title('\\textbf{{E}} $\mathrm{{5HT_{{1A}}}}$ current', loc = 'left')
-plt.ylabel('$I$ (pA)')
+plt.plot(fct_support, fct_washon, 'o', color = 'gray', markeredgecolor = 'k', markeredgewidth = 0.7)
+plt.plot([3, 8], [60, 60], 'k-', lw = 3)
+plt.text(5.5, 62, '5CT', ha = 'center')
+plt.ylim(5, 72)
+plt.ylabel('$I_{{\mathrm{{hold}}}}$ at $-50$mV (pA)')
 plt.xlabel('Time (min)')
+pltools.hide_border('tr')
 
 
 ### Passive membrane parameters subplots
@@ -139,37 +152,57 @@ plt.xlabel('Time (min)')
 ax = plt.subplot(spec[2, 0])
 plt.title('\\textbf{{F1}} Leak', loc = 'left')
 plt.hist(1e3/params_5HT['R'], color = hist_color)
+plt.text(
+    0.5, 1,
+    pltools.p_to_string(stats.shapiro(1e3/params_5HT['R'])[1]),
+    ha = 'center', va = 'top', transform = plt.gca().transAxes
+)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.xlabel('$g_l$ (pS)')
-plt.ylim(0, plt.ylim()[1] * 1.1)
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Capacitance
 ax = plt.subplot(spec[2, 1])
 plt.title('\\textbf{{F2}} Capacitance', loc = 'left')
 plt.hist(params_5HT['C'], color = hist_color)
+plt.text(
+    0.5, 1,
+    pltools.p_to_string(stats.shapiro(params_5HT['C'])[1]),
+    ha = 'center', va = 'top', transform = plt.gca().transAxes
+)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.xlabel('$C_m$ (pF)')
-plt.ylim(0, plt.ylim()[1] * 1.1)
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Membrane time constant
 ax = plt.subplot(spec[2, 2])
 plt.title('\\textbf{{F3}} Time constant', loc = 'left')
 plt.hist(params_5HT['R'] * params_5HT['C'] * 1e-3, color = hist_color)
+plt.text(
+    0.5, 1,
+    pltools.p_to_string(stats.shapiro(params_5HT['R'] * params_5HT['C'] * 1e-3)[1]),
+    ha = 'center', va = 'top', transform = plt.gca().transAxes
+)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.xlabel('$\\tau$ (ms)')
-plt.ylim(0, plt.ylim()[1] * 1.1)
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Estimated resting membrane potential
 ax = plt.subplot(spec[2, 3])
 plt.title('\\textbf{{F4}} Equilibrium $V$', loc = 'left')
 plt.hist(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])], color = hist_color)
+plt.text(
+    0.5, 1,
+    pltools.p_to_string(stats.shapiro(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])])[1]),
+    ha = 'center', va = 'top', transform = plt.gca().transAxes
+)
 pltools.hide_border(sides = 'rlt')
 plt.yticks([])
 plt.xlabel('$\hat{{E}}_l$ (mV)')
-plt.ylim(0, plt.ylim()[1] * 1.1)
+plt.ylim(0, plt.ylim()[1] * 1.2)
 
 if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'physiology.png')
@@ -184,3 +217,12 @@ print('{:>10}: {:>10.2f} +/- {:>6.2f} nS'.format('gl', np.mean(1e3 / params_5HT[
 print('{:>10}: {:>10.1f} +/- {:>6.1f} pF'.format('C', np.mean(params_5HT['C']), np.std(params_5HT['C'])))
 print('{:>10}: {:>10.1f} +/- {:>6.1f} ms'.format('tau', np.mean(params_5HT['R'] * params_5HT['C'] * 1e-3), np.std(params_5HT['R'] * params_5HT['C'] * 1e-3)))
 print('{:>10}: {:>10.1f} +/- {:>6.1f} mV'.format('El_est', np.nanmean(params_5HT['El_est']), np.nanstd(params_5HT['El_est'])))
+
+labels_ = ['Rm', 'gl', 'C', 'tau', 'El_est']
+values_ = [1e-3 * params_5HT['R'],
+           1e3 / params_5HT['R'],
+           params_5HT['C'],
+           params_5HT['R'] * params_5HT['C'] * 1e-3,
+           params_5HT['El_est'][~np.isnan(params_5HT['El_est'])]]
+for label_, value_ in zip(labels_, values_):
+    print('{}: W = {:.5f}, p = {:.5f}'.format(label_, stats.shapiro(value_)[0], stats.shapiro(value_)[1]))

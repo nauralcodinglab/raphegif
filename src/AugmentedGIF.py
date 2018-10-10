@@ -409,7 +409,7 @@ class AugmentedGIF(GIF):
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
-        spks = np.array(np.zeros(p_T), dtype="double")
+        spks = np.array(spks, dtype="double")
         spks_i   = Tools.timeToIndex(spks, self.dt)
 
         m = np.zeros_like(V, dtype = "double")
@@ -623,30 +623,28 @@ class AugmentedGIF(GIF):
         self.var_explained_dV = var_explained_dV
         print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
 
-        if False:
+        # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
+        ####################################################################################################
 
-            # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
-            ####################################################################################################
+        SSE = 0     # sum of squared errors
+        VAR = 0     # variance of data
 
-            SSE = 0     # sum of squared errors
-            VAR = 0     # variance of data
+        for tr in experiment.trainingset_traces :
 
-            for tr in experiment.trainingset_traces :
+            if tr.useTrace :
 
-                if tr.useTrace :
+                # Simulate subthreshold dynamics
+                (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
 
-                    # Simulate subthreshold dynamics
-                    (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                indices_tmp = tr.getROI_FarFromSpikes(0.0, self.Tref)
 
-                    indices_tmp = tr.getROI_FarFromSpikes(0.0, self.Tref)
+                SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
+                VAR += len(indices_tmp)*np.var(tr.V[indices_tmp])
 
-                    SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
-                    VAR += len(indices_tmp)*np.var(tr.V[indices_tmp])
+        var_explained_V = 1.0 - SSE / VAR
 
-            var_explained_V = 1.0 - SSE / VAR
-
-            self.var_explained_V = var_explained_V
-            print "Percentage of variance explained (on V): %0.2f" % (var_explained_V*100.0)
+        self.var_explained_V = var_explained_V
+        print "Percentage of variance explained (on V): %0.2f" % (var_explained_V*100.0)
 
 
     def fitSubthresholdDynamics_Build_Xmatrix_Yvector(self, trace, DT_beforeSpike=5.0):

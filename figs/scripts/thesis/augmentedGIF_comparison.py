@@ -11,6 +11,7 @@ import matplotlib.gridspec as gs
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import seaborn as sns
 import pandas as pd
+from scipy import stats
 
 import sys
 sys.path.append('./src')
@@ -207,6 +208,10 @@ plt.plot(
 )
 plt.plot([0 for i in R2_GIF], R2_GIF, 'ro', markeredgecolor = 'k')
 plt.plot([1 for i in R2_KGIF], R2_KGIF, 'bo', markeredgecolor = 'k')
+plt.text(
+    0.5, 0.2, pltools.p_to_string(stats.wilcoxon(R2_GIF, R2_KGIF)[1]),
+    ha = 'center', va = 'center', transform = plt.gca().transAxes
+)
 pltools.hide_border('tr')
 plt.xticks([0, 1], ['GIF', 'KGIF'])
 plt.ylim(0, 1)
@@ -222,6 +227,10 @@ plt.plot(
 )
 plt.plot([0 for i in Md_vals_GIF], Md_vals_GIF, 'ro', markeredgecolor = 'k')
 plt.plot([1 for i in Md_vals_KGIF], Md_vals_KGIF, 'bo', markeredgecolor = 'k')
+plt.text(
+    0.5, 0.9, pltools.p_to_string(stats.wilcoxon(Md_vals_GIF, Md_vals_KGIF)[1]),
+    ha = 'center', va = 'center', transform = plt.gca().transAxes
+)
 pltools.hide_border('tr')
 plt.xticks([0, 1], ['GIF', 'KGIF'])
 plt.ylim(0, 1)
@@ -233,6 +242,15 @@ if IMG_PATH is not None:
 
 plt.show()
 
+#%% STATS AND STUFF
+
+
+no_spks = [experiments[i].getTrainingSetNbOfSpikes() for i in range(len(experiments))]
+no_spks
+
+vals = no_spks
+print('{:.3f} +/- {:.3f}'.format(np.mean(vals), np.std(vals)))
+stats.wilcoxon(R2_KGIF, R2_GIF)
 
 #%% SUMMARY FIGURE OF AUGMENTED GIF PARAMETERS
 

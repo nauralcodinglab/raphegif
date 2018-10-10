@@ -145,6 +145,21 @@ def testset_traces_plot(null_mod, alt_mod, cell_no = 0, null_mod_label = None, a
     plt.legend(loc = 'lower left')
 
 
+def extract_friedman_p(mod, lower_V_bin = -11, upper_V_bin = -3):
+    """
+    Non-parametric repeated measures test for voltage-dependence of error
+    """
+
+    return stats.friedmanchisquare(*[mod['binned_e2_values'][i, :] for i in range(lower_V_bin, upper_V_bin)])[1]
+
+
+#%% FRIEDMAN TESTS ON VOLTAGE BINS
+
+extract_friedman_p(ohmic_mod_coeffs)
+extract_friedman_p(gk1_mod_coeffs)
+extract_friedman_p(gk2_mod_coeffs)
+extract_friedman_p(full_mod_coeffs)
+
 #%% MAKE SOME LATEX TEXT FOR MODEL DEFINITIONS
 
 ohmic_shorthand = '$\omega = I(t)- g_l\\times(V(t) - E_l)$'
