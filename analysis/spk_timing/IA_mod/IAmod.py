@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 
 class IAmod(object):
 
-    def __init__(self, ga, tau_h, sigma_noise):
+    def __init__(self, ga, tau_h, sigma_noise, tau_eff = 1):
+
+        self.tau_eff = tau_eff
 
         self.ga = ga
 
@@ -51,6 +53,7 @@ class IAmod(object):
             return 1 / (1 + np.exp( -self.h_k * (V - self.h_Vhalf) ))
 
         # Locally define variables.
+        tau_eff     = deepcopy(self.tau_eff)
         tau_h       = deepcopy(self.h_tau)
         ga          = deepcopy(self.ga)
         El          = deepcopy(self.El)
@@ -83,7 +86,7 @@ class IAmod(object):
 
             # Integrate voltage.
             dV = -(V_mat[t-1, :] - El) - ga * m_mat[t-1, :] * h_mat[t-1, :] * (V_mat[t-1, :] - Ea) + Vin[t-1, :]
-            V_mat[t] = V_mat[t-1, :] + dV * dt + V_noise[t-1, :] * np.sqrt(dt)
+            V_mat[t] = V_mat[t-1, :] + dV / tau_eff * dt + V_noise[t-1, :] * np.sqrt(dt)
 
             # Detect spiking neurons, log spikes, and reset voltage where applicable.
             spiking_neurons = V_mat[t-1, :] >= theta
