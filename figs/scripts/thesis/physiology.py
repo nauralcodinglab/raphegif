@@ -226,3 +226,21 @@ values_ = [1e-3 * params_5HT['R'],
            params_5HT['El_est'][~np.isnan(params_5HT['El_est'])]]
 for label_, value_ in zip(labels_, values_):
     print('{}: W = {:.5f}, p = {:.5f}'.format(label_, stats.shapiro(value_)[0], stats.shapiro(value_)[1]))
+
+# Fit gamma distribution to membrane time constant
+taus_ = params_5HT['R'] * params_5HT['C'] * 1e-3
+a, loc, scale = stats.gamma.fit(taus_ / np.median(taus_))
+x = np.arange(0, 3, 0.05)
+pdf = stats.gamma.pdf(x, a, loc = loc, scale = scale)
+sample = np.random.gamma(4.52, 0.19, 63)
+
+plt.figure()
+plt.hist(taus_ / np.median(taus_), label = 'Neuronal data')
+plt.plot(x, pdf / np.max(pdf) * 16, 'r-', label = 'Fitted distribution')
+plt.hist(sample + 0.22, alpha = 0.7, label = 'Artificial data')
+plt.legend()
+plt.xlabel('Normalized tau')
+plt.ylabel('No. of neurons')
+plt.show()
+
+print('gamma: a = {:.2f}, loc = {:.2f}, scale = {:.2f}'.format(a, loc, scale))
