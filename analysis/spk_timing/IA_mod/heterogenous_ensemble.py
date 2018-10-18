@@ -279,18 +279,35 @@ plt.show()
 T = 15
 burn_in = 3
 dt = 1e-3
-no_neurons = 500
+no_neurons = 100
 no_reps = 5
 mu = 22
 
 verbose = True
 
-noise_stimuli = []
-noise_simulations = {
-    'absent_mod': [],
-    'homogenous_mod': [],
-    'heterogenous_mod': []
+ga_mean = 11
+ga_std = 2.77
+
+sigma_noise = 0.5
+
+np.random.seed(42)
+random_gas = np.random.normal(ga_mean, ga_std, no_neurons)
+np.random.seed(43)
+random_taus = np.random.gamma(4.52, 0.19, no_neurons) + 0.22
+
+noise_mods = {
+    'absent_mod': IAmod(0, 1, sigma_noise),
+    'heterogenous_tau_no_IA_mod': IAmod(0, 1, sigma_noise, random_taus),
+    'heterogenous_mod': IAmod(random_gas, 1, sigma_noise),
+    'homogenous_mod': IAmod(ga_mean, 1, sigma_noise),
+    'heterogenous_tau_mod': IAmod(ga_mean, 1, sigma_noise, random_taus),
+    'heterogenous_both_mod': IAmod(random_gas, 1, sigma_noise, random_taus)
 }
+
+noise_stimuli = []
+noise_simulations = {}
+for key in noise_mods.keys():
+    noise_simulations[key] = []
 
 for rep in range(no_reps):
 
@@ -301,21 +318,21 @@ for rep in range(no_reps):
 
     noise_stimuli.append(Vin_noise_vec)
 
-    for i, key in enumerate(mods.keys()):
+    for i, key in enumerate(noise_mods.keys()):
 
         if verbose:
             print('Simulating {} rep {}'.format(key, rep))
 
-        noise_simulations[key].append(Simulation(mods[key], -50, Vin_noise_mat, dt))
+        noise_simulations[key].append(Simulation(noise_mods[key], -50, Vin_noise_mat, dt))
 
 
 #%% NOISY INPUT FIGURE
 
-IMG_PATH = './figs/ims/thesis/'#None
+IMG_PATH = None#'./figs/ims/thesis/'
 
-colors = [(0.1, 0.1, 0.1), (0.1, 0.5, 0.1), (0.25, 0.25, 0.8)]
+colors = [(0.1, 0.1, 0.1), (0.1, 0.5, 0.1), (0.25, 0.25, 0.8), (0.8, 0.2, 0.2), (0.5, 0.5, 0.5)]
 
-spec_outer = gs.GridSpec(1, 2, width_ratios = [1, 0.2])
+spec_outer = gs.GridSpec(1, 2, width_ratios = [1, 0.4], bottom = 0.2)
 spec_psth = gs.GridSpecFromSubplotSpec(2, 1, spec_outer[:, 0], height_ratios = [0.2, 1], hspace = 0.1)
 spec_corr = gs.GridSpecFromSubplotSpec(1, 1, spec_outer[:, 1])
 
@@ -334,31 +351,33 @@ pltools.hide_border('trb')
 I_ax.set_xticks([])
 
 PSTH_ax = plt.subplot(spec_psth[1, :])
-PSTH_ax.plot(
-    noise_simulations['absent_mod'][-1].t_vec,
-    PSTH(noise_simulations['absent_mod'][-1]),
-    '-', color = (0.1, 0.1, 0.1), label = 'No $I_A$'
-)
-PSTH_ax.plot(
-    noise_simulations['homogenous_mod'][-1].t_vec,
-    PSTH(noise_simulations['homogenous_mod'][-1]),
-    '-', color = (0.1, 0.5, 0.1), alpha = 0.7, label = 'Homogenous $I_A$'
-)
-PSTH_ax.plot(
-    noise_simulations['heterogenous_mod'][-1].t_vec,
-    PSTH(noise_simulations['heterogenous_mod'][-1]),
-    '-', color = (0.25, 0.25, 0.8), alpha = 0.7, label = 'Heterogenous $I_A$'
-)
+
+labels = {
+    'absent_mod': 'No $I_A$',
+    'heterogenous_tau_no_IA_mod': 'Hetero. $\\tau$ no $I_A$',
+    'homogenous_mod': 'Homo. $I_A$',
+    'heterogenous_mod': 'Hetero. $I_A$',
+    'heterogenous_tau_mod': 'Hetero. $\\tau$ homo. $I_A$',
+    'heterogenous_both_mod': 'Hetero. $\\tau$ hetero. $I_A$'
+}
+for i, key in enumerate([noise_simulations.keys()[i] for i in [2, 3, 0, 4, 1]]):
+    PSTH_ax.plot(
+        noise_simulations[key][-1].t_vec,
+        PSTH(noise_simulations[key][-1]),
+        '-', color = colors[i], label = labels[key], alpha = 0.7
+    )
+
 PSTH_ax.legend()
 PSTH_ax.set_ylabel('Pop. firing rate (spks neuron$^{{-1}}$ $\\tau_{{mem}}^{{-1}}$)')
 PSTH_ax.set_xlabel('Time ($\\tau_{{mem}}$)')
 pltools.hide_border('tr')
 
-plt.subplot(spec_corr[:, :])
+corr_ax = plt.subplot(spec_corr[:, :])
 plt.title('\\textbf{{B}}', loc = 'left')
 plt.ylim(0, 1)
 
 r_vals = pd.DataFrame(columns = ['r', 'key'])
+
 
 for i, key in enumerate(noise_simulations.keys()):
 
@@ -370,23 +389,23 @@ for i, key in enumerate(noise_simulations.keys()):
 
         df_tmp = pd.DataFrame(
             {'r':stats.pearsonr(psth_tmp, signal_tmp)[0],
-             'key':[key]}
+             'key':[key],
+             'label':[labels[key]]}
         )
 
         r_vals = r_vals.append(df_tmp)
 
 
-r_vals = r_vals.reset_index().reindex([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 1, 2, 3, 4]).iloc[:, 1:]
-
-sns.swarmplot('key', 'r', data = r_vals, palette = colors, edgecolor = 'gray', linewidth = 0.7)
-plt.xticks([])
-pltools.hide_border('trb')
+sns.swarmplot('label', 'r', data = r_vals, palette = colors, edgecolor = 'gray', linewidth = 0.7,
+    order = [labels.values()[i] for i in [2, 4, 0, 1, 5, 3]])#order = [labels.values()[i] for i in [2, 3, 0, 4, 1]])
+corr_ax.set_xticklabels(corr_ax.get_xticklabels(), rotation = 45, ha = 'right')
+pltools.hide_border('tr')
 plt.ylabel('Stimulus-response correlation $R$')
 plt.xlabel('')
 
 
 if IMG_PATH is not None:
-    plt.savefig(IMG_PATH + 'IA_noisy_stim_encoding.png')
+    plt.savefig(IMG_PATH + 'controlled_IA_noisy_stim_encoding.png')
 
 plt.show()
 
@@ -424,5 +443,52 @@ for i, key in enumerate(noise_simulations.keys()):
 plt.tight_layout()
 
 plt.savefig(IMG_PATH + 'IA_PSTH_corr.png')
+
+plt.show()
+
+
+#%% CROSS CORRELATION
+
+IMG_PATH = './figs/ims/thesis/'
+
+from scipy import signal
+
+plt.rc('text', usetex = False)
+
+plt.figure()
+
+for i, key in enumerate(noise_simulations.keys()):
+
+    tmp_xcorr = []
+
+    for rep in range(len(noise_stimuli)):
+
+        psth_tmp = PSTH(noise_simulations[key][rep], 0.1)[int(burn_in/dt):]
+        signal_tmp = noise_stimuli[rep][int(burn_in/dt):]
+
+        tmp_xcorr.append(signal.correlate(
+            psth_tmp - psth_tmp.mean(), signal_tmp - signal_tmp.mean(), mode = 'same') / (len(psth_tmp) * np.std(psth_tmp) * np.std(signal_tmp))
+        )
+
+    tmp_xcorr = np.array(tmp_xcorr)
+
+    plt.subplot(2, 3, i + 1)#[3, 5, 2, 1, 6, 4][i])
+    plt.title('{}'.format(labels[key]))
+    plt.axvline(0, color = 'k', lw = 0.5)
+    x = np.arange(-int(tmp_xcorr.shape[1]/2), int(tmp_xcorr.shape[1]/2), 1) * 1e-3
+    #plt.plot(np.tile(x[:, np.newaxis], (1, tmp_xcorr.shape[1])), tmp_xcorr.T[:len(x), :], 'k-', lw = 0.5, alpha = 0.5)
+    plt.plot(x, tmp_xcorr.mean(axis = 0)[:len(x)], 'r-', label = 'Mean (N = 5)')
+    plt.plot(x, np.flip(tmp_xcorr.mean(axis = 0)[:len(x)], -1), '-', color = 'gray', label = 'Flipped mean')
+    plt.legend(loc = 'lower right')
+    plt.ylim(-0.25, 0.75)
+    plt.xlim(-2, 2)
+
+    plt.ylabel('Cross correlation coeff.')
+    plt.xlabel('Lag (tau)')
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'IA_pop_xcorr.png')
 
 plt.show()

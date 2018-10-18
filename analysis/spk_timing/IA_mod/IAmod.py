@@ -86,7 +86,7 @@ class IAmod(object):
 
             # Integrate voltage.
             dV = -(V_mat[t-1, :] - El) - ga * m_mat[t-1, :] * h_mat[t-1, :] * (V_mat[t-1, :] - Ea) + Vin[t-1, :]
-            V_mat[t] = V_mat[t-1, :] + dV / tau_eff * dt + V_noise[t-1, :] * np.sqrt(dt)
+            V_mat[t] = V_mat[t-1, :] + (dV * dt + V_noise[t-1, :] * np.sqrt(dt)) / tau_eff
 
             # Detect spiking neurons, log spikes, and reset voltage where applicable.
             spiking_neurons = V_mat[t-1, :] >= theta
