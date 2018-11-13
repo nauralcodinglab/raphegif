@@ -47,23 +47,23 @@ params_5HT.drop('TdT', axis = 1, inplace = True)
 
 IMG_PATH = './figs/ims/defence/'
 
-plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
+plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
 
 
 spec = gridspec.GridSpec(2, 4, left = 0.05, height_ratios = [ 1, 0.6],
-                         right = 0.95, top = 0.95, bottom = 0.1,
-                         hspace = 0.4)
+                         right = 0.95, top = 0.92, bottom = 0.15,
+                         hspace = 0.35, wspace = 0.35)
 spec_curr_steps     = gridspec.GridSpecFromSubplotSpec(2, 1, spec[0, 0], height_ratios = [1, 0.2])
 spec_v_steps        = gridspec.GridSpecFromSubplotSpec(2, 1, spec[0, 2], height_ratios = [1, 0.2])
 
 hist_color = 'gray'
 
-plt.figure(figsize = (6, 5))
+plt.figure(figsize = (5, 2.2))
 
 Vax = plt.subplot(spec_curr_steps[0, :])
 cmdax = plt.subplot(spec_curr_steps[1, :], sharex = Vax)
 xlim = (2000, 4500)
-Vax.set_title('\\textbf{{C1}} Firing', loc = 'left')
+#Vax.set_title('\\textbf{{C1}} Firing', loc = 'left')
 sweeps_to_use = [0, 4, 15]
 Vax.set_xlim(xlim)
 Vax.plot(
@@ -85,7 +85,7 @@ pltools.add_scalebar(y_units = 'pA', y_size = 70, anchor = (0.6, 0.35), omit_x =
 
 spec_phase = gridspec.GridSpecFromSubplotSpec(2, 2, spec[0, 1], height_ratios = [1, 0.2], width_ratios = [0.2, 1])
 plt.subplot(spec_phase[0, 1])
-plt.title('\\textbf{{C2}} Phase plot')
+#plt.title('\\textbf{{C2}} Phase plot')
 start_sweep = 7
 t_range = slice(22000, 31500)
 plt.plot(
@@ -100,7 +100,7 @@ pltools.hide_border('tr')
 Iax = plt.subplot(spec_v_steps[0, :])
 cmdax = plt.subplot(spec_v_steps[1, :], sharex = Iax)
 xlim = (2500, 3500)
-Iax.set_title('\\textbf{{D}} Currents', loc = 'left')
+#Iax.set_title('\\textbf{{D}} Currents', loc = 'left')
 Iax.set_xlim(xlim)
 Iax.set_ylim(-100, 1200)
 sweeps_to_use = [0, 4, 8, 12]
@@ -128,7 +128,7 @@ pltools.hide_border(ax = cmdax)
 
 spec_5HT1A = gridspec.GridSpecFromSubplotSpec(2, 2, spec[0, 3], height_ratios = [1, 0.2], width_ratios = [0.2, 1])
 plt.subplot(spec_5HT1A[0, 1])
-plt.title('\\textbf{{E}} $\mathrm{{5HT_{{1A}}}}$ current', loc = 'left')
+#plt.title('\\textbf{{E}} $\mathrm{{5HT_{{1A}}}}$ current', loc = 'left')
 plt.plot(fct_support, fct_washon, 'o', color = 'gray', markeredgecolor = 'k', markeredgewidth = 0.7)
 plt.plot([3, 8], [60, 60], 'k-', lw = 3)
 plt.text(5.5, 62, '5CT', ha = 'center')
@@ -142,7 +142,7 @@ pltools.hide_border('tr')
 
 # Leak conductance
 ax = plt.subplot(spec[1, 0])
-plt.title('\\textbf{{F1}} Leak', loc = 'left')
+#plt.title('\\textbf{{F1}} Leak', loc = 'left')
 plt.hist(1e3/params_5HT['R'], color = hist_color)
 plt.text(
     0.5, 1,
@@ -156,7 +156,7 @@ plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Capacitance
 ax = plt.subplot(spec[1, 1])
-plt.title('\\textbf{{F2}} Capacitance', loc = 'left')
+#plt.title('\\textbf{{F2}} Capacitance', loc = 'left')
 plt.hist(params_5HT['C'], color = hist_color)
 plt.text(
     0.5, 1,
@@ -170,7 +170,7 @@ plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Membrane time constant
 ax = plt.subplot(spec[1, 2])
-plt.title('\\textbf{{F3}} Time constant', loc = 'left')
+#plt.title('\\textbf{{F3}} Time constant', loc = 'left')
 plt.hist(params_5HT['R'] * params_5HT['C'] * 1e-3, color = hist_color)
 plt.text(
     0.5, 1,
@@ -184,7 +184,7 @@ plt.ylim(0, plt.ylim()[1] * 1.2)
 
 # Estimated resting membrane potential
 ax = plt.subplot(spec[1, 3])
-plt.title('\\textbf{{F4}} Equilibrium $V$', loc = 'left')
+#plt.title('\\textbf{{F4}} Equilibrium $V$', loc = 'left')
 plt.hist(params_5HT['El_est'][~np.isnan(params_5HT['El_est'])], color = hist_color)
 plt.text(
     0.5, 1,

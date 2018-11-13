@@ -110,22 +110,26 @@ plt.show()
 
 #%% MAKE FIGURE
 
-plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
+plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
 
 IMG_PATH = './figs/ims/defence/'
 
 ex_cell = 3
 xrange = (500, 7500)
 
-spec_outer = plt.GridSpec(2, 2, width_ratios = [1, 0.2], wspace = 0.4, hspace = 0.4, top = 0.9, right = 0.95, left = 0.1, bottom = 0.1)
-spec_tr = gs.GridSpecFromSubplotSpec(3, 1, spec_outer[:, 0], height_ratios = [0.2, 1, 0.4], hspace = 0)
+spec_outer = plt.GridSpec(
+    2, 2,
+    width_ratios = [1, 0.4], wspace = 0.55, hspace = 0.4,
+    top = 0.9, right = 0.95, left = 0.15, bottom = 0.1
+)
+spec_tr = gs.GridSpecFromSubplotSpec(3, 1, spec_outer[:, 0], height_ratios = [0.2, 1, 0.6], hspace = 0)
 spec_raster = gs.GridSpecFromSubplotSpec(3, 1, spec_tr[2, 0], hspace = 0)
 
-plt.figure(figsize = (6, 5))
+plt.figure(figsize = (3, 2))
 
 ### Example neuron.
 plt.subplot(spec_tr[0, :])
-plt.title('\\textbf{{A}} Model comparison on 5HT neuron test data', loc = 'left')
+#plt.title('\\textbf{{A}} Model comparison on 5HT neuron test data', loc = 'left')
 plt.plot(
     experiments[ex_cell].testset_traces[0].getTime(),
     1e3 * experiments[ex_cell].testset_traces[0].I,
@@ -172,7 +176,7 @@ for i, sweep_spks in enumerate(predictions_GIF[ex_cell].spks_data):
     plt.plot(
         sweep_spks,
         [i for i_ in range(len(sweep_spks))],
-        'k|', markersize = 3
+        'k|', markersize = 1.3
     )
 
 plt.xlim(xrange)
@@ -187,7 +191,7 @@ for i, sweep_spks in enumerate(predictions_GIF[ex_cell].spks_model):
     plt.plot(
         sweep_spks,
         [i for i_ in range(len(sweep_spks))],
-        'r|', markersize = 3
+        'r|', markersize = 1.3
     )
 
 plt.xlim(xrange)
@@ -202,37 +206,38 @@ for i, sweep_spks in enumerate(predictions_KGIF[ex_cell].spks_model):
     plt.plot(
         sweep_spks,
         [i for i_ in range(len(sweep_spks))],
-        'b|', markersize = 3
+        'b|', markersize = 1.3
     )
 
 
 plt.xlim(xrange)
 pltools.add_scalebar(
     anchor = (0.98, -0.12), x_units = 'ms', omit_y = True,
-    x_label_space = -0.08
+    x_label_space = -0.16
 )
 
 plt.subplot(spec_outer[0, 1])
-plt.title('\\textbf{{B}}', loc = 'left')
+#plt.title('\\textbf{{B}}', loc = 'left')
 plt.plot(
     np.array(([0 for i in R2_GIF], [1 for i in R2_GIF])),
     np.array((R2_GIF, R2_KGIF)),
     color = 'gray', alpha = 0.5
 )
-plt.plot([0 for i in R2_GIF], R2_GIF, 'ro', markeredgecolor = 'k')
-plt.plot([1 for i in R2_KGIF], R2_KGIF, 'bo', markeredgecolor = 'k')
+plt.plot([0 for i in R2_GIF], R2_GIF, 'ro', markeredgecolor = 'k', clip_on = False)
+plt.plot([1 for i in R2_KGIF], R2_KGIF, 'bo', markeredgecolor = 'k', clip_on = False)
 plt.text(
     0.5, 0.2, pltools.p_to_string(stats.wilcoxon(R2_GIF, R2_KGIF)[1]),
     ha = 'center', va = 'center', transform = plt.gca().transAxes
 )
 pltools.hide_border('tr')
+plt.yticks([0, 0.5, 1], ['0.0', '0.5', '1.0'])
 plt.xticks([0, 1], ['GIF', 'KGIF'])
 plt.ylim(0, 1)
 plt.xlim(-0.25, 1.25)
 plt.ylabel('$R^2$ on $V_\\mathrm{{test}}$')
 
 plt.subplot(spec_outer[1, 1])
-plt.title('\\textbf{{C}}', loc = 'left')
+#plt.title('\\textbf{{C}}', loc = 'left')
 plt.plot(
     np.array(([0 for i in Md_vals_GIF], [1 for i in Md_vals_GIF])),
     np.array((Md_vals_GIF, Md_vals_KGIF)),
@@ -245,6 +250,7 @@ plt.text(
     ha = 'center', va = 'center', transform = plt.gca().transAxes
 )
 pltools.hide_border('tr')
+plt.yticks([0, 0.5, 1], ['0.0', '0.5', '1.0'])
 plt.xticks([0, 1], ['GIF', 'KGIF'])
 plt.ylim(0, 1)
 plt.xlim(-0.25, 1.25)

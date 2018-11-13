@@ -167,19 +167,19 @@ ex_cell = 4
 IMG_PATH = './figs/ims/defence/'
 
 spec = gs.GridSpec(
-    2, 2, width_ratios = [1, 0.15],
+    2, 2, width_ratios = [1, 0.3],
     top = 0.9, bottom = 0.1, left = 0.05, right = 0.98,
-    wspace = 0.5
+    wspace = 0.9
 )
 spec_tr = gs.GridSpecFromSubplotSpec(4, 1, spec[:, 0], height_ratios = [0.2, 1, 0.3, 0.3], hspace = 0)
 spec_quant = gs.GridSpecFromSubplotSpec(2, 1, spec[:, 1], hspace = 0.4)
 
-plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
+plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
 
-plt.figure(figsize = (6, 5))
+plt.figure(figsize = (3, 2))
 
 I_ax = plt.subplot(spec_tr[0, :])
-plt.title('\\textbf{{A}} 5HT neuron test data \& model predictions', loc = 'left')
+#plt.title('\\textbf{{A}} 5HT neuron test data \& model predictions', loc = 'left')
 plt.plot(
     1e-3 * experiments[ex_cell].testset_traces[0].getTime(),
     experiments[ex_cell].testset_traces[0].I,
@@ -210,14 +210,14 @@ pltools.add_scalebar(y_units = 'mV', y_size = 50, omit_x = True, anchor = (1.02,
 real_raster_ax = plt.subplot(spec_tr[2, :], sharex = I_ax)
 for i, sw in enumerate(experiments[ex_cell].testset_traces):
     spks = sw.getSpikeTimes()
-    plt.plot(1e-3 * spks, [i for j in spks], 'k|', markersize = 5)
+    plt.plot(1e-3 * spks, [i for j in spks], 'k|', markersize = 2)
 pltools.hide_border()
 
 plt.subplot(spec_tr[3, :], sharex = I_ax)
 for i, spks in enumerate(predictions[ex_cell].spks_model):
     if i >= len(experiments[ex_cell].testset_traces):
         break
-    plt.plot(1e-3 * spks, [i for j in spks], 'r|', markersize = 5)
+    plt.plot(1e-3 * spks, [i for j in spks], 'r|', markersize = 2)
 
 
 plt.xlim(0, 15)
@@ -226,7 +226,7 @@ pltools.add_scalebar(x_units = 's', omit_y = True, anchor = (1, -0.05), x_label_
 pltools.hide_ticks(ax = real_raster_ax)
 
 plt.subplot(spec_quant[0, :])
-plt.title('\\textbf{{B}}', loc = 'left')
+#plt.title('\\textbf{{B}}', loc = 'left')
 plt.ylim(0, 1)
 sigmas = [GIF.var_explained_V for GIF in GIFs]
 sns.swarmplot(y = sigmas, color = 'gray', edgecolor = 'k', linewidth = 0.5)
@@ -235,7 +235,7 @@ plt.xticks([])
 plt.ylabel('$R^2$ on $V_\mathrm{{test}}$')
 
 plt.subplot(spec_quant[1, :])
-plt.title('\\textbf{{C}}', loc = 'left')
+#plt.title('\\textbf{{C}}', loc = 'left')
 plt.ylim(0, 1)
 sns.swarmplot(y = Md_vals, color = 'gray', edgecolor = 'k', linewidth = 0.5)
 pltools.hide_border('trb')
