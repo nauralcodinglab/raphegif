@@ -10,10 +10,12 @@ import matplotlib.gridspec as gs
 
 import sys
 sys.path.append('./figs/scripts/defence')
+sys.path.append('./figs/scripts')
 sys.path.append('./analysis/spk_timing/IA_mod')
 
 from stimgen import Stim
 import IAmod
+import pltools
 
 
 #%% INITIALIZE MODELS
@@ -21,84 +23,21 @@ import IAmod
 noise_sd = 0
 
 linmod = IAmod.IAmod(0, 1, noise_sd)
+linmod.El = -70
 iamod = IAmod.IAmod(10, 1, noise_sd)
+iamod.El = -70
 
 
-#%% GENERATE SYNAPTIC KERNELS
-
-def generate_synaptic_kernel(half_T, ampli, tau_rise, tau_decay, dt = 0.001):
-
-    t_vec = np.arange(-half_T, half_T, dt)
-
-    waveform = np.heaviside(t_vec, 1) * (np.exp(-t_vec/tau_decay) - np.exp(-t_vec/tau_rise))
-    waveform /= np.max(waveform)
-    waveform *= ampli
-
-    return waveform
-
-# Normalize timescales to membrane tau for use by IAmod.
-membrane_tau = 75
-dt = 0.01
-
-lhb_ampli = 40
-mpfc_ampli = 12.5
-rise = 1 / membrane_tau
-lhb_decay = 10 / membrane_tau
-mpfc_decay = 75 / membrane_tau
-
-mpfc_kernel = generate_synaptic_kernel(6 * mpfc_decay, mpfc_ampli, rise, mpfc_decay, dt)
-lhb_kernel = generate_synaptic_kernel(6 * lhb_decay, lhb_ampli, rise, lhb_decay, dt)
-
-
-#%% SIMPLE SIMULATIONS TO INSPECT KERNELS
-
-T_single_epsc = 10
-
-trigger_vec = np.zeros(int(15/dt))
-trigger_vec[100] = 1
-
-mpfc_single_epsc = np.convolve(trigger_vec, mpfc_kernel, 'same')[:, np.newaxis]
-lhb_single_epsc = np.convolve(trigger_vec, lhb_kernel, 'same')[:, np.newaxis]
-
-mpfc_single_sim = IAmod.Simulation(linmod, -60, mpfc_single_epsc, dt)
-lhb_single_sim = IAmod.Simulation(linmod, -60, lhb_single_epsc, dt)
-
-AUC_mpfc = (mpfc_single_sim.V - linmod.El).sum() * dt
-AUC_lhb = (lhb_single_sim.V - linmod.El).sum() * dt
-
-
-plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
-plt.figure(figsize = (3, 2))
-
-I_ax = plt.subplot(211)
-plt.plot(mpfc_single_sim.t_vec, mpfc_single_epsc[:, 0], 'k-', label = 'mPFC')
-plt.plot(lhb_single_sim.t_vec, lhb_single_epsc[:, 0], 'r-', alpha = 0.9, label = 'LHb')
-plt.xticks([])
-plt.xlim(0, 8)
-plt.ylabel('Input (mV)')
-plt.legend()
-
-V_ax = plt.subplot(212)
-plt.plot(mpfc_single_sim.t_vec, mpfc_single_sim.V[:, 0], 'k-', label = 'mPFC')
-plt.plot(lhb_single_sim.t_vec, lhb_single_sim.V[:, 0], 'r-', alpha = 0.9, label = 'LHb')
-plt.xlim(0, 8)
-plt.ylabel('V (mV)')
-plt.xlabel('Time ($\\tau_\\mathrm{{mem}}$)')
-plt.legend()
-
-plt.tight_layout()
-
-plt.show()
-
-print('mPFC EPSP AUC: {:.2f}mV tau'.format(AUC_mpfc))
-print('LHb EPSP AUC: {:.2f}mV tau'.format(AUC_lhb))
-
-#%%
+#%% CREATE SYNAPTIC BOMBARDMENT CLASS WITH HANDY METHODS
 
 class SynapticBombardment(object):
 
     def __init__(self, dt = 0.001):
         self.dt = dt
+
+    def set_kernel(self, kernel, kernel_params = None):
+        self.kernel = kernel
+        self.kernel_params = kernel_params
 
     def generate_kernel(self, half_T, ampli, tau_rise, tau_decay):
         """Generate a synaptic kernel.
@@ -130,6 +69,13 @@ class SynapticBombardment(object):
         """Convert the rate of a Poisson point process to a probability."""
         return 1 - np.exp(-rate * self.dt)
 
+    def set_trigger(self, trigger):
+
+        if trigger.ndim < 2:
+            trigger = (1 * trigger)[:, np.newaxis]
+
+        self.trigger_mat = trigger
+
     def generate_trigger(self, rate, T, no_neurons, seed = 42):
         """Generate a sparse matrix with ones placed according to a Poisson point process."""
 
@@ -142,7 +88,7 @@ class SynapticBombardment(object):
 
         return trigger_mat
 
-    def conv(self):
+    def convolve(self):
         """Convolve trigger matrix with synaptic kernel."""
 
         I = np.empty_like(self.trigger_mat)
@@ -154,78 +100,312 @@ class SynapticBombardment(object):
 
         return I
 
-#%%
+    @property
+    def no_neurons(self):
+        try:
+            no_neurons = self.trigger.shape[1]
+        except AttributeError:
+            no_neurons = self.I.shape[1]
 
-def poisson_rtp(rate, dt):
-    """Convert the rate of a Poisson point process to a probability."""
-    return 1 - np.exp(-rate * dt)
+        return no_neurons
 
-def generate_poisson_trigger(rate, T, dt, seed = 42):
-    """Generate a sparse vector with ones placed according to a Poisson point process.
+    @property
+    def t_vec(self):
+        return np.arange(0, (self.I.shape[0] - 0.5) * self.dt, self.dt)
 
-    Inputs:
-        rate -- rate of the poisson process
-        T    -- length of the vector in time units
-        dt   -- timestep
-        seed -- random seed
-    """
+    @property
+    def t_mat(self):
+        return np.tile(self.t_vec[:, np.newaxis], (1, self.no_neurons))
 
-    trigger_vec = np.zeros(int(T/dt))
-    np.random.seed(seed)
-    rands = np.random.uniform(0, 1, len(trigger_vec))
-    trigger_vec[poisson_rtp(rate, dt) >= rands] = 1
+    def plot(self):
+        plt.figure()
+        plt.plot(self.t_mat, self.I, 'k-', alpha = min(1, 3 / self.no_neurons))
+        plt.xlabel('Time')
+        plt.show()
 
-    return trigger_vec
 
-def generate_poisson_trigger_mat(no_neurons, rate, T, dt, seed = 42):
-    trigger_mat = np.zeros((int(T/dt), no_neurons))
-    np.random.seed(seed)
-    rands = np.random.uniform(0, 1, trigger_mat.shape)
-    trigger_mat[poisson_rtp(rate, dt) >= rands] = 1
+#%% GENERATE SYNAPTIC KERNELS
 
-    return trigger_mat
+# Normalize timescales to membrane tau for use by IAmod.
+membrane_tau = 75
+dt = 0.01
 
-def conv_trigger_mat(trigger_mat, kernel):
+lhb_ampli = 80
+mpfc_ampli = 20
+rise = 1 / membrane_tau
+lhb_decay = 10 / membrane_tau
+mpfc_decay = 150 / membrane_tau
 
-    convolved = np.empty_like(trigger_mat)
+tmp_syn = SynapticBombardment(dt)
+mpfc_kernel = tmp_syn.generate_kernel(4.5 * mpfc_decay, mpfc_ampli, rise, mpfc_decay)
+lhb_kernel = tmp_syn.generate_kernel(6 * lhb_decay, lhb_ampli, rise, lhb_decay)
 
-    for i in range(trigger_mat.shape[1]):
-        convolved[:, i] = np.convolve(trigger_mat[:, i], kernel, 'same')
+10/75
+#%% SIMPLE SIMULATIONS TO INSPECT KERNELS
 
-    return convolved
+IMG_PATH = './figs/ims/defence/'
 
-tm = generate_poisson_trigger_mat(200, lhb_rate, T_bombardment, dt)
-cm = conv_trigger_mat(tm, mpfc_kernel)
+T_single_epsc = 20
 
-plt.figure()
-plt.plot(cm)
+trigger_vec = np.zeros(int(T_single_epsc/dt))
+trigger_vec[100] = 1
+
+mpfc_single_epsc = SynapticBombardment(dt)
+mpfc_single_epsc.set_kernel(mpfc_kernel)
+mpfc_single_epsc.set_trigger(trigger_vec)
+mpfc_single_epsc.convolve()
+
+lhb_single_epsc = SynapticBombardment(dt)
+lhb_single_epsc.set_kernel(lhb_kernel)
+lhb_single_epsc.set_trigger(trigger_vec)
+lhb_single_epsc.convolve()
+
+mpfc_single_lin     = IAmod.Simulation(linmod, -70, mpfc_single_epsc.I * 2.25, dt)
+lhb_single_lin      = IAmod.Simulation(linmod, -70, lhb_single_epsc.I * 2.25, dt)
+mpfc_single_ia      = IAmod.Simulation(iamod, -70, mpfc_single_epsc.I * 2.25, dt)
+lhb_single_ia       = IAmod.Simulation(iamod, -70, lhb_single_epsc.I * 2.25, dt)
+
+"""lhb_single_ia.simple_plot()
+mpfc_single_ia.simple_plot()"""
+
+AUC_mpfc = (mpfc_single_lin.V - linmod.El).sum() * dt
+AUC_lhb = (lhb_single_lin.V - linmod.El).sum() * dt
+
+
+spec_outer = gs.GridSpec(2, 2, height_ratios = [0.3, 1], hspace = 0)
+
+plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
+plt.figure(figsize = (5, 3))
+
+plt.subplot(spec_outer[0, 0])
+plt.title('mPFC-like input (slow EPSC decay)')
+plt.plot(mpfc_single_epsc.t_vec, mpfc_single_epsc.I, '-', color = 'gray', lw = 0.7)
+plt.xticks([])
+plt.xlim(0, 8)
+plt.ylabel('Input (mV)')
+
+plt.subplot(spec_outer[1, 0])
+plt.plot(mpfc_single_lin.t_vec, mpfc_single_lin.V[:, 0], 'r-', label = 'Linear model')
+plt.plot(mpfc_single_ia.t_vec, mpfc_single_ia.V[:, 0], 'b-', alpha = 0.9, label = 'Linear + $I_A$')
+plt.xlim(0, 8)
+plt.ylabel('V (mV)')
+plt.xlabel('Time ($\\tau_\\mathrm{{mem}}$)')
+plt.legend()
+
+plt.subplot(spec_outer[0, 1])
+plt.title('LHb-like input (fast EPSC decay)')
+plt.plot(lhb_single_epsc.t_vec, lhb_single_epsc.I, '-', color = 'gray', lw = 0.7)
+plt.xticks([])
+plt.xlim(0, 8)
+plt.ylabel('Input (mV)')
+
+plt.subplot(spec_outer[1, 1])
+plt.plot(lhb_single_lin.t_vec, lhb_single_lin.V[:, 0], 'r-', label = 'Linear model')
+plt.plot(lhb_single_ia.t_vec, lhb_single_ia.V[:, 0], 'b-', alpha = 0.9, label = 'Linear + $I_A$')
+plt.xlim(0, 8)
+plt.ylabel('V (mV)')
+plt.xlabel('Time ($\\tau_\\mathrm{{mem}}$)')
+plt.legend()
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'synpatic_kernels.png')
+
 plt.show()
 
+print('mPFC EPSP AUC: {:.2f}mV tau'.format(AUC_mpfc))
+print('LHb EPSP AUC: {:.2f}mV tau'.format(AUC_lhb))
 
-T_bombardment = 10 * 1e3/75
+
+#%% SIMULATE RESPONSE TO SYNAPTIC BOMBARDMENT
+
+T_bombardment = 20 / (75 * dt)
+no_neurons = 200
 
 lhb_rate = 0.015 * membrane_tau
 mpfc_rate = lhb_rate * AUC_lhb / AUC_mpfc
 
-lhb_trigger_vec = generate_poisson_trigger(lhb_rate, T_bombardment, dt)
-mpfc_trigger_vec = generate_poisson_trigger(mpfc_rate, T_bombardment, dt)
+lhb_poisson = SynapticBombardment(dt)
+lhb_poisson.set_kernel(lhb_kernel)
+lhb_poisson.generate_trigger(lhb_rate, T_bombardment, no_neurons)
+lhb_poisson.convolve()
+#lhb_poisson.plot()
 
-lhb_vin = np.convolve(lhb_trigger_vec, lhb_kernel, 'same')[:, np.newaxis]
-mpfc_vin = np.convolve(mpfc_trigger_vec, mpfc_kernel, 'same')[:, np.newaxis]
+mpfc_poisson = SynapticBombardment(dt)
+mpfc_poisson.set_kernel(mpfc_kernel)
+mpfc_poisson.generate_trigger(mpfc_rate, T_bombardment, no_neurons)
+mpfc_poisson.convolve()
+#mpfc_poisson.plot()
 
 print('Performing linear simulations...')
-lhb_bbd_lin_sim = IAmod.Simulation(linmod, -60, lhb_vin, dt)
-mpfc_bbd_lin_sim = IAmod.Simulation(linmod, -60, mpfc_vin, dt)
+lhb_bbd_lin_sim = IAmod.Simulation(linmod, -70, lhb_poisson.I, dt)
+mpfc_bbd_lin_sim = IAmod.Simulation(linmod, -70, mpfc_poisson.I, dt)
 
-print('Performing ia simulations...')
-lhb_bbd_ia_sim = IAmod.Simulation(iamod, -60, lhb_vin, dt)
-mpfc_bbd_ia_sim = IAmod.Simulation(iamod, -60, mpfc_vin, dt)
+print('Performing IA simulations...')
+lhb_bbd_ia_sim = IAmod.Simulation(iamod, -70, lhb_poisson.I, dt)
+mpfc_bbd_ia_sim = IAmod.Simulation(iamod, -70, mpfc_poisson.I, dt)
 print('Done!')
 
-lhb_bbd_ia_sim.simple_plot()
-mpfc_bbd_ia_sim.simple_plot()
+#lhb_bbd_ia_sim.simple_plot()
+#mpfc_bbd_ia_sim.simple_plot()
+
+#%% GENERATE FIGURE
+
+IMG_PATH = './figs/ims/defence/'
+
+def plot_raster(sim, color, neurons_to_show, ax = None):
+    if ax is None:
+        ax = plt.gca()
+
+    for i in range(neurons_to_show):
+        spk_times_tmp = np.where(sim.spks[:, i])[0] * sim.dt
+        plt.plot(
+            spk_times_tmp, [i for j in range(len(spk_times_tmp))],
+            '|', color = color, markersize = 2
+        )
+
+linred = (0.9, 0.2, 0.2)
+iablue = (0.2, 0.2, 0.8)
+
+neurons_to_show = 20
+
+spec_outer = gs.GridSpec(1, 2)
+spec_lhb            = gs.GridSpecFromSubplotSpec(3, 1, spec_outer[:, 0], height_ratios = [0.4, 1, 0.8], hspace = 0)
+spec_lhb_raster     = gs.GridSpecFromSubplotSpec(2, 1, spec_lhb[2, :], hspace = 0)
+spec_mpfc           = gs.GridSpecFromSubplotSpec(3, 1, spec_outer[:, 1], height_ratios = [0.4, 1, 0.8], hspace = 0)
+spec_mpfc_raster    = gs.GridSpecFromSubplotSpec(2, 1, spec_mpfc[2, :], hspace = 0)
+
+plt.figure(figsize = (5, 3))
+
+### LHb side
+plt.subplot(spec_lhb[0, :])
+plt.title('LHb-like input (fast EPSC decay)')
+plt.plot(
+    lhb_poisson.t_vec, lhb_poisson.I[:, 0],
+    '-', color = 'gray', lw = 0.7
+)
+plt.xlim(5, T_bombardment)
+plt.xticks([])
+plt.yticks([])
+pltools.hide_border()
+
+plt.subplot(spec_lhb[1, :])
+plt.plot(
+    lhb_bbd_lin_sim.t_vec, lhb_bbd_lin_sim.V[:, 0],
+    '-', color = linred, lw = 0.7, label = 'Linear model'
+)
+plt.plot(
+    lhb_bbd_ia_sim.t_vec, lhb_bbd_ia_sim.V[:, 0],
+    '-', color = iablue, lw = 0.7, alpha = 0.8, label = 'Linear + $I_A$'
+)
+plt.xlim(5, T_bombardment)
+plt.xticks([])
+pltools.hide_border('trb')
+plt.ylabel('V (mV)')
+plt.legend()
+
+plt.subplot(spec_lhb_raster[0, :])
+plot_raster(lhb_bbd_lin_sim, linred, neurons_to_show)
+plt.xlim(5, T_bombardment)
+plt.yticks([])
+plt.xticks([])
+pltools.hide_border()
+
+plt.subplot(spec_lhb_raster[1, :])
+plot_raster(lhb_bbd_ia_sim, iablue, neurons_to_show)
+plt.xlim(5, T_bombardment)
+plt.yticks([])
+pltools.hide_border('trl')
+plt.xlabel('Time ($\\tau_\\mathrm{{mem}}$)')
 
 
+### mPFC side
+plt.subplot(spec_mpfc[0, :])
+plt.title('mPFC-like input (slow EPSC decay)')
+plt.plot(
+    mpfc_poisson.t_vec, mpfc_poisson.I[:, 0],
+    '-', color = 'gray', lw = 0.7
+)
+plt.xlim(5, T_bombardment)
+plt.xticks([])
+plt.yticks([])
+pltools.hide_border()
+
+plt.subplot(spec_mpfc[1, :])
+plt.plot(
+    mpfc_bbd_lin_sim.t_vec, mpfc_bbd_lin_sim.V[:, 0],
+    '-', color = linred, lw = 0.7
+)
+plt.plot(
+    mpfc_bbd_ia_sim.t_vec, mpfc_bbd_ia_sim.V[:, 0],
+    '-', color = iablue, lw = 0.7, alpha = 0.8
+)
+plt.xlim(5, T_bombardment)
+plt.xticks([])
+pltools.hide_border('trb')
+
+plt.subplot(spec_mpfc_raster[0, :])
+plot_raster(mpfc_bbd_lin_sim, linred, neurons_to_show)
+plt.xlim(5, T_bombardment)
+plt.yticks([])
+plt.xticks([])
+pltools.hide_border()
+
+plt.subplot(spec_mpfc_raster[1, :])
+plot_raster(mpfc_bbd_ia_sim, iablue, neurons_to_show)
+plt.xlim(5, T_bombardment)
+plt.yticks([])
+pltools.hide_border('trl')
+plt.xlabel('Time ($\\tau_\\mathrm{{mem}}$)')
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'synaptic_bombardment.png')
+
+plt.show()
+
+
+#%%
+
+def extract_ISIs(sim):
+
+    ISIs = []
+
+    for i in range(sim.spks.shape[1]):
+        spk_times_tmp = np.where(sim.spks[:, i])[0] * sim.dt
+        if len(spk_times_tmp) > 1:
+            ISIs.extend(spk_times_tmp[1:] - spk_times_tmp[:-1])
+
+    return np.array(ISIs)
+
+tmp = extract_ISIs(mpfc_bbd_ia_sim)
+
+plt.figure(figsize = (5, 3))
+
+plt.subplot(121)
+plt.title('LHb-like input ISI distribution')
+plt.hist(extract_ISIs(lhb_bbd_lin_sim), color = linred, label = 'Linear model')
+plt.hist(extract_ISIs(lhb_bbd_ia_sim), color = iablue, alpha = 0.7, label = 'Linear + $I_A$')
+plt.xlabel('ISI ($\\tau_\\mathrm{mem}$)')
+pltools.hide_border('tr')
+
+plt.subplot(122)
+plt.title('mPFC-like input ISI distribution')
+plt.hist(extract_ISIs(mpfc_bbd_lin_sim), color = linred, label = 'Linear model')
+plt.hist(extract_ISIs(mpfc_bbd_ia_sim), color = iablue, alpha = 0.7, label = 'Linear + $I_A$')
+plt.xlabel('ISI ($\\tau_\\mathrm{mem}$)')
+pltools.hide_border('tr')
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'LHb_vs_mPFC_ISI_dist.png')
+
+plt.show()
+
+
+### INFORMATION THEORETIC STUFF BEYOND HERE
+"""
+Below here I started to work on computing the SR coherence under different conditions.
+"""
 
 #%%
 
