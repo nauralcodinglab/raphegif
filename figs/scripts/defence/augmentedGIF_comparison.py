@@ -1,3 +1,5 @@
+#TODO: Make raster spks line up with sample traces. 
+
 #%% IMPORT MODULES
 
 from __future__ import division

@@ -174,6 +174,108 @@ plt.show()
 M-current blocker doesn't seem to affect leak- and baseline-subtracted current at -30mV.
 """
 
+#%% FIT INACTIVATION TAU AND SAVE
+
+"""
+This block fits a single exponential inactivation time constant to IA at -20mV
+and pickles the result of the analysis.
+"""
+
+def exponential_curve(p, t):
+    """Three parameter exponential.
+
+    I = (A + C) * exp (-t/tau) + C
+
+    p = [A, C, tau]
+    """
+
+    A       = p[0]
+    C       = p[1]
+    tau     = p[2]
+
+    return (A + C) * np.exp(-t/tau) + C
+
+def exponential_optimizer_wrapper(I, p0, dt = 0.1):
+
+    t = np.arange(0, len(I) * dt, dt)[:len(I)]
+
+    p = optimize.least_squares(compute_residuals, p0, kwargs = {
+    'func': exponential_curve,
+    'X': t,
+    'Y': I
+    })['x']
+
+    no_pts = 500
+
+    fitted_points = np.empty((2, no_pts))
+    fitted_points[1, :] = np.linspace(t[0], t[-1], no_pts)
+    fitted_points[0, :] = exponential_curve(p, fitted_points[1, :])
+
+    return p, fitted_points
+
+
+tau_rec = []
+tau_data = []
+tau_params = []
+fitted_pts = []
+range_fitted = []
+
+subset = slice(26250, 27500)
+
+for i in range(len(gating)):
+
+    range_fitted.append([subset.start * 0.1, subset.stop * 0.1])
+
+    t_vec = np.arange(0, gating[i].shape[1], 0.1)[:gating[i].shape[1]]
+    tau_data_tmp = gating[i][0, subset, -1]
+    tau_data.append(np.array(
+        [tau_data_tmp,
+        t_vec[subset]]
+    ))
+
+    tau_rec.append(np.array([gating[i][0, :, -1], t_vec]))
+
+    p_tmp, fitted_tmp = exponential_optimizer_wrapper(
+        tau_data_tmp,
+        [tau_data_tmp[0] - tau_data_tmp[-1], tau_data_tmp[-1], 20],
+        dt = 0.1)
+
+    tau_params.append(p_tmp[2])
+    fitted_pts.append(np.array(
+        [fitted_tmp[0, :],
+        np.linspace(subset.start * 0.1, subset.stop * 0.1, len(fitted_tmp[0, :]))]
+    ))
+
+    plt.figure()
+    plt.plot(t_vec, gating[i][0, :, -1], 'k-')
+    plt.plot(t_vec[subset], gating[i][0, subset, -1], 'r-')
+    plt.plot(
+        np.linspace(
+            subset.start * 0.1, subset.stop * 0.1, len(fitted_tmp[0, :])
+        ),
+        fitted_tmp[0, :], 'b--'
+    )
+    plt.xlim(2600, 2800)
+    plt.show()
+
+
+tau_params = np.array(tau_params)
+print('IA inactivation tau {:.1f} +/- {:.1f} (mean +/- SD)'.format(
+    tau_params.mean(), tau_params.std()
+))
+
+IA_inactivation = {
+    'traces': tau_rec,
+    'fitted_data': tau_data,
+    'fitted_curves': fitted_pts,
+    'range_fitted': range_fitted,
+    'inactivation_taus': tau_params,
+}
+
+with open(FIGDATA_PATH + 'inactivation_fits.pyc', 'wb') as f:
+    pickle.dump(IA_inactivation, f)
+
+
 #%% LOAD GATING DATA
 
 with open(FIGDATA_PATH + 'peakact_pdata.pyc', 'rb') as f:

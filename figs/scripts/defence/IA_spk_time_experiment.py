@@ -484,7 +484,7 @@ plt.style.use('./figs/scripts/defence/defence_mplrc.dms')
 spec_mod_outer = gs.GridSpec(
     1, 2,
     left = 0.05, top = 0.85, right = 0.95, bottom = 0.15,
-    wspace = 0.4, width_ratios = [1, 0.75]
+    wspace = 0.5, width_ratios = [1, 0.75]
 )
 spec_model = gs.GridSpecFromSubplotSpec(2, 2, spec_mod_outer[:, 0], height_ratios = [1, 0.2], hspace = 0.1)
 
@@ -492,13 +492,13 @@ fig = plt.figure(figsize = (5, 2))
 
 ### A: simulated proof-of-principle
 
-ax_ohmic = plt.subplot(spec_model[0, 0])
+ax_ohmic = plt.subplot(spec_model[0, 1])
 plt.title('Linear model', loc = 'left')
-ax_ohmic_I = plt.subplot(spec_model[1, 0])
+ax_ohmic_I = plt.subplot(spec_model[1, 1])
 
-ax_IA = plt.subplot(spec_model[0, 1])
+ax_IA = plt.subplot(spec_model[0, 0])
 plt.title('Linear + $I_A$', loc = 'left')
-ax_IA_I = plt.subplot(spec_model[1, 1])
+ax_IA_I = plt.subplot(spec_model[1, 0])
 
 for i, V0 in enumerate([-70, -50]):
 
@@ -567,8 +567,8 @@ plt.show()
 
 spec_cell_outer = gs.GridSpec(
     1, 2,
-    left = 0.05, top = 0.85, right = 0.95, bottom = 0.15,
-    wspace = 0.4, width_ratios = [1, 0.75]
+    left = 0.05, top = 0.85, right = 0.95, bottom = 0.2,
+    wspace = 0.5, width_ratios = [1, 0.75]
 )
 spec_4AP = gs.GridSpecFromSubplotSpec(2, 2, spec_cell_outer[:, 0], height_ratios = [1, 0.2], hspace = 0.1)
 
@@ -582,6 +582,8 @@ V_ax_bl = plt.subplot(spec_4AP[0, 0])
 plt.title(' 5HT neuron', loc = 'left')
 plt.axhline(-70, color = 'k', ls = '--', lw = 0.5, dashes = (10, 10))
 plt.annotate('-70mV', (300, -72), ha = 'right', va = 'top')
+plt.annotate('', (140, 9), (240, 9), arrowprops = {'arrowstyle': '<->'})
+plt.text(190, 14, '$\\Delta t_\\mathrm{{spk}}$', ha = 'center')
 plt.ylim(-85, 40)
 
 I_ax_bl = plt.subplot(spec_4AP[1, 0])
@@ -606,12 +608,13 @@ pltools.add_scalebar(
 )
 
 V_ax_4AP = plt.subplot(spec_4AP[0, 1])
-plt.title('5HT $- I_A$', loc = 'left')
+plt.title('$I_A$ blocked', loc = 'left')
 plt.axhline(-70, color = 'k', ls = '--', lw = 0.5, dashes = (10, 10))
 plt.annotate('-70mV', (300, -72), ha = 'right', va = 'top')
-plt.annotate('\\textbf{{+4AP}}', (50, 20), ha = 'center')
+plt.annotate('\\textbf{{+4AP}}', (50, 25), ha = 'center')
+plt.annotate('', (120, 9), (210, 9), arrowprops = {'arrowstyle': '<->'})
+plt.text(165, 14, '$\\Delta t_\\mathrm{{spk}}$', ha = 'center')
 plt.ylim(-85, 40)
-
 
 I_ax_4AP = plt.subplot(spec_4AP[1, 1])
 plt.annotate('30pA', (300, 28), ha = 'right', va = 'top')
