@@ -233,6 +233,33 @@ class MiniDetector(object):
             locs_are_timestamps = True, dt = self.dt
         )
 
+    ### Extract mini parameters
+    def inter_mini_intervals(self, sort = False):
+        IMIs = []
+        for x in self.peaks:
+            IMIs.extend(np.diff(x))
+
+        if sort:
+            IMIs = np.sort(IMIs)
+
+        return np.array(IMIs)
+
+    def amplitudes(self, baseline_width = None, extract_max = True, sort = False):
+        if baseline_width is not None and baseline_width > 1:
+            minis_ = (np.copy(self.minis)
+                - self.minis[:baseline_width, :].mean(axis = 0))
+        else:
+            minis_ = np.copy(self.minis)
+
+        if extract_max:
+            amplis = np.nanmax(minis_, axis = 0)
+        else:
+            amplis = np.nanmin(minis_, axis = 0)
+
+        if sort:
+            amplis = np.sort(amplis)
+
+        return amplis
 
     ### Simple properties, support vectors & related methods
     @property
