@@ -2,6 +2,8 @@
 
 from __future__ import division
 
+import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
@@ -25,10 +27,6 @@ train_fnames = ['18o25000.abf',
 IV_fnames = ['18o25002.abf',
              '18o25006.abf',
              '18o25024.abf']
-
-mIPSC_fnames = ['18o23003.abf',
-                '18o23004.abf',
-                '18o23005.abf']
 
 DATA_PATH = './data/GABA_synapses/'
 
@@ -223,7 +221,15 @@ averaged_traces['decay'] = []
 V_target = 60
 fit_range = [slice(350, 1000), slice(300, 1000), slice(300, 1000)]
 p0 = (125, 0, 50)
-sample_tr = 2
+
+# Placeholder
+sample_tr = {
+    'ind': 2,
+    'x_fit': None,
+    'y_fit': None,
+    'x_tr': None,
+    'y_tr': None
+}
 
 for i in range(len(averaged_traces['traces'])):
 
@@ -249,16 +255,26 @@ for i in range(len(averaged_traces['traces'])):
     plt.ylim(-50, 175)
     plt.show()
 
-    if i == sample_tr:
-        x_fit = np.linspace(fit_range[i].start / 10, fit_range[i].stop / 10, fitted_pts.shape[1])
-        y_fit = fitted_pts[0, :]
+    if i == sample_tr['ind']:
+        sample_tr['x_fit'] = np.linspace(fit_range[i].start / 10, fit_range[i].stop / 10, fitted_pts.shape[1])
+        sample_tr['y_fit'] = fitted_pts[0, :]
 
-        x_tr = averaged_traces['t_mats'][i][:, ind]
-        y_tr = averaged_traces['traces'][i][:, ind]
+        sample_tr['x_tr'] = averaged_traces['t_mats'][i][:, ind]
+        sample_tr['y_tr'] = averaged_traces['traces'][i][:, ind]
 
     print('Decay tau = {:.2f}ms at V = {:.2f}mV'.format(
         p[2], averaged_traces['voltages'][i][ind]
     ))
+
+#%% DUMP DATA
+
+SAMPLE_TR_PATH = './data/GABA_synapses/sample_traces/'
+
+with open(SAMPLE_TR_PATH + 'averaged_traces.pyc', 'wb') as f:
+    pickle.dump(averaged_traces, f)
+
+with open(SAMPLE_TR_PATH + 'sample_decay_fit.pyc', 'wb') as f:
+    pickle.dump(sample_tr, f)
 
 
 #%% MAKE NICE FIGURE
@@ -274,8 +290,8 @@ plt.figure(figsize = (6, 4))
 plt.subplot(spec_outer[1, 0])
 plt.title('\\textbf{{B1}} Sample eIPSCs', loc = 'left')
 plt.plot(
-    averaged_traces['t_mats'][sample_tr][:, :-2],
-    averaged_traces['traces'][sample_tr][:, :-2],
+    averaged_traces['t_mats'][sample_tr['ind']][:, :-2],
+    averaged_traces['traces'][sample_tr['ind']][:, :-2],
     'k-', lw = 0.5
 )
 plt.ylim(-50, 175)
@@ -300,8 +316,8 @@ plt.ylabel('$I$ (pA)')
 
 plt.subplot(spec_tau[:, 0])
 plt.title('\\textbf{{B3}} $\\tau$ fit', loc = 'left')
-plt.plot(x_tr, y_tr, 'k-', lw = 0.5)
-plt.plot(x_fit, y_fit, 'g--')
+plt.plot(sample_tr['x_tr'], sample_tr['y_tr'], 'k-', lw = 0.5)
+plt.plot(sample_tr['x_fit'], sample_tr['y_fit'], 'g--')
 plt.ylim(-10, 175)
 pltools.add_scalebar(
     x_units = 'ms', y_units = 'pA', x_size = 20, y_size = 50, bar_space = 0,
@@ -315,3 +331,5 @@ sns.swarmplot(y = averaged_traces['decay'], color = 'g', edgecolor = 'gray')
 plt.xticks([])
 plt.ylabel('$\\tau$ (ms)')
 pltools.hide_border('trb')
+
+plt.show()
