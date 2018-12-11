@@ -175,6 +175,8 @@ def fit_GIF_exp_gamma(args):
 
 if __name__ == '__main__':
 
+    DATA_PATH = './data/fast_noise_5HT/'
+
     timescales_list = [[10], [30], [50], [100], [300], [500], [1000],
                        [10, 100], [30, 300], [50, 500], [100, 1000], [300, 3000],
                        [10, 100, 1000], [30, 300, 3000]]
@@ -186,5 +188,5 @@ if __name__ == '__main__':
     out = p.map(fit_GIF_exp_gamma, zip(timescales_list, experiments_list, models_list))
     p.close()
 
-    with open('gamma_filter_tests_output.pyc', 'wb') as f:
+    with open(DATA_PATH + 'gamma_filter_tests_output.pyc', 'wb') as f:
         pickle.dump(out, f)

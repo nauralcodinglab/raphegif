@@ -21,7 +21,7 @@ from AEC_Badel import *
 from GIF import *
 from AugmentedGIF import *
 from Filter_Rect_LogSpaced import *
-from Filter_Rect_LinSpaced import *
+from Filter_Exps import Filter_Exps
 
 import pltools
 
@@ -76,7 +76,7 @@ for expt in experiments:
     for tr in expt.testset_traces:
         tr.detectSpikes()
 
-    expt.plotTestSet()
+    #expt.plotTestSet()
 
 
 #%% KEEP GOOD EXPERIMENTS
@@ -128,8 +128,8 @@ for i, expt in enumerate(experiments):
             tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
 
 
-            tmp_GIF.gamma = Filter_Rect_LogSpaced()
-            tmp_GIF.gamma.setMetaParameters(5000., 150, 2000., slope = 2)
+            tmp_GIF.gamma = Filter_Exps()
+            tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
 
             # Define the ROI of the training set to be used for the fit
             for tr in expt.trainingset_traces:
@@ -348,8 +348,7 @@ if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'sert_cell.png', dpi = 300)
 
 plt.show()
-#%%
-GIFs[ex_cell].gamma.plot()
+
 
 #%% MD DISTRIBUTION FIGURE
 

@@ -19,7 +19,7 @@ from Experiment import *
 from AEC_Badel import *
 from GIF import *
 from Filter_Rect_LogSpaced import *
-from Filter_Rect_LinSpaced import *
+from Filter_Exps import Filter_Exps
 
 import pltools
 
@@ -110,7 +110,9 @@ for expt in experiments:
 
 GIFs = []
 
-for expt in experiments:
+for i, expt in enumerate(experiments):
+
+    print('Fitting GIF {} of {}'.format(i + 1, len(experiments)))
 
     with gagProcess():
 
@@ -123,8 +125,8 @@ for expt in experiments:
         tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
 
 
-        tmp_GIF.gamma = Filter_Rect_LogSpaced()
-        tmp_GIF.gamma.setMetaParameters(length=500.0, binsize_lb=5.0, binsize_ub=1000.0, slope=5.0)
+        tmp_GIF.gamma = Filter_Exps()
+        tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
 
         # Define the ROI of the training set to be used for the fit (in this example we will use only the first 100 s)
         for i in range(len(expt.trainingset_traces)):
