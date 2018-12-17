@@ -44,7 +44,7 @@ class gagProcess(object):
 
 DATA_PATH = './data/fast_noise_5HT/'
 
-with open(DATA_PATH + '5HT_aug_fast.pyc', 'rb') as f:
+with open(DATA_PATH + '5HT_good_aug_fast.pyc', 'rb') as f:
     obj = pickle.load(f)
     GIFs = obj['GIFs']
     AugmentedGIFs = obj['AugmentedGIFs']
@@ -309,7 +309,7 @@ for key in base_pdata_dict.keys():
 
 plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
 
-IMG_PATH = './figs/ims/thesis/'
+IMG_PATH = './figs/ims/5HTGIF_comparison/'
 
 spec = gs.GridSpec(3, 3, wspace = 1, hspace = 0.3)
 spec_filters = gs.GridSpecFromSubplotSpec(2, 1, spec[:, 2], hspace = 0.5)
@@ -318,7 +318,7 @@ plt.figure(figsize = (6, 4))
 
 plt.subplot(spec[0, 0])
 plt.title('\\textbf{{A1}}', loc = 'left')
-plt.ylim(0, 2)
+#plt.ylim(0, 2)
 plt.ylabel('$g_l$ (nS)')
 sns.swarmplot(
     y = 1e3 * np.concatenate((aug_pdata_dict['gl'], base_pdata_dict['gl'])),
@@ -341,7 +341,7 @@ pltools.hide_border('trb')
 
 plt.subplot(spec[1, 0])
 plt.title('\\textbf{{A3}}', loc = 'left')
-plt.ylim(-70, -30)
+#plt.ylim(-70, -30)
 plt.ylabel('$V_T^*$ (mV)')
 sns.swarmplot(
     y = np.concatenate((aug_pdata_dict['Vt_star'], base_pdata_dict['Vt_star'])),
@@ -366,14 +366,15 @@ pltools.hide_border('trb')
 plt.subplot(spec[2, 0])
 plt.title('\\textbf{{A5}}', loc = 'left')
 plt.ylabel('$\\bar{g}_A$ (nS)')
-sns.swarmplot(y = 1e3 * aug_pdata_dict['gbar_K1'], color = 'blue', edgecolor = 'k')
+plt.axhline(0, color = 'k', lw = 0.5, ls = '--', dashes = (10, 10))
+sns.swarmplot(y = 1e3 * aug_pdata_dict['gbar_K1'], color = 'blue', edgecolor = 'gray', lw = 0.5)
 plt.xticks([])
 pltools.hide_border('trb')
 
 plt.subplot(spec[2, 1])
 plt.title('\\textbf{{A6}}', loc = 'left')
 plt.ylabel('$\\bar{g}_\mathrm{Kslow}$ (nS)')
-sns.swarmplot(y = 1e3 * aug_pdata_dict['gbar_K2'], color = 'blue', edgecolor = 'k')
+sns.swarmplot(y = 1e3 * aug_pdata_dict['gbar_K2'], color = 'blue', edgecolor = 'gray', lw = 0.5)
 plt.xticks([])
 pltools.hide_border('trb')
 
@@ -381,9 +382,9 @@ pltools.hide_border('trb')
 plt.subplot(spec_filters[0, :])
 plt.title('\\textbf{{B1}} $\eta$', loc = 'left')
 for GIF_ in GIFs:
-    plt.plot(GIF_.eta.filtersupport, GIF_.eta.filter, 'r-', linewidth = 0.7, alpha = 0.7)
+    plt.loglog(GIF_.eta.filtersupport, GIF_.eta.filter, 'r-', linewidth = 0.7, alpha = 0.7)
 for GIF_ in AugmentedGIFs:
-    plt.plot(GIF_.eta.filtersupport, GIF_.eta.filter, 'b-', linewidth = 0.7, alpha = 0.7)
+    plt.loglog(GIF_.eta.filtersupport, GIF_.eta.filter, 'b-', linewidth = 0.7, alpha = 0.5)
 plt.ylabel('Spike-triggered current (nA)')
 plt.xlabel('Time (ms)')
 pltools.hide_border('tr')
@@ -391,15 +392,18 @@ pltools.hide_border('tr')
 plt.subplot(spec_filters[1, :])
 plt.title('\\textbf{{B2}} $\gamma$', loc = 'left')
 for GIF_ in GIFs:
-    plt.plot(GIF_.gamma.filtersupport, GIF_.gamma.filter, 'r-', linewidth = 0.7, alpha = 0.7)
+    supp, filt = GIF_.gamma.getInterpolatedFilter(0.1)
+    plt.loglog(supp, filt, 'r-', linewidth = 0.7, alpha = 0.7)
 for GIF_ in AugmentedGIFs:
-    plt.plot(GIF_.gamma.filtersupport, GIF_.gamma.filter, 'b-', linewidth = 0.7, alpha = 0.7)
+    supp, filt = GIF_.gamma.getInterpolatedFilter(0.1)
+    plt.loglog(supp, filt, 'b-', linewidth = 0.7, alpha = 0.5)
 plt.ylabel('Threshold movement (mV)')
 plt.xlabel('Time (ms)')
 pltools.hide_border('tr')
 
-
 if IMG_PATH is not None:
-    plt.savefig(IMG_PATH + 'augGIF_params.png')
+    plt.savefig(IMG_PATH + 'augGIF_good_params.png')
 
 plt.show()
+
+IMG_PATH

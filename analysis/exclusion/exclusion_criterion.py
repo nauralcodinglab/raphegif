@@ -214,6 +214,18 @@ for i, expt in enumerate(experiments):
 
         tmp_GIF.printParameters()
 
+
+#%% DUMP DATA
+
+output_dict = {
+    'GIFs': GIFs,
+    'AugmentedGIFs': AugmentedGIFs,
+    'experiments': experiments
+}
+
+with open('./data/fast_noise_5HT/5HT_good_aug_fast.pyc', 'wb') as f:
+    pickle.dump(output_dict, f)
+
 #%% EVALUATE PERFORMANCE
 
 precision = 8.
