@@ -261,7 +261,7 @@ class FeedForwardDRN(object):
             print('Simulating ser neurons...')
         self.ser_sim = self._simulate_ser(ser_net_Vin)
         if verbose:
-            print('Done {}!'.format(self.name))
+            print('Done {}!\n'.format(self.name))
 
     ### Misc.
     def copy(self, rename = None):
@@ -273,10 +273,36 @@ class FeedForwardDRN(object):
             tmp.name = rename
         return tmp
 
-    ### Methods for visualization.
+    ### Methods for visualization and analysis.
+    def gaba_psth(self, window_width):
+        return self.gaba_sim.PSTH(window_width)
+
+    def ser_psth(self, window_width):
+        return self.ser_sim.PSTH(window_width)
+
+    def plot_psth(self, window_width, return_fig = False):
+
+        plt.figure()
+
+        plt.suptitle(self.name)
+
+        plt.subplot(111)
+        plt.plot(self.gaba_sim.t_vec, self.gaba_sim.PSTH(window_width), 'g-', label = 'GABA')
+        plt.plot(self.ser_sim.t_vec, self.ser_sim.PSTH(window_width), 'b-', label = '5HT')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.subplots_adjust(top = 0.85)
+
+        if return_fig: return plt.gcf()
+
+
+
     def plot_rasters(self, return_fig = False):
 
         plt.figure()
+
+        plt.suptitle(self.name)
 
         gaba_raster = plt.subplot(211)
         plt.title('GABA')
@@ -292,12 +318,15 @@ class FeedForwardDRN(object):
         plt.xlabel('Time (tau)')
 
         plt.tight_layout()
+        plt.subplots_adjust(top = 0.85)
 
         if return_fig: return plt.gcf()
 
     def plot_traces(self, no_neurons = 20, return_fig = False):
 
         plt.figure()
+
+        plt.suptitle(self.name)
 
         gaba_traces = plt.subplot(211)
         plt.title('GABA')
@@ -317,6 +346,7 @@ class FeedForwardDRN(object):
         plt.xlabel('Time (tau)')
 
         plt.tight_layout()
+        plt.subplots_adjust(top = 0.85)
 
         if return_fig: return plt.gcf()
 
