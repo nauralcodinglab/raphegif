@@ -16,6 +16,7 @@ from scipy import stats
 import sys
 sys.path.append('./src')
 sys.path.append('./figs/scripts')
+sys.path.append('./analysis/gls_regression')
 
 from Experiment import *
 from AEC_Badel import *
@@ -23,65 +24,14 @@ from GIF import *
 from AugmentedGIF import *
 from Filter_Rect_LogSpaced import *
 from Filter_Exps import Filter_Exps
-from SpikeTrainComparator import intrinsic_reliability
 
 import pltools
 
-#%% READ IN DATA
+from model_evaluation import *
 
-class gagProcess(object):
+#%% LOAD DATA
 
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
-
-
-
-DATA_PATH = './data/fast_noise_5HT/'
-
-file_index = pd.read_csv(DATA_PATH + 'index.csv')
-
-
-experiments = []
-
-for i in range(file_index.shape[0]):
-
-
-    with gagProcess():
-
-        tmp_experiment = Experiment(file_index.loc[i, 'Cell'], 0.1)
-        tmp_experiment.setAECTrace(
-            'Axon', fname = DATA_PATH + file_index.loc[i, 'AEC2'],
-            V_channel = 0, I_channel = 1
-        )
-
-        for ind in ['1', '2', '3']:
-
-            tmp_experiment.addTrainingSetTrace(
-                'Axon', fname = DATA_PATH + file_index.loc[i, 'Train' + ind],
-                V_channel = 0, I_channel = 1
-            )
-            tmp_experiment.addTestSetTrace(
-                'Axon', fname = DATA_PATH + file_index.loc[i, 'Test' + ind],
-                V_channel = 0, I_channel = 1
-            )
-
-
-    experiments.append(tmp_experiment)
-
-
-for expt in experiments:
-
-    for tr in expt.trainingset_traces:
-        tr.detectSpikes()
-
-    for tr in expt.testset_traces:
-        tr.detectSpikes()
-
-    #expt.plotTestSet()
+from load_experiments import experiments
 
 
 #%% PLOT VARIABLE DISTRIBUTIONS
@@ -90,33 +40,6 @@ IMG_PATH = './figs/ims/var_dists/'
 bad_cells_ = [1, 2, 3, 4, 7, 9, 11, 12, 13, 18]
 plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
 
-
-def OLS_fit(X, y):
-    XTX = np.dot(X.T, X)
-    XTY = np.dot(X.T, y)
-    betas = np.linalg.solve(XTX, XTY)
-    return betas
-
-def build_Xy(experiment, excl_cols = None):
-
-    X = []
-    y = []
-
-    KGIF = AugmentedGIF(0.1)
-    KGIF.Tref = 6.5
-
-    for tr in expt.trainingset_traces:
-        X_tmp, y_tmp = KGIF.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, 1.5)
-
-        X.append(X_tmp)
-        y.append(y_tmp)
-
-    X = np.concatenate(X)
-    if excl_cols is not None:
-        X = X[:, [x for x in range(X.shape[1]) if x not in excl_cols]]
-    y = np.concatenate(y)
-
-    return X, y
 
 def upper_hexbin(x, y, **kwargs):
 
@@ -178,12 +101,7 @@ for key in ['good', 'bad']:
 
 coeffs = coeffs['good'].append(coeffs['bad'])
 
-coeffs['C'] = 1./coeffs.loc[:, 1]
-coeffs['gl'] = -coeffs.loc[:, 0] * coeffs['C']
-coeffs['El'] = coeffs.loc[:, 2]*coeffs['C']/coeffs['gl']
-
-coeffs['gk1'] = coeffs.loc[:, 3] * coeffs['C']
-coeffs['gk2'] = coeffs.loc[:, 4] * coeffs['C']
+coeffs = convert_betas(coeffs)
 
 #%%
 
@@ -256,108 +174,6 @@ if IMG_PATH is not None:
     plt.savefig(IMG_PATH + 'spikecut_params.png')
 
 plt.show()
-
-
-#%% FUNCTIONS FOR CROSS-VALIDATION
-def cross_validate(X, y, fitting_func, k = 10, random_seed = 42, verbose = False, include_proportion = True):
-    """Binned cross-validated train and test error.
-    """
-
-    np.random.seed(random_seed)
-    inds = np.random.permutation(len(y))
-    groups = np.split(inds, k)
-
-    var_explained_dict = {
-        'train': [],
-        'test': []
-    }
-
-    for i in range(k):
-
-        if verbose:
-            if i == 0:
-                print '\n'
-            print '\rCross-validating {:.1f}%'.format(100 * i / k),
-
-        test_inds_tmp = groups[i]
-        train_inds_tmp = np.concatenate([gr for j, gr in enumerate(groups) if j != i], axis = None)
-
-        train_y = y[train_inds_tmp]
-        train_X = X[train_inds_tmp, :]
-
-        test_y = y[test_inds_tmp]
-        test_X = X[test_inds_tmp, :]
-
-        betas = fitting_func(train_X, train_y)
-        var_explained_dict['train'].append(var_explained_binned(train_X, betas, train_y, 'default'))
-        var_explained_dict['test'].append(var_explained_binned(test_X, betas, test_y, 'default'))
-
-    var_explained_dict['train'] = np.mean(var_explained_dict['train'], axis = 0)
-    var_explained_dict['test'] = np.mean(var_explained_dict['test'], axis = 0)
-
-    if verbose:
-        print '\rDone!                 '
-
-    return var_explained_dict['train'], var_explained_dict['test']
-
-
-def WLS_fit(X, y):
-    voltage = X[:, 0]
-    #wts = np.exp((voltage - voltage.mean())/ voltage.std())
-    wts = np.log(1 + 1.1**(voltage + 50))
-
-    wtsy = wts * y
-    wtsX = wts[:, np.newaxis] * X
-
-    XTwtsX = np.dot(X.T, wtsX)
-    XTwtsy = np.dot(X.T, wtsy)
-    betas = np.linalg.solve(XTwtsX, XTwtsy)
-
-    return betas
-
-
-def OLS_fit(X, y):
-    XTX = np.dot(X.T, X)
-    XTY = np.dot(X.T, y)
-    betas = np.linalg.solve(XTX, XTY)
-    return betas
-
-def var_explained(X, betas, y):
-    yhat = np.dot(X, betas)
-    MSE = np.mean((y - yhat)**2)
-    var = np.var(y)
-    return 1. - MSE/var
-
-def var_explained_binned(X, betas, y, bins = 'default', return_proportion = False):
-    """
-    Returns a tuple of bin centres and binned means.
-    """
-
-    if bins == 'default':
-        bins = np.arange(-90, -20, 5)
-
-    V = X[:, 0]
-
-    yhat = np.dot(X, betas)
-    squared_errors = (y - yhat)**2
-
-    mean_, edges, bin_no = stats.binned_statistic(
-        V, squared_errors, 'mean', bins, [-80, -20]
-    )
-
-    if return_proportion:
-        cnt_, _, _ = stats.binned_statistic(
-            V, None, 'count', bins, [-80, -20]
-        )
-
-        proportion = cnt_ / np.sum(cnt_)
-
-    bin_centres = (edges[1:] + edges[:-1]) / 2.
-
-    if return_proportion:
-        return (bin_centres, mean_, proportion)
-    else:
-        return (bin_centres, mean_)
 
 
 #%% CROSS VALIDATE BINNED MSE ON TRAINING SET EXCLUDING SPIKES

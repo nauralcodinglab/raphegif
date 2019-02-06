@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 import scipy.stats as stats
+import pandas as pd
 
 sys.path.append('./src')
 
@@ -60,8 +61,12 @@ def build_Xy(expt_, excl_cols = None, GIFmod = AugmentedGIF):
     X = []
     y = []
 
-    tmpGIF = GIFmod(0.1)
-    tmpGIF.Tref = 6.5
+    try:
+        tmpGIF = GIFmod
+        tmpGIF.Tref = 6.5
+    except AttributeError:
+        tmpGIF = GIFmod(0.1)
+        tmpGIF.Tref = 6.5
 
     for tr in expt_.trainingset_traces:
         X_tmp, y_tmp = tmpGIF.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, 1.5)
@@ -83,17 +88,17 @@ def convert_betas(coeffs_df):
     Expects all further columns to be either 'group' or AHP coefficients.
     """
 
-    AHP_cols = coeffs_df.loc[:, [x != 'group' and int(x) >= 5 for x in coeffs.columns]].rename(
+    AHP_cols = coeffs_df.loc[:, [x != 'group' and int(x) >= 5 for x in coeffs_df.columns]].rename(
         lambda s: 'AHP{}'.format(int(s) - 5),
         axis = 'columns'
     )
 
     param_cols = pd.DataFrame()
-    param_cols['C'] = 1./coeffs.loc[:, 1]
-    param_cols['gl'] = -coeffs.loc[:, 0] * param_cols['C']
-    param_cols['El'] = coeffs.loc[:, 2]*param_cols['C']/param_cols['gl']
-    param_cols['gk1'] = coeffs.loc[:, 3] * param_cols['C']
-    param_cols['gk2'] = coeffs.loc[:, 4] * param_cols['C']
+    param_cols['C'] = 1./coeffs_df.loc[:, 1]
+    param_cols['gl'] = -coeffs_df.loc[:, 0] * param_cols['C']
+    param_cols['El'] = coeffs_df.loc[:, 2]*param_cols['C']/param_cols['gl']
+    param_cols['gk1'] = coeffs_df.loc[:, 3] * param_cols['C']
+    param_cols['gk2'] = coeffs_df.loc[:, 4] * param_cols['C']
 
     AHP_cols = AHP_cols.multiply(param_cols['C'], axis = 0)
 

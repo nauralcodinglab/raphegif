@@ -255,12 +255,7 @@ for key in ['good', 'bad']:
 
 coeffs = coeffs['good'].append(coeffs['bad'])
 
-coeffs['C'] = 1./coeffs.loc[:, 1]
-coeffs['gl'] = -coeffs.loc[:, 0] * coeffs['C']
-coeffs['El'] = coeffs.loc[:, 2]*coeffs['C']/coeffs['gl']
-
-coeffs['gk1'] = coeffs.loc[:, 3] * coeffs['C']
-coeffs['gk2'] = coeffs.loc[:, 4] * coeffs['C']
+coeffs = convert_betas(coeffs)
 
 #%%
 

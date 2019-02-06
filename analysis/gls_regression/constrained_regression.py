@@ -43,9 +43,6 @@ for i, expt in enumerate(experiments):
 
     print '\rFitting {:.1f}%'.format(100 * i / len(experiments)),
 
-    if i > 0:
-        continue
-
     X, y = build_Xy(expt)
     mask = X[:, 0] > -60
 
