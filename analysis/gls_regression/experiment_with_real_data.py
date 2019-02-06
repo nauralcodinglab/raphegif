@@ -99,47 +99,56 @@ plt.show()
 
 #%%
 
-def cov_(X):
-
-    X_norm = X - X.mean(axis = 0)
-    X_normT = X_norm.T.copy()
-    return np.dot(X_normT, X_norm) / (X_norm.shape[0] - 1)
-
-cov_tmp = cov_(X)[:5, :5]
-plt.matshow(cov_tmp)
-cov_tmp.diagonal()
-
+x = np.arange(-100, -20)
+plt.plot(x, np.log(1 + 1.1**(x + 50)))
 
 #%%
 
 KGIF = AugmentedGIF(0.1)
 
-def gls_fit(X, y, downsample = 1000):
+def cross_validate(X, y, fitting_func, k = 10, random_seed = 42, verbose = False):
+    """Returns tuple of mean cross-validated training and test error.
+    """
 
-    if downsample > 1:
-        X = np.copy(X[::downsample, :])
-        y = np.copy(y[::downsample])
-    elif downsample == 1:
-        pass
+    np.random.seed(random_seed)
+    inds = np.random.permutation(len(y))
+    groups = np.split(inds, k)
 
-    print('Computing covariance matrix.')
-    V = cov_(X.T)
+    var_explained_dict = {
+        'train': [],
+        'test': []
+    }
 
-    print('Weighting observations.')
-    Vinvy = np.linalg.solve(V, y)
-    VinvX = np.linalg.solve(V, X)
+    for i in range(k):
 
-    print('Obtaining coefficients.')
-    XTVX = np.dot(X.T, VinvX)
-    XTVy = np.dot(X.T, Vinvy)
-    betas = np.linalg.solve(XTVX, XTVy)
-    print('Done!')
+        if verbose:
+            if i == 0:
+                print '\n'
+            print '\rCross-validating {:.1f}%'.format(100 * i / k),
 
-    return betas
+        test_inds_tmp = groups[i]
+        train_inds_tmp = np.concatenate([gr for j, gr in enumerate(groups) if j != i], axis = None)
 
-def wls_fit(X, y):
+        train_y = y[train_inds_tmp]
+        train_X = X[train_inds_tmp, :]
+
+        test_y = y[test_inds_tmp]
+        test_X = X[test_inds_tmp, :]
+
+        betas = fitting_func(train_X, train_y)
+        var_explained_dict['train'].append(var_explained(train_X, betas, train_y))
+        var_explained_dict['test'].append(var_explained(test_X, betas, test_y))
+
+    if verbose:
+        print '\rDone!                 '
+
+    return np.mean(var_explained_dict['train']), np.mean(var_explained_dict['test'])
+
+
+def WLS_fit(X, y):
     voltage = X[:, 0]
-    wts = np.exp((voltage - voltage.mean())/ voltage.std())
+    #wts = np.exp((voltage - voltage.mean())/ voltage.std())
+    wts = np.log(1 + 1.1**(voltage + 50))
 
     wtsy = wts * y
     wtsX = wts[:, np.newaxis] * X
@@ -152,9 +161,10 @@ def wls_fit(X, y):
 
 
 def OLS_fit(X, y):
-    XTX_inv = np.linalg.inv(np.dot(X.T, X))
+    XTX = np.dot(X.T, X)
     XTY = np.dot(X.T, y)
-    return np.dot(XTX_inv, XTY)
+    betas = np.linalg.solve(XTX, XTY)
+    return betas
 
 def var_explained(X, betas, y):
     yhat = np.dot(X, betas)
@@ -202,15 +212,15 @@ def generate_row(expt, method, betas, R2):
 estimates = pd.DataFrame(columns = ['Cell', 'method', 'b1', 'b2', 'b3', 'b4', 'b5', 'R2'])
 binned_mse = {
     'all': [],
-    'wls': []
+    'WLS': []
 }
 
 for i, expt in enumerate(experiments):
 
     print('{:.1f}%'.format(100*(i + 1)/len(experiments)))
 
-    if i > 0:
-        continue
+    if i > 5:
+        pass
 
     X = []
     y = []
@@ -232,20 +242,20 @@ for i, expt in enumerate(experiments):
     estimates = estimates.append(generate_row(expt, 'all', betas[:5], var_exp_tmp), ignore_index = True)
 
     # GLS method
-    betas = wls_fit(X, y)
+    betas = WLS_fit(X, y)
     var_exp_tmp = var_explained(X, betas, y)
-    estimates = estimates.append(generate_row(expt, 'wls', betas[:5], var_exp_tmp), ignore_index = True)
+    estimates = estimates.append(generate_row(expt, 'WLS', betas[:5], var_exp_tmp), ignore_index = True)
 
     # gk2 only
     X_tmp = X[:, [x != 3 for x in range(X.shape[1])]]
-    betas = OLS_fit(X_tmp, y)
+    betas = WLS_fit(X_tmp, y)
     var_exp_tmp = var_explained(X_tmp, betas, y)
     betas = np.concatenate([betas[:3], [0], [betas[3]]])
     estimates = estimates.append(generate_row(expt, 'gk2', betas, var_exp_tmp), ignore_index = True)
 
     # gk1 only
     X_tmp = X[:, [x != 4 for x in range(X.shape[1])]]
-    betas = OLS_fit(X_tmp, y)
+    betas = WLS_fit(X_tmp, y)
     var_exp_tmp = var_explained(X_tmp, betas, y)
     betas = np.concatenate([betas[:4], [0]])
     estimates = estimates.append(generate_row(expt, 'gk1', betas, var_exp_tmp), ignore_index = True)
@@ -268,3 +278,5 @@ for lab in ['C', 'gl', 'El', 'gk1', 'gk2', 'R2']:
 
 
 #%%
+tmp = cross_validate(X, y, OLS_fit, verbose = True)
+tmp
