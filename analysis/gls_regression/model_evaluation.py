@@ -88,7 +88,9 @@ def convert_betas(coeffs_df):
     Expects all further columns to be either 'group' or AHP coefficients.
     """
 
-    AHP_cols = coeffs_df.loc[:, [x != 'group' and int(x) >= 5 for x in coeffs_df.columns]].rename(
+    AHP_cols = coeffs_df.loc[:,
+            [x not in ['group', 'var_explained', 'cell_ID'] and int(x) >= 5 for x in coeffs_df.columns]
+        ].rename(
         lambda s: 'AHP{}'.format(int(s) - 5),
         axis = 'columns'
     )
