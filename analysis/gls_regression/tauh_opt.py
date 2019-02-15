@@ -116,7 +116,7 @@ for key in fitted_coeffs.keys():
 
     master_coeffs = master_coeffs.append(tmp)
 
-with open('./analysis/gls_regression/tauh_linesearch_coeffs_new.pyc', 'wb') as f:
+with open('./analysis/gls_regression/tauh_linesearch_coeffs_AEC.pyc', 'wb') as f:
     pickle.dump(master_coeffs, f)
 
 
