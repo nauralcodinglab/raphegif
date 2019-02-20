@@ -59,30 +59,34 @@ for key in ['5HT', 'GABA']:
     file_index = pd.read_csv(fname_paths[key])
 
     for i in range(file_index.shape[0]):
-        with gagProcess():
+        try:
+            with gagProcess():
 
-            tmp_experiment = Experiment(file_index.loc[i, 'Cell'], 0.1)
-            tmp_experiment.setAECTrace(
-                'Axon', fname = data_paths[key] + file_index.loc[i, 'AEC2'],
-                V_channel = 0, I_channel = 1
-            )
-
-            for ind in ['1', '2', '3']:
-
-                tmp_experiment.addTrainingSetTrace(
-                    'Axon', fname = data_paths[key] + file_index.loc[i, 'Train' + ind],
-                    V_channel = 0, I_channel = 1
-                )
-                tmp_experiment.addTestSetTrace(
-                    'Axon', fname = data_paths[key] + file_index.loc[i, 'Test' + ind],
+                tmp_experiment = Experiment(file_index.loc[i, 'Cell'], 0.1)
+                tmp_experiment.setAECTrace(
+                    'Axon', fname = data_paths[key] + file_index.loc[i, 'AEC2'],
                     V_channel = 0, I_channel = 1
                 )
 
-            for tr in tmp_experiment.testset_traces:
-                tr.detectSpikes()
+                for ind in ['1', '2', '3']:
+
+                    tmp_experiment.addTrainingSetTrace(
+                        'Axon', fname = data_paths[key] + file_index.loc[i, 'Train' + ind],
+                        V_channel = 0, I_channel = 1
+                    )
+                    tmp_experiment.addTestSetTrace(
+                        'Axon', fname = data_paths[key] + file_index.loc[i, 'Test' + ind],
+                        V_channel = 0, I_channel = 1
+                    )
+
+                for tr in tmp_experiment.testset_traces:
+                    tr.detectSpikes()
 
 
-        experiments[key].append(tmp_experiment)
+            experiments[key].append(tmp_experiment)
+
+        except RuntimeError:
+            print 'Problem with {} import. Skipping.'.format(file_index.loc[i, 'Cell'])
 
 # Exclude GABA0 because of problems.
 experiments['GABA'].pop(0)
@@ -173,6 +177,6 @@ plt.xlabel('Window width (ms)')
 plt.tight_layout()
 
 if IMG_PATH is not None:
-    plt.savefig(IMG_PATH + 'intrinsic_reliability.png')
+    plt.savefig(IMG_PATH + 'intrinsic_reliability_updated.png')
 
 plt.show()
