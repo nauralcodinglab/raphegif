@@ -4,6 +4,9 @@ from __future__ import division
 
 import os
 
+import copy
+import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
@@ -151,6 +154,8 @@ for expt in experiments:
 
     tmp_GIF.printParameters()
 
+with open('./figs/scripts/gaba_neurons/opt_gaba_GIFs.pyc', 'wb') as f:
+    pickle.dump(GIFs, f)
 
 #%% EVALUATE PERFORMANCE
 
@@ -176,23 +181,11 @@ for expt, GIF_ in zip(experiments, GIFs):
 
 #%% MAKE FIGURE
 
-plt.rc('text', usetex = True)
+plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
 
-SMALL_SIZE = 8
-MEDIUM_SIZE = 10
-BIGGER_SIZE = 12
+IMG_PATH = './figs/ims/gaba_cells/'
 
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)     # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)
-
-IMG_PATH = './figs/ims/TAC3/'
-
-ex_cell = 0
+ex_cell = 5
 xrange = (2000, 5000)
 
 predictions[ex_cell].spks_data
@@ -269,19 +262,20 @@ pltools.add_scalebar(
 )
 
 if IMG_PATH is not None:
-    plt.savefig(IMG_PATH + 'GABA_bad_cell.png', dpi = 300)
+    plt.savefig(IMG_PATH + 'GABA_good_cell.png', dpi = 300)
 
 plt.show()
 
 
 #%% MD DISTRIBUTION FIGURE
 
-plt.figure(figsize = (1, 3))
+plt.figure(figsize = (1.2, 3))
 
-plt.plot([0 for i in Md_vals], Md_vals, 'ko', markersize = 10, alpha = 0.7)
+plt.subplot(111)
+plt.ylim(0, 1)
+sns.swarmplot(x = [0 for i in Md_vals], y = Md_vals, facecolor = 'black', edgecolor = 'gray', linewidth = 0.5)
 pltools.hide_border('trb')
 plt.xticks([])
-plt.ylim(0, 1)
 plt.ylabel('Md* (4ms)')
 
 plt.tight_layout()
@@ -369,7 +363,7 @@ plt.axhline(0, ls = '--', color = 'k', lw = 0.5, dashes = (10, 10))
 
 for i in range(len(GIFs)):
     x, y = GIFs[i].gamma.getInterpolatedFilter(0.1)
-    plt.plot(x, y, 'k-')
+    plt.loglog(x, y, 'k-')
 
 plt.ylim(plt.ylim()[0], 30)
 plt.ylabel('Threshold movement (mV)')
@@ -434,35 +428,22 @@ for cell_no in range(len(experiments)):
         ISIs_tmp.extend(compute_ISIs(experiments[cell_no].trainingset_traces[tr_no]))
 
 
-    name_vec_tmp = ['{}\nMd = {:.2f}'.format(experiments[cell_no].name, Md_vals[cell_no]) for i in range(len(ISIs_tmp))]
+    name_vec_tmp = ['{}\nMd = {:.2f}'.format(experiments[cell_no].name.replace('_', ' '), Md_vals[cell_no]) for i in range(len(ISIs_tmp))]
 
     if cell_no == 0:
         violin_df = pd.DataFrame({'Label': name_vec_tmp, 'ISI': ISIs_tmp})
     else:
         violin_df = violin_df.append(pd.DataFrame({'Label': name_vec_tmp, 'ISI': ISIs_tmp}))
 
-violin_df
 
 plt.figure(figsize = (8, 8))
 
 violin_ax = plt.subplot(111)
 plt.title('ISI distribution of DRN SOM neurons')
-
 sns.violinplot(x = 'ISI', y = 'Label', data = violin_df, cut = 0, bw = 0.1)
 plt.ylabel('')
 plt.xlabel('ISI (ms)')
 plt.xlim(0, plt.xlim()[1])
-
-ins_ax = inset_axes(violin_ax, width = '20%', height = '20%', loc = 'center right', borderpad = 3)
-plt.title('First decile')
-
-for i, lab in enumerate(['DRN351', 'DRN354', 'DRN355', 'DRN356', 'DRN357']):
-    tmp_quantile = np.percentile(violin_df.loc[[lab in x for x in violin_df['Label']], 'ISI'], 10)
-    ins_ax.barh(len(violin_df['Label']) - i - 1, tmp_quantile)
-
-#ins_ax.set_yticklabels(np.flip(['DRN351', 'DRN354', 'DRN355', 'DRN356', 'DRN357'], -1))
-ins_ax.set_yticks([])
-ins_ax.set_xlabel('ISI (ms)')
 
 
 plt.savefig(IMG_PATH + 'ISI_violin.png', dpi = 300)
