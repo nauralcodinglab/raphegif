@@ -146,6 +146,15 @@ class Simulation(object):
 
         return first_spk
 
+    def PSTH(self, window_width):
+        """
+        Obtain the population firing rate with a resolution of `window_width`.
+        """
+        kernel = np.ones(int(window_width / self.dt)) / (window_width * self.no_neurons)
+        spks_sum = self.spks.sum(axis = 1)
+        psth = np.convolve(spks_sum, kernel, 'same')
+        return psth
+
 
     def simple_plot(self):
 
