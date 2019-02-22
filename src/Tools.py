@@ -134,6 +134,22 @@ def timeToIndex(x_t, dt):
 
     return x_i
 
+def timeToIntVec(x_t, T, dt):
+    """Convert vector of timestamps to a vector of zeros and ones.
+
+    Inputs:
+        x_t -- Vector of timestamps
+        T   -- Total length of integer vector output (time units)
+        dt  -- Timestep width
+    """
+
+    x_i = timeToIndex(x_t, dt)
+    intvec = np.zeros(int(T / dt), dtype = np.int8)
+    intvec[x_i] = 1
+
+    return intvec
+
+
 
 ###########################################################
 # Functions to perform exponential fit
