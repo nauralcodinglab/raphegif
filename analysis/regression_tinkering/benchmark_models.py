@@ -25,7 +25,7 @@ from scipy import optimize
 import sys
 sys.path.append('./src')
 sys.path.append('./figs/scripts')
-sys.path.append('./analysis/gls_regression')
+sys.path.append('./analysis/regression_tinkering')
 
 from GIF import GIF
 from AugmentedGIF import AugmentedGIF
@@ -43,10 +43,10 @@ from model_evaluation import *
 
 from load_experiments import experiments
 
-"""with open('./analysis/gls_regression/tauh_linesearch_coeffs_new.pyc', 'rb') as f:
+"""with open('./analysis/regression_tinkering/tauh_linesearch_coeffs_new.pyc', 'rb') as f:
     master_coeffs = pickle.load(f)"""
 
-with open(os.path.join('analysis', 'gls_regression', 'reference_experiments.pyc'), 'wb') as f:
+with open(os.path.join('analysis', 'regression_tinkering', 'reference_experiments.pyc'), 'wb') as f:
     pickle.dump(experiments, f)
 
 #%% DEFINE CLASS TO GAG VERBOSE POZZORINI METHODS
@@ -94,7 +94,7 @@ for i, expt in enumerate(experiments):
     GIFs.append(tmp_GIF)
     tmp_GIF.printParameters()
 
-with open(os.path.join('analysis', 'gls_regression', 'GIF_reference_mods.pyc'), 'wb') as f:
+with open(os.path.join('analysis', 'regression_tinkering', 'GIF_reference_mods.pyc'), 'wb') as f:
     pickle.dump(GIFs, f)
 
 
@@ -189,12 +189,12 @@ for i, expt in enumerate(experiments):
 
 print('Done!')
 
-with open('./analysis/gls_regression/Opt_KGIFs.pyc', 'wb') as f:
+with open('./analysis/regression_tinkering/Opt_KGIFs.pyc', 'wb') as f:
     pickle.dump(Opt_KGIFs, f)
 
 #%%
 
-with open('./analysis/gls_regression/Opt_KGIFs.pyc', 'rb') as f:
+with open('./analysis/regression_tinkering/Opt_KGIFs.pyc', 'rb') as f:
     Opt_KGIFs = pickle.load(f)
 
 precision = 8.
@@ -223,7 +223,7 @@ for expt, GIF_, KGIF_ in zip(experiments, GIFs, Opt_KGIFs):
 
     print '{} MD* {}ms: {:.2f}, {:.2f}'.format(expt.name, precision, tmp_Md_vals[0], tmp_Md_vals[1])
 
-with open(os.path.join('analysis', 'gls_regression', 'Md_preds.pyc'), 'wb') as f:
+with open(os.path.join('analysis', 'regression_tinkering', 'Md_preds.pyc'), 'wb') as f:
     pickle.dump({'Md_vals': Md_vals, 'predictions': predictions}, f)
 
 #%% MAKE PLOT
