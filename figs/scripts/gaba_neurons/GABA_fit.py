@@ -4,24 +4,29 @@ from __future__ import division
 
 import os
 
-import copy
+import copy; from copy import deepcopy
 import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 from scipy import stats
+from scipy import optimize
 import seaborn as sns
 import pandas as pd
 
 import sys
 sys.path.append('./src')
 sys.path.append('./figs/scripts')
+sys.path.append('./analysis/regression_tinkering')
 
+from Experiment import Experiment
 from GIF import GIF
+from iGIF_NP import iGIF_NP
 from Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
 from Filter_Exps import Filter_Exps
 from SpikeTrainComparator import intrinsic_reliability
+from model_evaluation import *
 
 import pltools
 
@@ -157,36 +162,522 @@ for expt in experiments:
 with open('./figs/scripts/gaba_neurons/opt_gaba_GIFs.pyc', 'wb') as f:
     pickle.dump(GIFs, f)
 
+#%% FIT iGIFs
+
+iGIFs = []
+
+for expt in experiments:
+
+    with gagProcess():
+        pass
+
+    tmp_GIF = iGIF_NP(0.1)
+
+    # Define parameters
+    tmp_GIF.Tref = 4.0
+
+    tmp_GIF.eta = Filter_Rect_LogSpaced()
+    tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
+
+    tmp_GIF.gamma = Filter_Exps()
+    tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
+
+    # Define the ROI of the training set to be used for the fit.
+    for tr in expt.trainingset_traces:
+        tr.setROI([[2000, 58000]])
+    for tr in expt.testset_traces:
+        tr.setROI([[500, 9500]])
+
+    tmp_GIF.fit(
+        expt, DT_beforeSpike=1.5,
+        theta_tau_all = np.logspace(np.log2(1), np.log2(100), 7, base = 2),
+        last_bin_constrained = True, do_plot = True
+    )
+
+    iGIFs.append(tmp_GIF)
+
+    tmp_GIF.printParameters()
+
+with open('./figs/scripts/gaba_neurons/Opt_iGIFs.pyc', 'wb') as f:
+    pickle.dump(Opt_KGIFs, f)
+
+#%% FIT AUGMENTEDGIFs
+
+"""Fit KGIF, but don't restrict gk1 coefficient sign. This should capture IA or IT.
+"""
+
+Opt_KGIFs = []
+
+full_coeffs = []
+
+for i, expt in enumerate(experiments):
+
+    print('Fitting GIF to {} ({:.1f}%)'.format(expt.name, 100 * (i + 1) / len(experiments)))
+
+    tmp_GIF = AugmentedGIF(0.1)
+
+    # Define parameters
+    tmp_GIF.Tref = 4.0
+
+    tmp_GIF.eta = Filter_Rect_LogSpaced()
+    tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
+
+
+    tmp_GIF.gamma = Filter_Exps()
+    tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
+
+    # Define the ROI of the training set to be used for the fit
+    for tr in expt.trainingset_traces:
+        tr.setROI([[1000,59000]])
+    for tr in expt.testset_traces:
+        tr.setROI([[500, 9500]])
+
+    coeffs = []
+
+    for h_tau in np.logspace(np.log2(10), np.log2(500), 13, base = 2):
+
+        print '\rFitting h_tau = {:.1f}ms'.format(h_tau),
+
+        tmp_GIF.h_tau = h_tau
+
+        X, y = build_Xy(expt, GIFmod = tmp_GIF)
+        mask = X[:, 0] > -80
+
+        betas = optimize.lsq_linear(
+            X, y,
+            bounds = (
+                np.concatenate(([-np.inf, 0, -np.inf, -np.inf, 0], np.full(X.shape[1] - 5, -np.inf))), # Don't restrict "gk1"
+                np.concatenate(([0, np.inf, np.inf, np.inf, np.inf], np.full(X.shape[1] - 5, np.inf)))
+            )
+        )['x'].tolist()
+
+        var_expl_ = var_explained(X, betas, y)
+
+        group_ = h_tau
+
+        row = deepcopy(betas)
+        row.extend([group_, var_expl_, expt.name])
+
+        coeffs.append(row)
+
+    coeffs = pd.DataFrame(coeffs)
+    coeffs = coeffs.rename({
+        coeffs.shape[1] - 3: 'group',
+        coeffs.shape[1] - 2: 'var_explained',
+        coeffs.shape[1] - 1: 'cell_ID'
+        }, axis = 1)
+
+    tmp = convert_betas(coeffs)
+    tmp['var_explained'] = coeffs['var_explained']
+    tmp['cell_ID'] = coeffs['cell_ID']
+
+    full_coeffs.append(tmp)
+
+    # Assign coeffs of best model
+    best_mod_ind = np.argmax(tmp['var_explained'])
+
+    tmp_GIF.C = tmp.loc[best_mod_ind, 'C']
+    tmp_GIF.gl = tmp.loc[best_mod_ind, 'gl']
+    tmp_GIF.El = tmp.loc[best_mod_ind, 'El']
+    tmp_GIF.gbar_K1 = tmp.loc[best_mod_ind, 'gk1']
+    tmp_GIF.h_tau = tmp.loc[best_mod_ind, 'group']
+    tmp_GIF.gbar_K2 = tmp.loc[best_mod_ind, 'gk2']
+    tmp_GIF.eta.setFilter_Coefficients(-np.array(tmp.loc[best_mod_ind, [x for x in tmp.columns if 'AHP' in x]].tolist()))
+
+    # Fit threshold params
+    print 'Fitting threshold dynamics.'
+    with gagProcess():
+        tmp_GIF.fitVoltageReset(expt, tmp_GIF.Tref, False)
+        tmp_GIF.fitStaticThreshold(expt)
+        tmp_GIF.fitThresholdDynamics(expt)
+
+    Opt_KGIFs.append(tmp_GIF)
+
+with open('./figs/scripts/gaba_neurons/Opt_KGIFs.pyc', 'wb') as f:
+    pickle.dump(Opt_KGIFs, f)
+
 #%% EVALUATE PERFORMANCE
 
-precision = 4.
+with open('./figs/scripts/gaba_neurons/Opt_KGIFs.pyc', 'rb') as f:
+    Opt_KGIFs = pickle.load(f)
+
+precision = 1.
 Md_vals = []
 predictions = []
 
-for expt, GIF_ in zip(experiments, GIFs):
+for expt, GIF_, KGIF_ in zip(experiments, GIFs, iGIFs):
 
-    with gagProcess():
+    tmp_Md_vals = []
+    tmp_predictions = []
 
-        # Use the myGIF model to predict the spiking data of the test data set in myExp
-        tmp_prediction = expt.predictSpikes(GIF_, nb_rep=500)
+    for mod in [GIF_, KGIF_]:
 
-        # Compute Md* with a temporal precision of +/- 4ms
-        Md = tmp_prediction.computeMD_Kistler(precision, 0.1)
+        with gagProcess():
+
+            # Use the myGIF model to predict the spiking data of the test data set in myExp
+            tmp_prediction = expt.predictSpikes(mod, nb_rep=500)
+
+            Md = tmp_prediction.computeMD_Kistler(precision, 0.1)
+
+            tmp_predictions.append(tmp_prediction)
+            tmp_Md_vals.append(Md)
 
     predictions.append(tmp_prediction)
-    Md_vals.append(Md)
+    Md_vals.append(tmp_Md_vals)
 
-    print '{} MD* {}ms: {:.2f}'.format(expt.name, precision, Md)
+    print '{} MD* {}ms: {:.2f}, {:.2f}'.format(expt.name, precision, tmp_Md_vals[0], tmp_Md_vals[1])
 
+#%%
+
+IMG_PATH = './figs/ims/gaba_cells/'
+
+plt.figure(figsize = (3, 3))
+plt.subplot(111)
+plt.ylim(0, 1)
+sns.swarmplot(
+    x = np.array([['GIF', 'iGIF'] for i in Md_vals]).flatten(),
+    y = np.array(Md_vals).flatten()
+)
+plt.plot(np.array([[0.2, 0.8] for i in Md_vals]).T, np.array(Md_vals).T, color = 'gray')
+plt.ylabel('$M_d^*$ (1ms precision)')
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'iGIF_Md_comparison_1ms.png')
+
+plt.show()
+
+
+#%%
+
+
+Iweak = np.concatenate((np.zeros(2500), -0.04 * np.ones(1500), 0.02 * np.ones(10000)))
+Imed = np.concatenate((np.zeros(2500), -0.04 * np.ones(1500), 0.06 * np.ones(10000)))
+Istrong = np.concatenate((np.zeros(2500), -0.04 * np.ones(1500), 0.10 * np.ones(10000)))
+
+spec_outer = gs.GridSpec(len(GIFs), 3)
+
+plt.figure(figsize = (6, 10))
+
+for i, GIF_, iGIF_ in zip([i for i in range(len(GIFs))], GIFs, iGIFs):
+
+    # Perform simulations
+    t, V, eta, V_T, spks = GIF_.simulate(Iweak, GIF_.El)
+    GIF_weakinput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    t, V, eta, V_T, spks = GIF_.simulate(Imed, GIF_.El)
+    GIF_medinput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    t, V, eta, V_T, spks = GIF_.simulate(Istrong, GIF_.El)
+    GIF_stronginput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    t, V, eta, V_T, spks = iGIF_.simulate(Iweak, iGIF_.El)
+    iGIF_weakinput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    t, V, eta, V_T, spks = iGIF_.simulate(Imed, iGIF_.El)
+    iGIF_medinput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    t, V, eta, V_T, spks = iGIF_.simulate(Istrong, iGIF_.El)
+    iGIF_stronginput = {'t': t, 'V': V, 'eta': eta, 'V_T': V_T, 'spks': spks}
+
+    # Plot output.
+    plt.subplot(spec_outer[i, 0])
+    if i == 0:
+        plt.title('Weak input')
+    plt.plot(GIF_weakinput['t'], GIF_weakinput['V'], 'k-', lw = 0.5)
+    plt.plot(iGIF_weakinput['t'], iGIF_weakinput['V'], 'r-', alpha = 0.7, lw = 0.5)
+    plt.text(
+        0.95, 0.05,
+        r'$\Delta M_d^* = {:.3f}$'.format(Md_vals[i][1] - Md_vals[i][0]),
+        ha = 'right', va = 'bottom', transform = plt.gca().transAxes
+    )
+    plt.ylabel('$V$ (mV)')
+    if i != len(GIFs) - 1:
+        plt.xticks([])
+    else:
+        plt.xlabel('Time (ms)')
+
+    plt.subplot(spec_outer[i, 1])
+    if i == 0:
+        plt.title('Medium input')
+    plt.plot(GIF_medinput['t'], GIF_medinput['V'], 'k-', lw = 0.5)
+    plt.plot(iGIF_medinput['t'], iGIF_medinput['V'], 'r-', alpha = 0.7, lw = 0.5)
+    if i != len(GIFs) - 1:
+        plt.xticks([])
+    else:
+        plt.xlabel('Time (ms)')
+
+    plt.subplot(spec_outer[i, 2])
+    if i == 0:
+        plt.title('Strong input')
+    plt.plot(GIF_stronginput['t'], GIF_stronginput['V'], 'k-', lw = 0.5)
+    plt.plot(iGIF_stronginput['t'], iGIF_stronginput['V'], 'r-', alpha = 0.7, lw = 0.5)
+    if i != len(GIFs) - 1:
+        plt.xticks([])
+    else:
+        plt.xlabel('Time (ms)')
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'iGIF_firingpattern_comparison.png')
+
+plt.show()
+
+#%% LOAD CURRENT STEPS
+
+"""
+Inspect GIF/iGIF spiketrains and compare with data where available.
+"""
+
+spec_step_traces = gs.GridSpec(2, 3, height_ratios = [0.2, 1], hspace = 0)
+
+DATA_PATH = os.path.join('data', 'GABA_cells')
+fnames_csv = pd.read_csv(os.path.join(DATA_PATH, 'index.csv'))
+fnames_csv.columns
+curr_step_expts = []
+
+q = 0
+for expt, GIF_, iGIF_ in zip(experiments, GIFs, iGIFs):
+    fname = fnames_csv.loc[fnames_csv['Cell'] == expt.name, 'Current steps'].tolist()[0]
+    if not pd.isnull(fname):
+        print 'Curr steps found for {}'.format(expt.name)
+        with gagProcess():
+            tmp_expt = Experiment(expt.name, 0.1)
+            tmp_expt.addTrainingSetTrace(
+                'Axon', fname = os.path.join(DATA_PATH, fname),
+                I_channel = 1, V_channel = 0
+            )
+        for tr in tmp_expt.trainingset_traces:
+            tr.detectSpikes()
+            tr.setROI([[3000, 4200]])
+        curr_step_expts.append(tmp_expt)
+
+        plt.figure(figsize = (6, 3))
+        plt.suptitle(r'\textbf{{{}}}'.format(expt.name.replace('_', '-')))
+
+        tr_ax = plt.subplot(spec_step_traces[1, 0])
+        tr_raster_ax = plt.subplot(spec_step_traces[0, 0])
+        gif_ax = plt.subplot(spec_step_traces[1, 1])
+        gif_raster_ax = plt.subplot(spec_step_traces[0, 1])
+        igif_ax = plt.subplot(spec_step_traces[1, 2])
+        igif_raster_ax = plt.subplot(spec_step_traces[0, 2])
+        first_spk_sweep = None
+        for i, tr in enumerate(tmp_expt.trainingset_traces):
+            if tr.getSpikeNbInROI() > 2:
+
+                if first_spk_sweep is None:
+                    first_spk_sweep = i
+
+                if (i - first_spk_sweep)%2 == 0 and i - first_spk_sweep < 1:
+                    tr_ax.plot(np.arange(0, (len(tr.V) - 0.5) * 0.1, 0.1), tr.V, 'k-', lw = 0.7)
+                    tr_raster_ax.plot(tr.getSpikeTimes(), np.zeros_like(tr.getSpikeTimes()), 'k|', markersize = 1.5)
+
+                    for j in range(10):
+                        t, V, eta, V_T, spks = GIF_.simulate(tr.I, GIF_.El)
+                        gif_raster_ax.plot(spks, j * np.ones_like(spks), 'k|', markersize = 1.5)
+                    gif_ax.plot(t, V, 'k-', lw = 0.7)
+                    gif_ax.text(0.05, 0.95, '$M_d^* = {:.2f}$'.format(Md_vals[q][0]), transform = gif_ax.transAxes, ha = 'left', va = 'top')
+
+                    for j in range(10):
+                        t, V, eta, V_T, spks = iGIF_.simulate(tr.I, iGIF_.El)
+                        igif_raster_ax.plot(spks, j * np.ones_like(spks), 'r|', markersize = 1.5)
+                    igif_ax.plot(t, V, 'r-', lw = 0.7)
+                    igif_ax.text(0.05, 0.95, '$M_d^* = {:.2f}$'.format(Md_vals[q][1]), transform = igif_ax.transAxes, ha = 'left', va = 'top')
+
+            else:
+                continue
+
+        tr_raster_ax.set_title('Raw data')
+        tr_raster_ax.set_xlim(tr_ax.get_xlim())
+        tr_raster_ax.set_yticks([])
+        tr_raster_ax.set_xticks([])
+
+        gif_raster_ax.set_title('GIF')
+        gif_raster_ax.set_xlim(gif_ax.get_xlim())
+        gif_raster_ax.set_yticks([])
+        gif_raster_ax.set_xticks([])
+
+        igif_raster_ax.set_title('iGIF')
+        igif_raster_ax.set_xlim(igif_ax.get_xlim())
+        igif_raster_ax.set_yticks([])
+        igif_raster_ax.set_xticks([])
+
+        tr_ax.set_xlabel('Time (ms)')
+        tr_ax.set_ylabel('V (mV)')
+
+        gif_ax.set_xlabel('Time (ms)')
+        gif_ax.set_ylim(tr_ax.get_ylim())
+        igif_ax.set_xlabel('Time (ms)')
+        igif_ax.set_ylim(tr_ax.get_ylim())
+
+        plt.tight_layout()
+        plt.subplots_adjust(top = 0.85)
+
+        if IMG_PATH is not None:
+            plt.savefig(os.path.join(IMG_PATH, '{}_steps_comparison.png'.format(expt.name)))
+
+        plt.show()
+
+    else:
+        print 'Curr steps not found for {}'.format(expt.name)
+
+    q += 1
+
+
+
+#%%
+
+nb_reps = 30
+
+ISIs = []
+sim_ISIs = []
+
+for i, GIF_, iGIF_, expt in zip([i for i in range(len(GIFs))], GIFs, iGIFs, experiments):
+
+    tmp = []
+    for tr in expt.trainingset_traces:
+        tmp.append(np.diff(tr.getSpikeTimes()))
+    ISIs.append(np.concatenate(tmp))
+    del tmp
+
+    tmp = {'GIF': [], 'iGIF': []}
+    for j in range(nb_reps):
+        _, _, _, _, gif_spks = GIF_.simulate(expt.trainingset_traces[0].I, GIF_.El)
+        _, _, _, _, igif_spks = iGIF_.simulate(expt.trainingset_traces[0].I, GIF_.El)
+
+        tmp['GIF'].append(np.diff(gif_spks))
+        tmp['iGIF'].append(np.diff(igif_spks))
+
+    sim_ISIs_tmp = {}
+    for key in tmp.keys():
+        sim_ISIs_tmp[key] = np.concatenate(tmp[key])
+    del tmp
+    sim_ISIs.append(sim_ISIs_tmp)
+    print '{:.1f}%'.format(100*(i+1)/len(GIFs))
+
+#%%
+
+def cumdist(x):
+    sorted = np.sort(x)
+    return sorted, np.cumsum(sorted)/np.sum(x)
+
+bins = np.logspace(np.log2(1), np.log2(5000), 20, base = 2)
+
+for i in range(len(GIFs)):
+    plt.figure(figsize = (5, 3))
+
+    plt.suptitle(r'{} - $\Delta M_d^* = {:.3f}$'.format(
+        experiments[i].name.replace('_', '-'), Md_vals[i][1] - Md_vals[i][0]
+    ))
+
+    plt.subplot(121)
+    plt.title('ISI histogram')
+    plt.xscale('log')
+    plt.hist(ISIs[i], bins = bins, density = True, color = 'k')
+    plt.hist(
+        sim_ISIs[i]['GIF'], bins = bins, density = True,
+        color = 'gray', lw = 3, histtype = 'step'
+    )
+    plt.hist(
+        sim_ISIs[i]['iGIF'], bins = bins, density = True,
+        color = 'r', lw = 3, histtype = 'step', alpha = 0.7
+    )
+    plt.ylabel('Density')
+    plt.xlabel('ISI (ms)')
+
+    plt.subplot(122)
+    plt.title('Cumulative distribution')
+    plt.xscale('log')
+    plt.fill_between(
+        *cumdist(ISIs[i]),
+        color = 'k', clip_on = False, zorder = 10,
+        label = 'Training data'
+    )
+    plt.plot(
+        *cumdist(sim_ISIs[i]['GIF']),
+        color = 'gray', lw = 3, clip_on = False, zorder = 10,
+        label = 'GIF'
+    )
+    plt.plot(
+        *cumdist(sim_ISIs[i]['iGIF']),
+        color = 'r', lw = 3, alpha = 0.7, clip_on = False, zorder = 10,
+        label = 'iGIF'
+    )
+    plt.ylim(0, 1)
+    plt.legend(loc = 'upper left')
+    plt.ylabel('Cumulative fraction')
+    plt.xlabel('ISI (ms)')
+
+    plt.tight_layout()
+    plt.subplots_adjust(top = 0.85)
+
+    if IMG_PATH is not None:
+        plt.savefig(IMG_PATH + '{}_ISI_dist.png'.format(experiments[i].name))
+
+    plt.show()
+
+#%% EXAMINE
+
+Md_arr = np.array(Md_vals)
+
+plt.figure(figsize = (6, 3))
+
+GIF_ax = plt.subplot(131)
+plt.title('GIF performance')
+plt.xscale('log')
+plt.ylabel('Cumulative fraction')
+plt.xlabel('ISI (ms)')
+
+iGIF_ax = plt.subplot(132)
+plt.title('iGIF performance')
+plt.xscale('log')
+plt.ylabel('Cumulative fraction')
+plt.xlabel('ISI (ms)')
+
+improvement_ax = plt.subplot(133)
+plt.title('iGIF improvement')
+plt.xscale('log')
+plt.ylabel('Cumulative fraction')
+plt.xlabel('ISI (ms)')
+
+dmd = Md_arr[:, 1] - Md_arr[:, 0]
+
+for i in range(len(GIFs)):
+    GIF_ax.plot(
+        *cumdist(ISIs[i]),
+        color = ((Md_arr[i, 0] - Md_arr[:, 0].min()) / np.max(Md_arr[:, 0] - Md_arr[:, 0].min()), 0, 0),
+        lw = 2, alpha = 0.7
+    )
+
+    iGIF_ax.plot(
+        *cumdist(ISIs[i]),
+        color = ((Md_arr[i, 1] - Md_arr[:, 1].min()) / np.max(Md_arr[:, 1] - Md_arr[:, 1].min()), 0, 0),
+        lw = 2, alpha = 0.7
+    )
+
+    improvement_ax.plot(
+        *cumdist(ISIs[i]),
+        color = ((dmd[i] - dmd.min()) / np.max(dmd - dmd.min()), 0, 0),
+        lw = 2, alpha = 0.7
+    )
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'ISI_cumdist_md_improvement.png')
+
+plt.show()
 
 #%% MAKE FIGURE
 
 plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
 
-IMG_PATH = './figs/ims/gaba_cells/'
+IMG_PATH = None#'./figs/ims/gaba_cells/'
 
-ex_cell = 5
-xrange = (2000, 5000)
+ex_cell = 0
+xrange = (2000, 9000)
 
 predictions[ex_cell].spks_data
 predictions[ex_cell].spks_model
@@ -216,7 +707,7 @@ plt.plot(
     label = 'Real neuron'
 )
 
-t, V, _, _, spks = GIFs[ex_cell].simulate(
+t, V, _, _, spks = iGIFs[ex_cell].simulate(
     experiments[ex_cell].testset_traces[0].I,
     experiments[ex_cell].testset_traces[0].V[0]
 )
@@ -266,6 +757,97 @@ if IMG_PATH is not None:
 
 plt.show()
 
+print(Opt_KGIFs[ex_cell].gbar_K1)
+print(Opt_KGIFs[ex_cell].h_tau)
+print(Opt_KGIFs[ex_cell].gbar_K2)
+
+#%%
+
+def param_corrplot(x_good, y_good, ax = None):
+
+    if ax is None:
+        ax = plt.gca()
+
+    ax.plot(
+        x_good, y_good,
+        'ko', markeredgecolor = 'gray', lw = 0.5, clip_on = False
+    )
+    ax.set_xlim(
+        min(ax.get_xlim()[0], ax.get_ylim()[0]),
+        max(ax.get_xlim()[1], ax.get_ylim()[1])
+    )
+    ax.set_ylim(
+        min(ax.get_xlim()[0], ax.get_ylim()[0]),
+        max(ax.get_xlim()[1], ax.get_ylim()[1])
+    )
+    ax.plot(ax.get_xlim(), ax.get_xlim(), 'k-', zorder = -1, lw = 0.5)
+
+
+spec_params = gs.GridSpec(2, 3)
+
+plt.figure(figsize = (6, 4))
+
+plt.subplot(spec_params[0, 0])
+plt.title(r'R (M$\Omega$)')
+param_corrplot(
+    [1/x.gl for x in GIFs], [1/x.gl for x in Opt_KGIFs]
+)
+plt.ylabel('Opt. KGIF')
+plt.xlabel('GIF')
+
+plt.subplot(spec_params[0, 1])
+plt.title('C (nF)')
+param_corrplot(
+    [x.C for x in GIFs], [x.C for x in Opt_KGIFs]
+)
+plt.xlabel('GIF')
+
+plt.subplot(spec_params[0, 2])
+plt.title('E (mV)')
+param_corrplot(
+    [x.El for x in GIFs], [x.El for x in Opt_KGIFs]
+)
+plt.xlabel('GIF')
+
+plt.subplot(spec_params[1, 0])
+plt.title(r'A-type conductance')
+#plt.ylim(0, 0.025)
+sns.swarmplot(
+    x = ['tmp' for i in range(len(Opt_KGIFs))],
+    y = [x.gbar_K1 for x in Opt_KGIFs],
+    palette = ('k', 'r'), clip_on = False, edgecolor = 'gray', linewidth = 0.5
+)
+plt.ylabel(r'$\bar{g}_A$ (nS)')
+plt.xticks([])
+
+plt.subplot(spec_params[1, 1])
+plt.title(r'A-type inactivation time')
+#plt.ylim(0, 160)
+sns.swarmplot(
+    x = ['tmp' for i in range(len(Opt_KGIFs))],
+    y = [x.h_tau for x in Opt_KGIFs],
+    palette = ('k', 'r'), clip_on = False, edgecolor = 'gray', linewidth = 0.5
+)
+plt.xticks([])
+plt.ylabel(r'$\tau_h$ (ms)')
+
+plt.subplot(spec_params[1, 2])
+plt.title(r'Kslow conductance')
+#plt.ylim(0, 0.01)
+sns.swarmplot(
+    x = ['tmp' for i in range(len(Opt_KGIFs))],
+    y = [x.gbar_K2 for x in Opt_KGIFs],
+    palette = ('k', 'r'), clip_on = False, edgecolor = 'gray', linewidth = 0.5
+)
+plt.xticks([])
+plt.ylabel(r'$\bar{g}_{slow}$ (nS)')
+
+plt.tight_layout()
+
+if IMG_PATH is not None:
+    plt.savefig(IMG_PATH + 'parameter_distributions.png')
+
+plt.show()
 
 #%% MD DISTRIBUTION FIGURE
 
