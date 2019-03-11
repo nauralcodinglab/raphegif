@@ -6,3 +6,4 @@ mydata
 .pydevproject
 ./src/myexamples/
 ./src/myexamples
+*.ipynb_checkpoints
