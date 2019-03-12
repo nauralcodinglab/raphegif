@@ -13,7 +13,7 @@ import pandas as pd
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 
 from Experiment import *
 from AEC_Badel import *
@@ -22,7 +22,7 @@ from AugmentedGIF import *
 from Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
 from Filter_Exps import Filter_Exps
 
-import pltools
+import src.pltools as pltools
 
 
 #%% LOAD DATA

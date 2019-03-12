@@ -10,12 +10,12 @@ import matplotlib.gridspec as gs
 
 import sys
 sys.path.append('./figs/scripts/defence')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./analysis/spk_timing/IA_mod')
 
 from stimgen import Stim
 import IAmod
-import pltools
+import src.pltools as pltools
 
 
 #%% INITIALIZE MODELS

@@ -4,7 +4,7 @@ from __future__ import division
 
 import sys
 sys.path.append('./analysis/spk_timing/IA_mod')
-sys.path.append('./figs/scripts')
+
 
 import pickle
 
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 
 import IAmod
-import pltools
+import src.pltools as pltools
 
 
 #%% INITIALIZE MODELS & PERFORM SIMULATIONS

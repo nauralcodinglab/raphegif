@@ -605,8 +605,8 @@ if __name__ == '__main__':
 if __name__ == '__main__':
 
     import IAmod
-    sys.path.append('./figs/scripts')
-    import pltools
+    
+    import src.pltools as pltools
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 

@@ -12,11 +12,11 @@ import pandas as pd
 
 import sys
 sys.path.append('./analysis/gating/')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./figs/scripts/defence')
 
 from cell_class import Cell, Recording
-import pltools
+import src.pltools as pltools
 from stimgen import Stim
 
 

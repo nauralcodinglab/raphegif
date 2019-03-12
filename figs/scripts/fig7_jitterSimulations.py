@@ -10,10 +10,10 @@ from matplotlib import cm
 
 import sys
 sys.path.append('./src/')
-sys.path.append('./figs/scripts/')
+
 
 from jitterGIF import jitterGIF
-import pltools
+import src.pltools as pltools
 
 
 #%% INITIALIZE JITTERGIF

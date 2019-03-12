@@ -14,8 +14,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import sys
 sys.path.append('./analysis/gating/')
 sys.path.append('./analysis/spk_timing/IA_mod')
-sys.path.append('./figs/scripts')
-import pltools
+
+import src.pltools as pltools
 from cell_class import Cell, Recording
 import IAmod
 

@@ -28,12 +28,12 @@ from scipy import optimize
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./analysis/gls_regression')
 
 from AugmentedGIF import *
 
-import pltools
+import src.pltools as pltools
 
 from model_evaluation import *
 

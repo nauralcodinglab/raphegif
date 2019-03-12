@@ -13,7 +13,7 @@ from scipy import stats
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 
 from Experiment import *
 from AEC_Badel import *
@@ -23,7 +23,7 @@ from Filter_Rect_LogSpaced import *
 from Filter_Exps import Filter_Exps
 from SpikeTrainComparator import intrinsic_reliability
 
-import pltools
+import src.pltools as pltools
 
 #%% DEFINE FUNCTION TO GAG VERBOSE POZZORINI FUNCTIONS
 

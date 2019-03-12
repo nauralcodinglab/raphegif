@@ -140,8 +140,8 @@ print '\nDone!\n'
 This saves an svg of training and test set traces to use in fig. 2
 """
 
-sys.path.append('./figs/scripts')
-import pltools
+
+import src.pltools as pltools
 
 import matplotlib as mpl
 

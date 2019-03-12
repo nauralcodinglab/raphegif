@@ -13,12 +13,12 @@ from scipy import stats
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 
 from Experiment import *
 from SpikeTrainComparator import intrinsic_reliability
 
-import pltools
+import src.pltools as pltools
 
 
 #%% DEFINE FUNCTION TO GAG VERBOSE POZZORINI FUNCTIONS

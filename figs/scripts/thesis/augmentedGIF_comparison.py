@@ -15,7 +15,7 @@ from scipy import stats
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 
 from Experiment import *
 from AEC_Badel import *
@@ -24,7 +24,7 @@ from AugmentedGIF import *
 from Filter_Rect_LogSpaced import *
 from Filter_Rect_LinSpaced import *
 
-import pltools
+import src.pltools as pltools
 
 #%% DEFINE CLASS TO GAG VERBOSE POZZORINI METHODS
 

@@ -17,7 +17,7 @@ import pandas as pd
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./analysis/regression_tinkering')
 
 from Experiment import Experiment
@@ -28,7 +28,7 @@ from Filter_Exps import Filter_Exps
 from SpikeTrainComparator import intrinsic_reliability
 from model_evaluation import *
 
-import pltools
+import src.pltools as pltools
 
 #%% LOAD DATA
 

@@ -24,7 +24,7 @@ from scipy import optimize
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./analysis/regression_tinkering')
 
 from GIF import GIF
@@ -34,7 +34,7 @@ from Filter_Exps import Filter_Exps
 from SpikeTrainComparator import intrinsic_reliability
 from Trace import Trace
 
-import pltools
+import src.pltools as pltools
 
 from model_evaluation import *
 

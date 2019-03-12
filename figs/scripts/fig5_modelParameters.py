@@ -11,9 +11,9 @@ import matplotlib as mpl
 import scipy.stats as stats
 
 import sys
-sys.path.append('./figs/scripts/')
 
-import pltools
+
+import src.pltools as pltools
 
 
 #%% LOAD DATA

@@ -16,11 +16,11 @@ import scipy.optimize as optimize
 import sys
 sys.path.append('./src/')
 sys.path.append('./analysis/gating/')
-sys.path.append('./figs/scripts')
+
 
 from SubthreshGIF_K import SubthreshGIF_K
 from cell_class import Cell
-import pltools
+import src.pltools as pltools
 
 
 #%% HANDY FUNCTIONS

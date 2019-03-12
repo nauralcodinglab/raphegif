@@ -9,7 +9,7 @@ import pandas as pd
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 
 from Experiment import *
 from AEC_Badel import *

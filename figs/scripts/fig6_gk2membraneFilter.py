@@ -17,11 +17,11 @@ import scipy as sp
 
 import sys
 sys.path.append('src')
-sys.path.append('./figs/scripts/')
+
 
 from SubthreshGIF_K import SubthreshGIF_K
 import Tools
-import pltools
+import src.pltools as pltools
 
 #%% EXTRACT DETAILED POWER SPECTRUM DENSITY
 

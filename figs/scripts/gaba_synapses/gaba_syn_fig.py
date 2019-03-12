@@ -16,10 +16,10 @@ import scipy.stats as stats
 import sys
 sys.path.append('./analysis/gating')
 sys.path.append('./analysis/gaba_synapses')
-sys.path.append('./figs/scripts')
+
 from cell_class import Cell
 import MiniDetector
-import pltools
+import src.pltools as pltools
 
 #%% LOAD DATA
 

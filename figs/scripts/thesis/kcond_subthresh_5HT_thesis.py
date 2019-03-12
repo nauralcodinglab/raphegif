@@ -12,10 +12,10 @@ import scipy.stats as stats
 
 import sys
 sys.path.append('./src/')
-sys.path.append('./figs/scripts/')
+
 sys.path.append('analysis/subthresh_mod_selection')
 
-import pltools
+import src.pltools as pltools
 
 
 #%% LOAD DATA

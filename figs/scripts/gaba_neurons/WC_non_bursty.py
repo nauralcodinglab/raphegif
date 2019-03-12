@@ -10,9 +10,9 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 import sys
 sys.path.append('./analysis/gating')
-sys.path.append('./figs/scripts')
+
 from cell_class import Cell
-import pltools
+import src.pltools as pltools
 
 
 #%% LOAD DATA

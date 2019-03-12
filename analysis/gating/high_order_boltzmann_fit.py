@@ -15,10 +15,10 @@ import scipy.optimize as optimize
 
 import sys
 sys.path.append('./analysis/gating/')
-sys.path.append('./figs/scripts')
+
 
 from cell_class import Cell, Recording
-import pltools
+import src.pltools as pltools
 
 
 #%% LOAD GATING DATA

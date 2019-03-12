@@ -15,7 +15,7 @@ from scipy import stats
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./analysis/gls_regression')
 
 from Experiment import *
@@ -25,7 +25,7 @@ from AugmentedGIF import *
 from Filter_Rect_LogSpaced import *
 from Filter_Exps import Filter_Exps
 
-import pltools
+import src.pltools as pltools
 
 from model_evaluation import *
 

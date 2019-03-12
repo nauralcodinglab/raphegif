@@ -9,9 +9,9 @@ import pandas as pd
 
 import sys
 sys.path.append('./analysis/spk_timing/')
-sys.path.append('./figs/scripts')
+
 import OhmicSpkPredictor as osp
-import pltools
+import src.pltools as pltools
 
 
 #%% DEFINE FUNCTIONS FOR IF CELL

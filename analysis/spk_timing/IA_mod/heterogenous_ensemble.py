@@ -13,10 +13,10 @@ import pandas as pd
 
 import sys
 sys.path.append('./analysis/spk_timing/IA_mod')
-sys.path.append('./figs/scripts')
+
 sys.path.append('./src/')
 from IAmod import IAmod, Simulation
-import pltools
+import src.pltools as pltools
 from Tools import generateOUprocess
 
 #%%

@@ -14,7 +14,7 @@ import pickle
 
 import sys
 sys.path.append('./src')
-sys.path.append('./figs/scripts')
+
 sys.path.append('analysis/subthresh_mod_selection')
 
 import matplotlib.pyplot as plt
@@ -27,7 +27,7 @@ import numpy as np
 from ModMats import ModMats
 from Experiment import Experiment
 from SubthreshGIF_K import SubthreshGIF_K
-import pltools
+import src.pltools as pltools
 
 
 #%% DEFINE FUNCTIONS TO GAG VERBOSE POZZORINI METHODS
