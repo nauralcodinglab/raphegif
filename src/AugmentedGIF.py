@@ -706,3 +706,25 @@ class AugmentedGIF(GIF):
         Y = ( np.gradient(trace.V)/trace.dt )[selection]
 
         return (X, Y)
+
+    def printParameters(self):
+
+        """
+        Print model parameters on terminal.
+        """
+
+        print "\n-------------------------"
+        print "GIF model parameters:"
+        print "-------------------------"
+        print "tau_m (ms):\t%0.3f"  % (self.C/self.gl)
+        print "R (MOhm):\t%0.3f"    % (1.0/self.gl)
+        print "C (nF):\t\t%0.3f"    % (self.C)
+        print "gl (nS):\t%0.6f"     % (self.gl)
+        print "El (mV):\t%0.3f"     % (self.El)
+        print "Tref (ms):\t%0.3f"   % (self.Tref)
+        print "Vr (mV):\t%0.3f"     % (self.Vr)
+        print "Vt* (mV):\t%0.3f"    % (self.Vt_star)
+        print "DV (mV):\t%0.3f"     % (self.DV)
+        print "gk1 (ns):\t%0.4f"    % (self.gbar_K1)
+        print "gk2 (ns):\t%0.4f"    % (self.gbar_K2)
+        print "-------------------------\n"
