@@ -1,10 +1,11 @@
+import sys
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from scipy.optimize import leastsq
 import weave
-
-import sys
 
 
 ###########################################################
@@ -27,6 +28,25 @@ def removeAxis(ax, which_ax=['top', 'right']):
 def reprint(str):
     sys.stdout.write('%s\r' % (str))
     sys.stdout.flush()
+
+
+class gagProcess(object):
+    """Class to forcibly gag verbose methods.
+
+    Temporarily redirects stdout to block print commands.
+
+    Usage:
+
+    with gagProcess:
+        print 'Things that will not be printed.'
+    """
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._original_stdout
 
 
 ###########################################################
