@@ -7,3 +7,5 @@ mydata
 ./src/myexamples/
 ./src/myexamples
 *.ipynb_checkpoints
+*/__pycache__
+*.ldat

@@ -16,16 +16,15 @@ import seaborn as sns
 import pandas as pd
 
 import sys
-sys.path.append('./src')
-
 sys.path.append('./analysis/regression_tinkering')
 
-from Experiment import Experiment
-from GIF import GIF
-from iGIF_NP import iGIF_NP
-from Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
-from Filter_Exps import Filter_Exps
-from SpikeTrainComparator import intrinsic_reliability
+from src.Experiment import Experiment
+from src.GIF import GIF
+from src.CalciumGIF import CalciumGIF
+from src.iGIF_NP import iGIF_NP
+from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
+from src.Filter_Exps import Filter_Exps
+from src.SpikeTrainComparator import intrinsic_reliability
 from model_evaluation import *
 
 import src.pltools as pltools
@@ -105,6 +104,10 @@ bad_cells = []
 for i in np.flip(np.sort(bad_cell_inds), -1):
     bad_cells.append(experiments.pop(i))
 
+"""with open(os.path.join('data', 'processed', 'GABA_fastnoise', 'gaba_goodcells.ldat'), 'wb') as f:
+    pickle.dump(experiments, f)
+    f.close()"""
+
 #%%
 
 t_supp = []
@@ -127,8 +130,9 @@ plt.axvline(-1.5, color = 'k')
 plt.axvline(4, color = 'k')
 plt.show()
 
-
 #%% FIT GIFs
+
+MOD_PATH = os.path.join('data', 'models', 'GABA')
 
 GIFs = []
 
@@ -137,6 +141,7 @@ for expt in experiments:
     with gagProcess():
 
         tmp_GIF = GIF(0.1)
+        tmp_GIF.name = expt.name
 
         # Define parameters
         tmp_GIF.Tref = 4.0
@@ -159,8 +164,73 @@ for expt in experiments:
 
     tmp_GIF.printParameters()
 
-with open('./figs/scripts/gaba_neurons/opt_gaba_GIFs.pyc', 'wb') as f:
+with open(os.path.join(MOD_PATH, 'gaba_gifs.mod'), 'wb') as f:
     pickle.dump(GIFs, f)
+    f.close()
+
+
+#%% FIT CaGIFs
+
+CaGIFs = []
+
+for expt in experiments:
+
+    with gagProcess():
+
+        tmp_GIF = CalciumGIF(0.1)
+        tmp_GIF.name = expt.name
+
+        # Define parameters
+        tmp_GIF.Tref = 4.0
+
+        tmp_GIF.eta = Filter_Rect_LogSpaced()
+        tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
+
+        tmp_GIF.gamma = Filter_Exps()
+        tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
+
+        # Define the ROI of the training set to be used for the fit.
+        for tr in expt.trainingset_traces:
+            tr.setROI([[2000, 58000]])
+        for tr in expt.testset_traces:
+            tr.setROI([[500, 9500]])
+
+        X, y = build_Xy(expt, GIFmod = tmp_GIF)
+        mask = X[:, 0] > -80
+
+        betas = optimize.lsq_linear(
+            X[mask, :], y[mask],
+            bounds = (
+                np.concatenate(([-np.inf, 0, -np.inf, 0, 0], np.full(X.shape[1] - 5, -np.inf))),
+                np.concatenate(([0, np.inf, np.inf, np.inf, np.inf], np.full(X.shape[1] - 5, np.inf)))
+            )
+        )['x'].tolist()
+
+        #var_expl_ = var_explained(X, betas, y)
+
+        coeffs = pd.DataFrame([betas])
+        tmp = convert_betas(coeffs)
+
+        tmp_GIF.C = tmp.loc[0, 'C']
+        tmp_GIF.gl = tmp.loc[0, 'gl']
+        tmp_GIF.El = tmp.loc[0, 'El']
+        tmp_GIF.gbar_K1 = tmp.loc[0, 'gk1']
+        tmp_GIF.gbar_K2 = tmp.loc[0, 'gk2']
+        tmp_GIF.eta.setFilter_Coefficients(-np.array(tmp.loc[0, [x for x in tmp.columns if 'AHP' in x]].tolist()))
+
+        # Fit threshold dynamics.
+        tmp_GIF.fitVoltageReset(expt, tmp_GIF.Tref, False)
+        tmp_GIF.fitStaticThreshold(expt)
+        tmp_GIF.fitThresholdDynamics(expt)
+
+    CaGIFs.append(tmp_GIF)
+
+    tmp_GIF.printParameters()
+
+with open(os.path.join(MOD_PATH, 'gaba_cagifs.mod'), 'wb') as f:
+    pickle.dump(CaGIFs, f)
+    f.close()
+
 
 #%% FIT iGIFs
 
@@ -169,42 +239,40 @@ iGIFs = []
 for expt in experiments:
 
     with gagProcess():
-        pass
 
-    tmp_GIF = iGIF_NP(0.1)
+        tmp_GIF = iGIF_NP(0.1)
+        tmp_GIF.name = expt.name
 
-    # Define parameters
-    tmp_GIF.Tref = 4.0
+        # Define parameters
+        tmp_GIF.Tref = 4.0
 
-    tmp_GIF.eta = Filter_Rect_LogSpaced()
-    tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
+        tmp_GIF.eta = Filter_Rect_LogSpaced()
+        tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
 
-    tmp_GIF.gamma = Filter_Exps()
-    tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
+        tmp_GIF.gamma = Filter_Exps()
+        tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
 
-    # Define the ROI of the training set to be used for the fit.
-    for tr in expt.trainingset_traces:
-        tr.setROI([[2000, 58000]])
-    for tr in expt.testset_traces:
-        tr.setROI([[500, 9500]])
+        # Define the ROI of the training set to be used for the fit.
+        for tr in expt.trainingset_traces:
+            tr.setROI([[2000, 58000]])
+        for tr in expt.testset_traces:
+            tr.setROI([[500, 9500]])
 
-    tmp_GIF.fit(
-        expt, DT_beforeSpike=1.5,
-        theta_tau_all = np.logspace(np.log2(1), np.log2(100), 7, base = 2),
-        last_bin_constrained = True, do_plot = True
-    )
+        tmp_GIF.fit(
+            expt, DT_beforeSpike=1.5,
+            theta_tau_all = np.logspace(np.log2(1), np.log2(100), 7, base = 2),
+            last_bin_constrained = True, do_plot = True
+        )
 
     iGIFs.append(tmp_GIF)
 
     tmp_GIF.printParameters()
 
-with open('./figs/scripts/gaba_neurons/Opt_iGIFs.pyc', 'wb') as f:
-    pickle.dump(Opt_KGIFs, f)
+with open(os.path.join(MOD_PATH, 'gaba_igifs.mod'), 'wb') as f:
+    pickle.dump(iGIFs, f)
+    f.close()
 
 #%% FIT AUGMENTEDGIFs
-
-"""Fit KGIF, but don't restrict gk1 coefficient sign. This should capture IA or IT.
-"""
 
 Opt_KGIFs = []
 
@@ -234,7 +302,7 @@ for i, expt in enumerate(experiments):
 
     coeffs = []
 
-    for h_tau in np.logspace(np.log2(10), np.log2(500), 13, base = 2):
+    for h_tau in np.logspace(np.log2(10), np.log2(300), 10, base = 2):
 
         print '\rFitting h_tau = {:.1f}ms'.format(h_tau),
 
@@ -244,9 +312,9 @@ for i, expt in enumerate(experiments):
         mask = X[:, 0] > -80
 
         betas = optimize.lsq_linear(
-            X, y,
+            X[mask, :], y[mask],
             bounds = (
-                np.concatenate(([-np.inf, 0, -np.inf, -np.inf, 0], np.full(X.shape[1] - 5, -np.inf))), # Don't restrict "gk1"
+                np.concatenate(([-np.inf, 0, -np.inf, 0, 0], np.full(X.shape[1] - 5, -np.inf))),
                 np.concatenate(([0, np.inf, np.inf, np.inf, np.inf], np.full(X.shape[1] - 5, np.inf)))
             )
         )['x'].tolist()
@@ -293,8 +361,9 @@ for i, expt in enumerate(experiments):
 
     Opt_KGIFs.append(tmp_GIF)
 
-with open('./figs/scripts/gaba_neurons/Opt_KGIFs.pyc', 'wb') as f:
+with open(os.path.join(MOD_PATH, 'gaba_kgifs.mod'), 'wb') as f:
     pickle.dump(Opt_KGIFs, f)
+    f.close()
 
 #%% EVALUATE PERFORMANCE
 
