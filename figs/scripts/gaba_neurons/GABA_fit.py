@@ -22,6 +22,7 @@ from src.Experiment import Experiment
 from src.GIF import GIF
 from src.CalciumGIF import CalciumGIF
 from src.iGIF_NP import iGIF_NP
+from src.iGIF_VR import iGIF_VR
 from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
 from src.Filter_Exps import Filter_Exps
 from src.SpikeTrainComparator import intrinsic_reliability
@@ -270,6 +271,48 @@ for expt in experiments:
 
 with open(os.path.join(MOD_PATH, 'gaba_igifs.mod'), 'wb') as f:
     pickle.dump(iGIFs, f)
+    f.close()
+
+#%% FIT iGIF_VRs
+"""Fit iGIF subclass with variable reset rule.
+"""
+
+iGIF_VRs = []
+
+for expt in experiments:
+
+    with gagProcess():
+
+        tmp_GIF = iGIF_VR(0.1)
+        tmp_GIF.name = expt.name
+
+        # Define parameters
+        tmp_GIF.Tref = 4.0
+
+        tmp_GIF.eta = Filter_Rect_LogSpaced()
+        tmp_GIF.eta.setMetaParameters(length=500.0, binsize_lb=2.0, binsize_ub=1000.0, slope=4.5)
+
+        tmp_GIF.gamma = Filter_Exps()
+        tmp_GIF.gamma.setFilter_Timescales([30, 300, 3000])
+
+        # Define the ROI of the training set to be used for the fit.
+        for tr in expt.trainingset_traces:
+            tr.setROI([[2000, 58000]])
+        for tr in expt.testset_traces:
+            tr.setROI([[500, 9500]])
+
+        tmp_GIF.fit(
+            expt, DT_beforeSpike=1.5,
+            theta_tau_all = np.logspace(np.log2(1), np.log2(100), 7, base = 2),
+            do_plot = True
+        )
+
+    iGIF_VRs.append(tmp_GIF)
+
+    tmp_GIF.printParameters()
+
+with open(os.path.join(MOD_PATH, 'gaba_igif_vrs.mod'), 'wb') as f:
+    pickle.dump(iGIF_VRs, f)
     f.close()
 
 #%% FIT AUGMENTEDGIFs

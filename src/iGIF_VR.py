@@ -259,6 +259,7 @@ class iGIF_VR(iGIF_NP):
                 float lambda = 0.0 ;
                 float rr = 0.0;
 
+                float theta_tot;
                 float theta_taufactor = (1.0-dt/theta_tau);
 
                 for (int t=0; t<T_ind-1; t++) {
@@ -279,7 +280,7 @@ class iGIF_VR(iGIF_NP):
                         }
                     }
 
-                    float theta_tot = 0.0;
+                    theta_tot = 0.0;
                     for (int r=0; r<R; r++) {
                         theta_tot += p_theta_i[r]*theta[t+1,r];
                     }
@@ -307,7 +308,7 @@ class iGIF_VR(iGIF_NP):
                             V[t+1] = V[t-Tref_ind] * Vr_slope + Vr_intercept;
 
                             for (int r=0; r<R; r++)
-                                theta[t+1,r] = 0.0;
+                                theta[t+1,r] = theta[t-Tref_ind,r];
                         }
 
                         // UPDATE ADAPTATION PROCESSES
