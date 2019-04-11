@@ -20,29 +20,13 @@ import seaborn as sns
 import scipy as sp
 from sklearn.cluster import KMeans
 
-# Import GIF toolbox modules from read-only clone
-import sys
-sys.path.append('src')
-
-from Experiment import Experiment
-from SubthreshGIF import SubthreshGIF
-from SubthreshGIF_K import SubthreshGIF_K
-from AEC_Badel import AEC_Badel
-from Trace import Trace
-import Tools
-
-
-#%% DEFINE FUNCTIONS TO GAG VERBOSE POZZORINI METHODS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
-
+from src.Experiment import Experiment
+from src.SubthreshGIF import SubthreshGIF
+from src.SubthreshGIF_K import SubthreshGIF_K
+from src.AEC_Badel import AEC_Badel
+from src.Trace import Trace
+import src.Tools
+from src.Tools import gagProcess
 
 
 #%% LOAD DATA

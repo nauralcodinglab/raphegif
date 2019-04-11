@@ -7,26 +7,13 @@ import os
 import numpy as np
 import pandas as pd
 
-import sys
-sys.path.append('./src')
+from src.Experiment import *
+from src.AEC_Badel import *
 
-
-from Experiment import *
-from AEC_Badel import *
+from src.Tools import gagProcess
 
 
 #%% READ IN DATA
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
-
-
 
 DATA_PATH = './data/fast_noise_5HT/'
 

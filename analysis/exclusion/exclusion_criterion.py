@@ -11,30 +11,17 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats
 
-import sys
-sys.path.append('./src')
-
-
-from Experiment import *
-from AEC_Badel import *
-from GIF import *
-from AugmentedGIF import *
-from Filter_Rect_LogSpaced import *
-from Filter_Exps import Filter_Exps
-from SpikeTrainComparator import intrinsic_reliability
+from src.Experiment import *
+from src.AEC_Badel import *
+from src.GIF import *
+from src.AugmentedGIF import *
+from src.Filter_Rect_LogSpaced import *
+from src.Filter_Exps import Filter_Exps
+from src.SpikeTrainComparator import intrinsic_reliability
 
 import src.pltools as pltools
+from src.Tools import gagProcess
 
-#%% DEFINE FUNCTION TO GAG VERBOSE POZZORINI FUNCTIONS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
 
 #%% READ IN DATA
 

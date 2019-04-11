@@ -10,9 +10,8 @@ import matplotlib.pyplot as plt
 import scipy as sp
 
 sys.path.append('analysis/subthresh_mod_selection')
-sys.path.append('src')
 from ModMats import ModMats
-from SubthreshGIF_K import SubthreshGIF_K
+from src.SubthreshGIF_K import SubthreshGIF_K
 
 
 #%% LOAD DATA

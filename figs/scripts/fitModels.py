@@ -14,26 +14,14 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 import sys
-sys.path.append('./src/')
 sys.path.append('analysis/subthresh_mod_selection')
 
 from ModMats import ModMats
-from Experiment import Experiment
-from SubthreshGIF_K import SubthreshGIF_K
-from AEC_Badel import AEC_Badel
+from src.Experiment import Experiment
+from src.SubthreshGIF_K import SubthreshGIF_K
+from src.AEC_Badel import AEC_Badel
 
-
-#%% DEFINE FUNCTIONS TO GAG VERBOSE POZZORINI METHODS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
-
+from src.Tools import gagProcess
 
 
 #%% LOAD DATA

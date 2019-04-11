@@ -30,6 +30,7 @@ from src.SpikeTrainComparator import intrinsic_reliability
 from model_evaluation import *
 
 import src.pltools as pltools
+from src.Tools import gagProcess
 
 #%% LOAD DATA
 

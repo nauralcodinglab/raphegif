@@ -23,18 +23,17 @@ from scipy import stats
 from scipy import optimize
 
 import sys
-sys.path.append('./src')
-
 sys.path.append('./analysis/regression_tinkering')
 
-from GIF import GIF
-from AugmentedGIF import AugmentedGIF
-from Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
-from Filter_Exps import Filter_Exps
-from SpikeTrainComparator import intrinsic_reliability
-from Trace import Trace
+from src.GIF import GIF
+from src.AugmentedGIF import AugmentedGIF
+from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
+from src.Filter_Exps import Filter_Exps
+from src.SpikeTrainComparator import intrinsic_reliability
+from src.Trace import Trace
 
 import src.pltools as pltools
+from src.Tools import gagProcess
 
 from model_evaluation import *
 
@@ -48,17 +47,6 @@ from load_experiments import experiments
 
 with open(os.path.join('analysis', 'regression_tinkering', 'reference_experiments.pyc'), 'wb') as f:
     pickle.dump(experiments, f)
-
-#%% DEFINE CLASS TO GAG VERBOSE POZZORINI METHODS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
 
 
 #%% FIT GIFs

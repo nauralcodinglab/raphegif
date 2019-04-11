@@ -13,29 +13,15 @@ import seaborn as sns
 import pandas as pd
 from scipy import stats
 
-import sys
-sys.path.append('./src')
-
-
-from Experiment import *
-from AEC_Badel import *
-from GIF import *
-from AugmentedGIF import *
-from Filter_Rect_LogSpaced import *
-from Filter_Rect_LinSpaced import *
+from src.Experiment import *
+from src.AEC_Badel import *
+from src.GIF import *
+from src.AugmentedGIF import *
+from src.Filter_Rect_LogSpaced import *
+from src.Filter_Rect_LinSpaced import *
 
 import src.pltools as pltools
-
-#%% DEFINE CLASS TO GAG VERBOSE POZZORINI METHODS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
+from src.Tools import gagProcess
 
 
 #%% LOAD DATA

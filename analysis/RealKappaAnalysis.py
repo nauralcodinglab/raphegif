@@ -9,11 +9,10 @@ import plotly.graph_objs as go
 from scipy import signal
 
 import sys
-sys.path.append('src')
 sys.path.append('analysis/gating')
 
-from SubthreshGIF_K import SubthreshGIF_K
-import Tools
+from src.SubthreshGIF_K import SubthreshGIF_K
+from src import Tools
 from cell_class import Cell
 
 

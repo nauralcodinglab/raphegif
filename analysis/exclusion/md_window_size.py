@@ -11,26 +11,11 @@ import seaborn as sns
 import pandas as pd
 from scipy import stats
 
-import sys
-sys.path.append('./src')
-
-
-from Experiment import *
-from SpikeTrainComparator import intrinsic_reliability
+from src.Experiment import *
+from src.SpikeTrainComparator import intrinsic_reliability
 
 import src.pltools as pltools
-
-
-#%% DEFINE FUNCTION TO GAG VERBOSE POZZORINI FUNCTIONS
-
-class gagProcess(object):
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout = self._original_stdout
+from src.Tools import gagProcess
 
 
 #%% LOAD DATA
