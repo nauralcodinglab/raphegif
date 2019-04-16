@@ -163,7 +163,7 @@ sergif_noIA_mod = gfn.GIFnet(
 
 print 'Saving GIFnet with IA knocked out.'
 with open(os.path.join(MODEL_PATH, 'sergif_noIA.mod'), 'wb') as f:
-    pickle.dump(sergif_noIA, f)
+    pickle.dump(sergif_noIA_mod, f)
     f.close()
 del sergif_noIA
 print 'Done GIFnet with IA knocked out!'
