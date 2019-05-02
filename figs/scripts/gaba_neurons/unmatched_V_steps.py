@@ -11,10 +11,7 @@ import matplotlib.gridspec as gs
 from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
-import sys
-sys.path.append('./analysis/gating')
-
-from cell_class import Cell
+from src.cell_class import Cell
 import src.pltools as pltools
 
 

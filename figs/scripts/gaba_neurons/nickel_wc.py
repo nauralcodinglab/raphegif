@@ -12,10 +12,9 @@ import pandas as pd
 
 import sys
 sys.path.append('./analysis/spk_timing/')
-sys.path.append('./analysis/gating')
 
 import OhmicSpkPredictor as osp
-from cell_class import Cell
+from src.cell_class import Cell
 import src.pltools as pltools
 
 

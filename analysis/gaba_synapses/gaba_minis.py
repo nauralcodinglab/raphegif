@@ -4,10 +4,10 @@ from __future__ import division
 
 import pickle
 
+from src.cell_class import Cell
+
 import sys
-sys.path.append('./analysis/gating')
 sys.path.append('./analysis/gaba_synapses')
-from cell_class import Cell
 import MiniDetector
 
 

@@ -8,9 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-import sys
-sys.path.append('./analysis/gating/')
-from cell_class import Cell, Recording
+from src.cell_class import Cell, Recording
 
 
 #%% DEFINE SPK TIME PREDICTOR

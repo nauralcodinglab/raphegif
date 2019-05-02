@@ -13,11 +13,7 @@ import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
 
-import sys
-sys.path.append('./analysis/gating/')
-
-
-from cell_class import Cell, Recording
+from src.cell_class import Cell, Recording
 import src.pltools as pltools
 
 

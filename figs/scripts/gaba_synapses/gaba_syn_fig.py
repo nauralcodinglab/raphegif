@@ -14,10 +14,9 @@ import scipy.optimize as optimize
 import scipy.stats as stats
 
 import sys
-sys.path.append('./analysis/gating')
 sys.path.append('./analysis/gaba_synapses')
 
-from cell_class import Cell
+from src.cell_class import Cell
 import MiniDetector
 import src.pltools as pltools
 

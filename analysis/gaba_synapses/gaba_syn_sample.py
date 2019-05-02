@@ -10,10 +10,7 @@ import matplotlib.gridspec as gs
 import seaborn as sns
 import scipy.optimize as optimize
 
-import sys
-sys.path.append('./analysis/gating')
-
-from cell_class import Cell
+from src.cell_class import Cell
 import src.pltools as pltools
 
 

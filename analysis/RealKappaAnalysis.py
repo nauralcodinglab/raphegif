@@ -8,12 +8,9 @@ import plotly.offline as pyoff
 import plotly.graph_objs as go
 from scipy import signal
 
-import sys
-sys.path.append('analysis/gating')
-
 from src.SubthreshGIF_K import SubthreshGIF_K
 from src import Tools
-from cell_class import Cell
+from src.cell_class import Cell
 
 
 #%% READ IN FILES
