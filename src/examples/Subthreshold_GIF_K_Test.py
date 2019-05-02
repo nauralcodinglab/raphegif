@@ -96,14 +96,17 @@ print('Success!\n')
 myGIF = SubthreshGIF_K(0.1)
 
 # Define parameters
+myGIF.m_A = 1.61
 myGIF.m_Vhalf = -27
 myGIF.m_k = 0.113
 myGIF.m_tau = 1.
 
-myGIF.h_Vhalf = -59.9
-myGIF.h_k = -0.166
+myGIF.h_A = 1.03
+myGIF.h_Vhalf = -59.2
+myGIF.h_k = -0.165
 myGIF.h_tau = 50.
 
+myGIF.n_A = 1.55
 myGIF.n_Vhalf = -16.9
 myGIF.n_k = 0.114
 myGIF.n_tau = 100.

@@ -165,14 +165,17 @@ print '\nDone!\n'
 
 KGIF = SubthreshGIF_K(0.1)
 
+KGIF.m_A = 1.61
 KGIF.m_Vhalf = -27
 KGIF.m_k = 0.113
 KGIF.m_tau = 1.
 
-KGIF.h_Vhalf = -59.9
-KGIF.h_k = -0.166
+KGIF.h_A = 1.03
+KGIF.h_Vhalf = -59.2
+KGIF.h_k = -0.165
 KGIF.h_tau = 50.
 
+KGIF.n_A = 1.55
 KGIF.n_Vhalf = -16.9
 KGIF.n_k = 0.114
 KGIF.n_tau = 100.

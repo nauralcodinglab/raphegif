@@ -75,9 +75,9 @@ class AugmentedGIF(GIF):
         self.m_k = 0.0985
         self.m_A = 1.61
 
-        self.h_Vhalf = -74.7
-        self.h_k = -0.11
-        self.h_A = 1.39
+        self.h_Vhalf = -59.2
+        self.h_k = -0.165
+        self.h_A = 1.03
         self.h_tau = 70
 
         self.n_Vhalf = -24.3

@@ -23,16 +23,19 @@ myGIF.gbar_K2 = 0
 myGIF.Vthresh = -45
 myGIF.Vreset = -75
 
+myGIF.m_A = 1.61
 myGIF.m_Vhalf = -23.7
-myGIF.m_k = 0.10
+myGIF.m_k = 0.0985
 myGIF.m_tau = 1.
 
-myGIF.h_Vhalf = -76.0
-myGIF.h_k = -0.11
+myGIF.h_A = 1.03
+myGIF.h_Vhalf = -59.2
+myGIF.h_k = -0.165
 myGIF.h_tau = 50.
 
+myGIF.n_A = 1.55
 myGIF.n_Vhalf = -24.2
-myGIF.n_k = 0.20
+myGIF.n_k = 0.216
 myGIF.n_tau = 100.
 
 myGIF.E_K = -101.

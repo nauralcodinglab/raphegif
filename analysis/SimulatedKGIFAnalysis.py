@@ -427,14 +427,17 @@ base_model.gl = 0.001 # nS
 base_model.gbar_K1 = 0.
 base_model.gbar_K2 = 0.
 
+base_model.m_A = 1.61
 base_model.m_Vhalf = -27
 base_model.m_k = 0.113
 base_model.m_tau = 1.
 
-base_model.h_Vhalf = -59.9
-base_model.h_k = -0.166
+base_model.h_A = 1.03
+base_model.h_Vhalf = -59.2
+base_model.h_k = -0.165
 base_model.h_tau = 50.
 
+base_model.n_A = 1.55
 base_model.n_Vhalf = -16.9
 base_model.n_k = 0.114
 base_model.n_tau = 100.

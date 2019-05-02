@@ -22,11 +22,11 @@ class IAmod(object):
         self.El = -60
         self.Ea = -101
 
-        self.m_Vhalf = -27
-        self.m_k = 0.113
+        self.m_Vhalf = -23.7
+        self.m_k = 0.0985
 
-        self.h_Vhalf = -74.7
-        self.h_k = -0.11
+        self.h_Vhalf = -59.2
+        self.h_k = -0.165
         self.h_tau = tau_h
 
         self.sigma_noise = sigma_noise
