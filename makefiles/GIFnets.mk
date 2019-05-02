@@ -1,20 +1,24 @@
-SIM_PATH=$(data/simulations/GIF_network/)
+SIM_PATH=data/simulations/GIF_network
+MOD_PATH=data/models/GIF_network
+GEN_PATH=analysis/GIF_network/model_generators
 
 .PHONY : all
-all : data/simulations/GIF_network/median_gifs.dat data/simulations/GIF_network/sergif_manual.dat data/simulations/GIF_network/sergif_noIA.dat
+all : \
+$(SIM_PATH)/median_gifs.ldat $(SIM_PATH)/sergif_manual.ldat $(SIM_PATH)/sergif_noIA.ldat \
+$(SIM_PATH)/fuzzy_mean_gifnet.ldat $(SIM_PATH)/fuzzy_manual_gifnet.ldat $(SIM_PATH)/fuzzy_manual_noIA_gifnet.mod
 
-data/models/GIF_network/median_gifs.mod : analysis/GIF_network/generate_gif_models.py
-	python -m analysis.GIF_network.generate_gif_models
+# Rules for constructing models.
+# Incomplete because dependency on fitted GIFs isn't accounted for...
+$(MOD_PATH)/median_gifs.mod $(MOD_PATH)/sergif_manual.mod $(MOD_PATH)/sergif_noIA.mod : $(GEN_PATH)/point_gifnets.py
+	PYTHONPATH="$(shell pwd)" python $<
 
-data/models/GIF_network/sergif_manual.mod : analysis/GIF_network/generate_gif_models.py
-	python -m analysis.GIF_network.generate_gif_models
+$(MOD_PATH)/fuzzy_mean_gifnet.mod $(MOD_PATH)/fuzzy_manual_gifnet.mod $(MOD_PATH)/fuzzy_manual_noIA_gifnet.mod : $(GEN_PATH)/fuzzy_gifnets.py
+	PYTHONPATH="$(shell pwd)" python $<
 
-data/models/GIF_network/sergif_noIA.mod : analysis/GIF_network/generate_gif_models.py
-	python -m analysis.GIF_network.generate_gif_models
-
-data/simulations/GIF_network/%.dat : data/models/GIF_network/%.mod
-	python -m analysis.GIF_network.gifnet_sim $< $@ -v
+# Rule for running necessary simulations.
+$(SIM_PATH)/%.ldat : $(MOD_PATH)/%.mod
+	PYTHONPATH="$(shell pwd)" python analysis/GIF_network/gifnet_sim.py $< $@ -v
 
 .PHONY : clean
 clean :
-	rm data/models/GIF_network/*; rm data/simulations/GIF_network/*;
+	rm $(MOD_PATH)/*; rm $(SIM_PATH)/*;

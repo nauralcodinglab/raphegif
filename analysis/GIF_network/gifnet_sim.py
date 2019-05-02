@@ -10,6 +10,7 @@ from __future__ import division
 import argparse
 import pickle
 import multiprocessing as mp
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -79,6 +80,23 @@ if __name__ == '__main__':
     }
 
 
+#%% DEFINE A FUNCTION TO RANDOMIZE MODEL COEFFICIENTS
+
+def fuzz_parameters(model):
+    """Randomize GIF model parameters.
+    """
+
+    if not hasattr(model, 'param_sds'):
+        raise AttributeError('model does not have required `param_sds` attribute.')
+
+    model_cpy = deepcopy(model)
+
+    for attr_ in model_cpy.param_sds.keys():
+        vars(model_cpy)[attr_] = np.random.normal(getattr(model_cpy, attr_), model_cpy.param_sds[attr_])
+
+    return model_cpy
+
+
 #%% DEFINE A MAIN FUNC TO RUN THE SIMULATION IN PARALLEL
 
 if __name__ == '__main__':
@@ -96,8 +114,13 @@ if __name__ == '__main__':
         # Iterate over GABA neurons providing input to a single 5HT cell.
         gaba_outmat = np.empty((no_gaba_neurons, len(distal_in)), dtype = np.float32)
         for gaba_no in range(no_gaba_neurons):
-            t, V, eta, v_T, spks = gifnet_mod.gaba_mod.simulate(
-                I + OU_noise['gaba'][gaba_no, :], gifnet_mod.gaba_mod.El
+            if hasattr(gifnet_mod.gaba_mod, 'param_sds'):
+                tmp_gaba_mod = fuzz_parameters(gifnet_mod.gaba_mod)
+            else:
+                tmp_gaba_mod = gifnet_mod.gaba_mod
+
+            t, V, eta, v_T, spks = tmp_gaba_mod.simulate(
+                I + OU_noise['gaba'][gaba_no, :], tmp_gaba_mod.El
             )
             gaba_outmat[gaba_no, :] = np.convolve(
                 timeToIntVec(spks, distal_in.shape[0] * gifnet_mod.dt, gifnet_mod.dt), gifnet_mod.gaba_kernel, 'same'
@@ -131,11 +154,16 @@ if __name__ == '__main__':
         for ser_no in range(no_ser_neurons):
             I_tmp = I + OU_noise['ser'][ser_no, :]
 
+            if hasattr(gifnet_mod.ser_mod, 'param_sds'):
+                tmp_ser_mod = fuzz_parameters(gifnet_mod.ser_mod)
+            else:
+                tmp_ser_mod = gifnet_mod.ser_mod
+
             # Try with and without feed-forward inhibition
             for ib_status, ib_multiplier in zip(('ib', 'reg'), (1, 0)):
-                t, V, eta, v_T, spks = gifnet_mod.ser_mod.simulate(
+                t, V, eta, v_T, spks = tmp_ser_mod.simulate(
                     I_tmp + gaba_inmat[ser_no, :] * ib_multiplier,
-                    gifnet_mod.ser_mod.El
+                    tmp_ser_mod.El
                 )
                 ser_spkvecs[ib_status] += timeToIntVec(spks, distal_in.shape[0] * gifnet_mod.dt, gifnet_mod.dt)
 
@@ -150,13 +178,14 @@ if __name__ == '__main__':
         if args.verbose: print '\n'
 
 
-        ff_results_tmp = pd.DataFrame(columns = ['Scale', 'Inhibition', 'Input', 'ser spks', 'ser ex', 'gaba ex'])
+        ff_results_tmp = pd.DataFrame(columns = ['Scale', 'Inhibition', 'Input', 'ser spks', 'gaba in', 'ser ex', 'gaba ex'])
         for ib_status in ('ib', 'reg'):
             row = {
                 'Scale': scale,
                 'Inhibition': ib_status,
                 'Input': I,
                 'ser spks': ser_spkvecs[ib_status],
+                'gaba in': gaba_inmat,
                 'ser ex': ser_examples[ib_status],
                 'gaba ex': gaba_ex
             }
@@ -185,3 +214,4 @@ if __name__ == '__main__':
 
     if args.verbose:
         print 'Finished {}!'.format(gifnet_mod.name)
+
