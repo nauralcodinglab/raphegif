@@ -9,3 +9,4 @@ mydata
 *.ipynb_checkpoints
 */__pycache__
 *.ldat
+*.lmod
