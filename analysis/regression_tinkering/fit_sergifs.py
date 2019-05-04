@@ -30,6 +30,7 @@ for i, expt in enumerate(experiments):
     print('Fitting GIF to {} ({:.1f}%)'.format(expt.name, 100 * (i + 1) / len(experiments)))
 
     tmp_GIF = GIF(0.1)
+    tmp_GIF.name = expt.name
 
     with gagProcess():
 

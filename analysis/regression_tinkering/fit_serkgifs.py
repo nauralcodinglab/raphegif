@@ -37,9 +37,10 @@ full_coeffs = []
 
 for i, expt in enumerate(experiments):
 
-    print('Fitting GIF to {} ({:.1f}%)'.format(expt.name, 100 * (i + 1) / len(experiments)))
+    print('Fitting AugmentedGIF to {} ({:.1f}%)'.format(expt.name, 100 * (i + 1) / len(experiments)))
 
     tmp_GIF = AugmentedGIF(0.1)
+    tmp_GIF.name = expt.name
 
     # Define parameters
     tmp_GIF.Tref = 6.5
