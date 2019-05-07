@@ -10,3 +10,4 @@ mydata
 */__pycache__
 *.ldat
 *.lmod
+*.swp
