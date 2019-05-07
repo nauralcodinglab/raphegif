@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     distal_in = { 
     'ser_input': np.array([generateOUprocess(60000., 100., 0.050, 0.050, 0.1, 42).astype(np.float32)] * 1200, dtype = np.float32),
-    'gaba_input': np.array([generateOUprocess(60000, 30., 0.050, 0.050, 0.1, 43).astype(np.float32)] * 800, dtype = np.float32)
+    'gaba_input': np.array([generateOUprocess(60000, 30., 0.050, 0.050, 0.1, 43).astype(np.float32)] * 1, dtype = np.float32)
     }
 
 

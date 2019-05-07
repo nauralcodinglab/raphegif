@@ -78,14 +78,6 @@ class GIFnet(object):
         if not ser_input.shape[0] == self.no_ser_neurons:
             raise ValueError('ser_input nrows and connectivity_matrix nrows do not match.')
 
-        # Check timesteps.
-        if self.ser_mod.dt != self.dt:
-            raise ValueError('Instance dt and ser_mod.dt do not match!')
-        if self.gaba_mod.dt != self.dt:
-            raise ValueError('Instance dt and gaba_mod.dt do not match!')
-
-
-
     def simulate(self, input_arrs):
         """
         Perform GIF network simulation.
@@ -104,8 +96,8 @@ class GIFnet(object):
         gaba_spktimes = []
         gaba_outmat = np.empty((self.no_gaba_neurons, gaba_input.shape[1]), dtype = np.float32) # Spks convolved with IPSC kernel
         for gaba_no in range(self.no_gaba_neurons):
-            t, V, eta, v_T, spks = self.gaba_mod.simulate(
-                gaba_input[gaba_no, :], self.gaba_mod.El
+            t, V, eta, v_T, spks = self.gaba_mod[gaba_no].simulate(
+                gaba_input[gaba_no, :], self.gaba_mod[gaba_no].El
             )
             gaba_spktimes.append(spks)
             gaba_outmat[gaba_no, :] = np.convolve(
@@ -124,40 +116,35 @@ class GIFnet(object):
         gaba_outmat[:, :int(self.propagation_delay / self.dt)] = 0
 
         # Transform GABA output into 5HT input using connectivity matrix.
-        gaba_inmat = np.dot(connectivity_matrix, gaba_outmat)
+        gaba_inmat = np.dot(self.connectivity_matrix, gaba_outmat)
 
         # Create a dict to hold 5HT example traces.
-        ser_examples = {}
+        ser_example = {}
 
-        # Allocate lists to hold 5HT spiketrains.
-        ser_spktimes = {
-            'ib': [],
-            'reg': []
-        }
+        # Allocate to hold 5HT spiketrains.
+        ser_spktimes = []
 
         for ser_no in range(self.no_ser_neurons):
 
-            # Try with and without feed-forward inhibition
-            for ib_status, ib_multiplier in zip(('ib', 'reg'), (1, 0)):
-                I = ser_input[ser_no, :] + gaba_inmat[ser_no, :] * ib_multiplier
-                t, V, eta, v_T, spks = self.ser_mod.simulate(
-                    I,
-                    self.ser_mod.El
-                )
-                ser_spktimes[ib_status].append(spks)
+            I = ser_input[ser_no, :] + gaba_inmat[ser_no, :] 
+            t, V, eta, v_T, spks = self.ser_mod[ser_no].simulate(
+                I,
+                self.ser_mod[ser_no].El
+            )
+            ser_spktimes.append(spks)
 
-                # Save a sample trace.
-                if ser_no == 0:
-                    ser_examples[ib_status] = {'t': t, 'V': V, 'eta': eta, 'v_T': v_T, 'spks': spks, 'I': I}
+            # Save a sample trace.
+            if ser_no == 0:
+                ser_example = {'t': t, 'V': V, 'eta': eta, 'v_T': v_T, 'spks': spks, 'I': I}
 
             print '\rSimulating 5HT neurons {:.1f}%'.format(100 * (ser_no + 1) / self.no_ser_neurons),
         print '\n'
 
         output_dict =  {
             'ser_spktimes': ser_spktimes,
-            'ser_examples': ser_examples,
+            'ser_example': ser_example,
             'gaba_spktimes': gaba_spktimes,
-            'gaba_examples': gaba_ex,
+            'gaba_example': gaba_ex,
             'gaba_inmat': gaba_inmat
         }
 
@@ -181,8 +168,8 @@ if __name__ == '__main__':
 
     # Try initializing GIFnet.
     test_gifnet = GIFnet(
-        ser_mod = GIF(dt),
-        gaba_mod = GIF(dt),
+        ser_mod = [GIF(dt)] * no_ser_neurons,
+        gaba_mod = [GIF(dt)] * no_gaba_neurons,
         gaba_kernel = [1, 1, 1, 0.5],
         propagation_delay = 1.,
         connectivity_matrix = connectivity_matrix,
