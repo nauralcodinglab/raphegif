@@ -82,38 +82,45 @@ def plot_traces(rec, primary_ax, secondary_ax, param_dict, primary_channel = 0, 
         for sw, col, alph in zip(sweeps, cols, alphas):
             primary_ax.plot(
                 t_vec, rec[primary_channel, :, sw],
-                '-', color = col, lw = 0.5, alpha = alph
+                '-', color = col, lw = 1., alpha = alph
             )
     if secondary_ax is not None:
         for sw, col, alph in zip(sweeps, cols, alphas):
             secondary_ax.plot(
                 t_vec, rec[secondary_channel, :, sw],
-                '-', color = 'gray', lw = 0.5, alpha = alph
+                '-', color = 'gray', lw = 1., alpha = alph
             )
 
 
-spec_outer = gs.GridSpec(2, 4, wspace = 0.4, hspace = 0, bottom = 0.07, right = 0.95, height_ratios = [1, 0.2])
-#spec_bl_tr = gs.GridSpecFromSubplotSpec(2, 1, spec_outer[:, 0], height_ratios = [1, 0.2], hspace = 0)
-#spec_vclamp = gs.GridSpecFromSubplotSpec(2, 1, spec_outer[:, 1], height_ratios = [1, 0.2], hspace = 0)
+spec_outer = gs.GridSpec(1, 2, wspace = 0.4, bottom = 0.2, left = 0.08, right = 0.95)
+spec_burstcell = gs.GridSpecFromSubplotSpec(
+    2, 2, spec_outer[:, 0],
+    height_ratios = [1, 0.3], hspace = 0.05, wspace = 0.5
+)
+spec_delaycell = gs.GridSpecFromSubplotSpec(
+    2, 2, spec_outer[:, 1],
+    height_ratios = [1, 0.3], hspace = 0.05, wspace = 0.5
+)
 
-plt.figure(figsize = (16, 5))
+plt.figure(figsize = (16, 3.5))
 
 ### Plot of bursty cell.
-bl_V_ax = plt.subplot(spec_outer[0, 0])
-bl_V_ax.set_title('\\textbf{{A1}} Current steps', loc = 'left')
+bl_V_ax = plt.subplot(spec_burstcell[0, 0])
+bl_V_ax.set_title('\\textbf{{A1}} Bursting', loc = 'left')
 bl_V_ax.set_xticks([])
 bl_V_ax.set_ylabel('$V$ (mV)')
-bl_I_ax = plt.subplot(spec_outer[1, 0])
-bl_I_ax.set_yticks([])
+bl_I_ax = plt.subplot(spec_burstcell[1, 0])
+#bl_I_ax.set_yticks([])
+bl_I_ax.set_ylabel('$I$ (pA)')
 bl_I_ax.set_xlabel('Time (ms)')
 
 plot_traces(DRN398_recs['baseline'][0][:, tr_xrange, :], bl_V_ax, bl_I_ax, bl_params_bursty)
 
-vclamp_I_ax = plt.subplot(spec_outer[0, 1])
-vclamp_I_ax.set_title('\\textbf{{A2}} Voltage steps (TTX)', loc = 'left')
+vclamp_I_ax = plt.subplot(spec_burstcell[0, 1])
+vclamp_I_ax.set_title('\\textbf{{A2}} Currents', loc = 'left')
 vclamp_I_ax.set_xticks([])
 vclamp_I_ax.set_ylabel('$I$ (pA)')
-vclamp_V_ax = plt.subplot(spec_outer[1, 1])
+vclamp_V_ax = plt.subplot(spec_burstcell[1, 1])
 vclamp_V_ax.set_xlabel('Time (ms)')
 vclamp_V_ax.set_ylabel('$V$ (mV)')
 
@@ -123,6 +130,7 @@ vclamp_ins = inset_axes(vclamp_I_ax, '30%', '25%', loc = 'upper center')
 plot_traces(DRN398_recs['V-steps'][0][:, vclamp_xrange, :], vclamp_ins, None, vclamp_params)
 vclamp_ins.set_xlim(90, 350)
 vclamp_ins.set_ylim(-90, 200)
+vclamp_ins.set_xticks([])
 vclamp_ins.set_yticks([])
 mark_inset(vclamp_I_ax, vclamp_ins, loc1 = 2, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
 
@@ -130,21 +138,22 @@ vclamp_I_ax.set_ylim(-100, vclamp_I_ax.get_ylim()[1])
 vclamp_I_ax.set_yticks(vclamp_I_ax.get_yticks()[1:])
 
 ### Plot of non-bursty cell.
-bl_V_ax = plt.subplot(spec_outer[0, 2])
-bl_V_ax.set_title('\\textbf{{B1}} Current steps', loc = 'left')
+bl_V_ax = plt.subplot(spec_delaycell[0, 0])
+bl_V_ax.set_title('\\textbf{{B1}} Delayed firing', loc = 'left')
 bl_V_ax.set_xticks([])
 bl_V_ax.set_ylabel('$V$ (mV)')
-bl_I_ax = plt.subplot(spec_outer[1, 2])
-bl_I_ax.set_yticks([])
+bl_I_ax = plt.subplot(spec_delaycell[1, 0])
+#bl_I_ax.set_yticks([])
+bl_I_ax.set_ylabel('$I$ (pA)')
 bl_I_ax.set_xlabel('Time (ms)')
 
 plot_traces(DRN393_recs['baseline'][0][:, tr_xrange, :], bl_V_ax, bl_I_ax, bl_params_nonbursty)
 
-vclamp_I_ax = plt.subplot(spec_outer[0, 3])
-vclamp_I_ax.set_title('\\textbf{{B2}} Voltage steps (TTX)', loc = 'left')
+vclamp_I_ax = plt.subplot(spec_delaycell[0, 1])
+vclamp_I_ax.set_title('\\textbf{{B2}} Currents', loc = 'left')
 vclamp_I_ax.set_xticks([])
 vclamp_I_ax.set_ylabel('$I$ (pA)')
-vclamp_V_ax = plt.subplot(spec_outer[1, 3])
+vclamp_V_ax = plt.subplot(spec_delaycell[1, 1])
 vclamp_V_ax.set_xlabel('Time (ms)')
 vclamp_V_ax.set_ylabel('$V$ (mV)')
 
@@ -155,6 +164,7 @@ plot_traces(DRN393_recs['V-steps'][0][:, vclamp_xrange, :], vclamp_ins, None, vc
 vclamp_ins.set_xlim(90, 350)
 vclamp_ins.set_ylim(-30, 60)
 vclamp_ins.set_yticks([])
+vclamp_ins.set_xticks([])
 mark_inset(vclamp_I_ax, vclamp_ins, loc1 = 2, loc2 = 4, ls = '--', color = 'gray', lw = 0.5)
 
 vclamp_I_ax.set_ylim(-100, vclamp_I_ax.get_ylim()[1])
@@ -164,4 +174,3 @@ plt.tight_layout()
 
 if IMG_PATH is not None:
     plt.savefig(os.path.join(IMG_PATH, 'fig4_somassociation.png'))
-

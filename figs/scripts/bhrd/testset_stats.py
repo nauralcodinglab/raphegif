@@ -37,23 +37,23 @@ ex_cells = {
     'GABA': experiments['GABA'][0]
 }
 
-plt.figure()
+plt.figure(figsize = (16, 9))
 
-spec_outer = gs.GridSpec(2, 3)
+spec_outer = gs.GridSpec(2, 3, height_ratios = [1., 0.6])
 spec_sertr = gs.GridSpecFromSubplotSpec(
     3, 1, spec_outer[0, 0],
-    hspace = 0.05, height_ratios = [0.2, 1, 0.5]
+    hspace = 0.05, height_ratios = [0.3, 1, 0.5]
 )
 spec_somtr = gs.GridSpecFromSubplotSpec(
     3, 1, spec_outer[0, 1],
-    hspace = 0.05, height_ratios = [0.2, 1, 0.5]
+    hspace = 0.05, height_ratios = [0.3, 1, 0.5]
 )
 spec_pyrtr = gs.GridSpecFromSubplotSpec(
     3, 1, spec_outer[0, 2],
-    hspace = 0.05, height_ratios = [0.2, 1, 0.5]
+    hspace = 0.05, height_ratios = [0.3, 1, 0.5]
 )
 
-def plot_sample_traces(spec, title, example_cell, color = 'k'):
+def plot_sample_traces(spec, title, example_cell, color = 'k', draw_ylabels = False):
     """Standard method for plotting sample testset traces.
 
     Inputs:
@@ -71,32 +71,37 @@ def plot_sample_traces(spec, title, example_cell, color = 'k'):
     plt.subplot(spec[0, :])
     plt.title(title, loc = 'left')
     plt.plot(
-        example_cell.testset_traces[0].getTime(),
+        example_cell.testset_traces[0].getTime() * 1e-3,
         example_cell.testset_traces[0].I,
-        '-', color = 'gray', lw = 0.5
+        '-', color = 'gray', lw = 1.
     )
     plt.xticks([])
+    if draw_ylabels:
+        plt.ylabel('$I$ (nA)')
 
     # Plot membrane potential (all sweeps) in second row.
     plt.subplot(spec[1, :])
     for tr in example_cell.testset_traces:
         plt.plot(
-            tr.getTime(), tr.V, '-', color = color, lw = 0.5, alpha = 0.7
+            tr.getTime() * 1e-3, tr.V, '-', color = color, lw = 1., alpha = 0.7
         )
     plt.xticks([])
     xlim_ = plt.xlim()
+    if draw_ylabels:
+        plt.ylabel('$V$ (mV)')
 
     # Plot spikes in third row.
     plt.subplot(spec[2, :])
     spktrains = []
     for tr in example_cell.testset_traces:
-        spktrains.append(tr.getSpikeTimes())
+        spktrains.append(tr.getSpikeTimes() * 1e-3)
     plt.eventplot(spktrains, color = color)
     plt.xlim(xlim_)
     plt.yticks([])
+    plt.xlabel('Time (s)')
 
 ### Plot sample traces.
-plot_sample_traces(spec_sertr, r'\textbf{A1} 5HT test set', ex_cells['5HT'])
+plot_sample_traces(spec_sertr, r'\textbf{A1} 5HT test set', ex_cells['5HT'], draw_ylabels = True)
 plot_sample_traces(spec_somtr, r'\textbf{B1} SOM test set', ex_cells['GABA'])
 plot_sample_traces(spec_pyrtr, r'\textbf{C1} mPFC L5 pyr. test set', ex_cells['mPFC'])
 
@@ -104,11 +109,10 @@ plot_sample_traces(spec_pyrtr, r'\textbf{C1} mPFC L5 pyr. test set', ex_cells['m
 # Intrinsic reliability of 5HT cells.
 plt.subplot(spec_outer[1, 0])
 plt.title(r'\textbf{A2} 5HT intrinsic reliability', loc = 'left')
-plt.axvline(8, color = 'k', ls = '--', dashes = (10, 10), lw = 0.5)
 plt.semilogx(
     reliabilities['supports']['5HT'],
     reliabilities['reliabilities']['5HT'],
-    'k-', lw = 0.8, alpha = 0.8
+    'k-', lw = 1.2, alpha = 0.8
 )
 plt.ylim(0,1)
 plt.ylabel('Intrinsic reliability')
@@ -117,11 +121,10 @@ plt.xlabel('Precision (ms)')
 # Intrinsic reliability of SOM cells.
 plt.subplot(spec_outer[1, 1])
 plt.title(r'\textbf{B2} SOM intrinsic reliability', loc = 'left')
-plt.axvline(8, color = 'k', ls = '--', dashes = (10, 10), lw = 0.5)
 plt.semilogx(
     reliabilities['supports']['GABA'],
     reliabilities['reliabilities']['GABA'],
-    'k-', lw = 0.8, alpha = 0.8
+    'k-', lw = 1.2, alpha = 0.8
 )
 plt.ylim(0,1)
 plt.ylabel('Intrinsic reliability')
@@ -129,12 +132,11 @@ plt.xlabel('Precision (ms)')
 
 # Intrinsic reliability of mPFC cells.
 plt.subplot(spec_outer[1, 2])
-plt.title(r'\textbf{C2} mPFC L5 pyr. intrinsic reliability', loc = 'left')
-plt.axvline(8, color = 'k', ls = '--', dashes = (10, 10), lw = 0.5)
+plt.title(r'\textbf{C2} mPFC intrinsic reliability', loc = 'left')
 plt.semilogx(
     reliabilities['supports']['mPFC'],
     reliabilities['reliabilities']['mPFC'],
-    'k-', lw = 0.8, alpha = 0.8
+    'k-', lw = 1.2, alpha = 0.8
 )
 plt.ylim(0,1)
 plt.ylabel('Intrinsic reliability')
@@ -145,4 +147,3 @@ plt.tight_layout()
 if IMG_PATH is not None:
     print 'Saving figure.'
     plt.savefig(os.path.join(IMG_PATH, 'fig6_testsetstats.png'), dpi = 300)
-

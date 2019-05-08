@@ -159,7 +159,7 @@ spec_performance    = gs.GridSpecFromSubplotSpec(1, 2, spec_outer[3, :], width_r
 spec_performance_tr = gs.GridSpecFromSubplotSpec(4, 1, spec_performance[:, 0], height_ratios = [0.2, 1, 0.5, 0.5], hspace = 0)
 spec_performance_quant = gs.GridSpecFromSubplotSpec(1, 2, spec_performance[:, 1], wspace = 0.6)
 
-plt.figure(figsize = (16, 16))
+plt.figure(figsize = (16, 14))
 
 plt.subplot(spec_model[:, 0])
 plt.title('\\textbf{{A1}} RC-circuit subthreshold model', loc = 'left')
@@ -175,7 +175,7 @@ toy_GIF.DV = 3
 t, V, _, V_T, _ = toy_GIF.simulate(I_vec, toy_GIF.El)
 V[V > -10] = 40
 
-plt.plot(t, I_vec, '-', color = 'gray', lw = 2.)
+plt.plot(t, I_vec, '-', color = 'gray', lw = 1.)
 pltools.hide_ticks()
 pltools.hide_border()
 
@@ -189,8 +189,8 @@ p_spk /= np.nanmax(p_spk)
 p_spk *= np.abs(np.max(V[V < -10]))
 p_spk += toy_GIF.El
 
-plt.plot(t, p_spk, 'r--', lw = 2., label = '$P_\mathrm{{spike}}$')
-plt.plot(t, V, 'r-', lw = 2., label = '$V$')
+plt.plot(t, p_spk, 'r--', lw = 1., label = '$P_\mathrm{{spike}}$')
+plt.plot(t, V, 'r-', lw = 1., label = '$V$')
 
 plt.annotate(
     'Deterministic\n$V$ dynamics', (195, -49),
@@ -232,7 +232,7 @@ tr_I_ax = plt.subplot(spec_training[1, :])
 plt.plot(
     1e-3 * ex_experiment.trainingset_traces[0].getTime(),
     ex_experiment.trainingset_traces[0].I,
-    '-', color = 'gray', lw = 2.
+    '-', color = 'gray', lw = 1.
 )
 pltools.add_scalebar(y_units = 'nA', anchor = (1.1, 0.1), y_label_space = 0.005, omit_x = True)
 I_ylim = plt.ylim()
@@ -241,7 +241,7 @@ plt.subplot(spec_training[2, :], sharex = tr_I_ax)
 plt.plot(
     1e-3 * ex_experiment.trainingset_traces[0].getTime(),
     ex_experiment.trainingset_traces[0].V,
-    'k-', lw = 2.
+    'k-', lw = 1.
 )
 pltools.add_scalebar(
     y_units = 'mV', anchor = (1.1, 0.2), y_label_space = 0.005,
@@ -268,7 +268,7 @@ tst_I_ax = plt.subplot(spec_test[1, :])
 plt.plot(
     ex_experiment.testset_traces[0].getTime(),
     ex_experiment.testset_traces[0].I,
-    '-', color = 'gray', lw = 2.
+    '-', color = 'gray', lw = 1.
 )
 pltools.hide_border()
 pltools.hide_ticks()
@@ -278,7 +278,7 @@ plt.subplot(spec_test[2, :], sharex = tst_I_ax)
 plt.plot(
     ex_experiment.testset_traces[0].getTime(),
     ex_experiment.testset_traces[0].V,
-    'k-', lw = 2.
+    'k-', lw = 1.
 )
 pltools.hide_border()
 pltools.hide_ticks()
@@ -310,7 +310,7 @@ plt.subplot(spec_data[1, :])
 plt.plot(
     ex_experiment.trainingset_traces[0].getTime(),
     ex_experiment.trainingset_traces[0].I,
-    color = 'gray', lw = 2.
+    color = 'gray', lw = 1.
 )
 plt.xlim(proc_xlim)
 pltools.hide_ticks()
@@ -320,7 +320,7 @@ split_left_anchor = plt.subplot(spec_data[2, :])
 plt.plot(
     ex_experiment.trainingset_traces[0].getTime(),
     ex_experiment.trainingset_traces[0].V,
-    'k-', lw = 2.
+    'k-', lw = 1.
 )
 plt.xlim(proc_xlim)
 pltools.hide_ticks()
@@ -341,7 +341,7 @@ I_tmp[~mask_tmp] = np.nan
 plt.plot(
     ex_experiment.trainingset_traces[0].getTime(),
     I_tmp,
-    '-', color = 'gray', lw = 2.
+    '-', color = 'gray', lw = 1.
 )
 plt.xlim(proc_xlim)
 pltools.hide_ticks()
@@ -353,7 +353,7 @@ V_tmp[~mask_tmp] = np.nan
 plt.plot(
     ex_experiment.trainingset_traces[0].getTime(),
     V_tmp,
-    'k-', lw = 2.
+    'k-', lw = 1.
 )
 plt.xlim(proc_xlim)
 pltools.hide_ticks()
@@ -430,7 +430,7 @@ plt.title('\\textbf{{D1}} Evaluation of performance', loc = 'left')
 plt.plot(
     ex_experiment.testset_traces[0].getTime(),
     ex_experiment.testset_traces[0].I,
-    '-', color = 'gray', lw = 2.
+    '-', color = 'gray', lw = 1.
 )
 plt.xlim(perf_xlim)
 pltools.add_scalebar(y_units = 'nA', y_size = 1, anchor = (1.02, 0.2), omit_x = True, y_label_space = -0.02)
@@ -439,7 +439,7 @@ plt.subplot(spec_performance_tr[1, :])
 plt.plot(
     ex_experiment.testset_traces[0].getTime(),
     ex_experiment.testset_traces[0].V,
-    'k-', lw = 2.
+    'k-', lw = 1.
 )
 
 t, V, _, _, spks = GIFs[ex_cell].simulate(
@@ -450,7 +450,7 @@ V[np.array(spks / 0.1).astype(np.int32)] = 0
 
 plt.plot(
     t, V,
-    color = 'r', lw = 2., alpha = 0.7,
+    color = 'r', lw = 1., alpha = 0.7,
     label = 'Linear model'
 )
 plt.xlim(perf_xlim)
@@ -476,7 +476,7 @@ plt.subplot(spec_performance_quant[:, 0])
 plt.title('\\textbf{{D2}}', loc = 'left')
 plt.ylim(0, 1)
 sigmas = [GIF_.var_explained_V for GIF_ in GIFs]
-sns.swarmplot(y = sigmas, color = 'gray', edgecolor = 'k', size = 10, lw = 2.)
+sns.swarmplot(y = sigmas, color = 'gray', edgecolor = 'k', size = 10, lw = 1.)
 plt.xticks([])
 plt.ylabel('$R^2$ on $V_\mathrm{{test}}$')
 pltools.hide_border('trb')
@@ -484,7 +484,7 @@ pltools.hide_border('trb')
 plt.subplot(spec_performance_quant[:, 1])
 plt.title('\\textbf{{D3}}', loc = 'left')
 plt.ylim(0, 1)
-sns.swarmplot(y = mPFC_Md_vals, color = 'gray', edgecolor = 'k', size = 10, lw = 2.)
+sns.swarmplot(y = mPFC_Md_vals, color = 'gray', edgecolor = 'k', size = 10, lw = 1.)
 plt.xticks([])
 plt.ylabel('$M_d^*$ (4ms)')
 pltools.hide_border('trb')

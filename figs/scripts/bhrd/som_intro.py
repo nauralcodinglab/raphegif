@@ -67,18 +67,18 @@ plt.style.use(os.path.join('figs', 'scripts', 'bhrd', 'poster_mplrc.dms'))
 IMG_PATH = os.path.join('figs', 'ims', '2019BHRD')
 hist_color = 'gray'
 
-plt.figure(figsize = (16,10))
+plt.figure(figsize = (16,9))
 
 # Define layout with GridSpec objects.
 spec_outer = gs.GridSpec(3, 1)
 spec_firstrow = gs.GridSpecFromSubplotSpec(
-    1, 3, spec_outer[0, :]
+    1, 3, spec_outer[0, :], hspace = 0.45
 )
 spec_wccurr = gs.GridSpecFromSubplotSpec(
-    2, 1, spec_firstrow[:, 2], hspace = 0, height_ratios = [1, 0.2]
+    2, 1, spec_firstrow[:, 2], hspace = 0.05, height_ratios = [1, 0.2]
 )
 spec_currsteprow = gs.GridSpecFromSubplotSpec(
-    2, 2, spec_outer[1, :], hspace = 0, height_ratios = [1, 0.2]
+    2, 2, spec_outer[1, :], hspace = 0.05, height_ratios = [1, 0.2]
 )
 spec_histrow = gs.GridSpecFromSubplotSpec(
     1, 4, spec_outer[2, :]
@@ -86,7 +86,7 @@ spec_histrow = gs.GridSpecFromSubplotSpec(
 
 ### Lay out first row.
 plt.subplot(spec_firstrow[:, 0])
-plt.title(r'\textbf{A} Schematic', loc = 'left')
+plt.title(r'\textbf{A}', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot(spec_firstrow[:, 1])
@@ -98,8 +98,8 @@ plt.title(r'\textbf{C} Whole cell currents', loc = 'left')
 for tr in processed:
     tr.set_dt(0.1)
     plt.plot(
-        tr.t_mat[0, :, -1], tr[0, :, -1],
-        'k-', lw = 0.5, alpha = 0.8
+        tr.t_mat[0, :10000, -1], tr[0, 25000:35000, -1],
+        'k-', lw = 1., alpha = 0.8
     )
 plt.text(
     0.95, 0.95,
@@ -107,51 +107,57 @@ plt.text(
     ha = 'right', va = 'top',
     transform = plt.gca().transAxes
 )
-plt.xlim(2400, 3500)
+plt.ylabel('$I$ (pA)')
 plt.ylim(-100, plt.ylim()[1])
+plt.xticks([])
 
 plt.subplot(spec_wccurr[1, :])
 plt.plot(
-    tr.t_mat[1, :, -1], tr[1, :, -1],
-    '-', lw = 0.5, color = 'gray'
+    tr.t_mat[1, :10000, -1], tr[1, 25000:35000, -1],
+    '-', lw = 1., color = 'gray'
 )
-plt.xlim(2400, 3500)
+plt.yticks([-20, -80], ['$-20$', '$-80$'])
+plt.ylabel('$V$ (mV)')
+plt.xlabel('Time (ms)')
+
 
 ### Create second row with sample current steps.
 trace_xlim = (2500, 19000)
 plt.subplot(spec_currsteprow[0, 0])
-plt.title(r'\textbf{D1}', loc = 'left')
+plt.title(r'\textbf{D1} Burst firing SOM neuron', loc = 'left')
 plt.plot(
-    long_curr['DRN422'].t_mat[0, :, 0],
-    long_curr['DRN422'][0, :, 0],
-    'k-', lw = 0.5
+    long_curr['DRN422'].t_mat[0, :165000, 0] * 1e-3,
+    long_curr['DRN422'][0, 25000:190000, 0],
+    'k-', lw = 1.
 )
-plt.xlim(trace_xlim)
+plt.ylabel('$V$ (mV)')
+plt.xticks([])
 
 plt.subplot(spec_currsteprow[1, 0])
 plt.plot(
-    long_curr['DRN422'].t_mat[1, :, 0],
-    long_curr['DRN422'][1, :, 0],
-    '-', lw = 0.5, color = 'gray'
+    long_curr['DRN422'].t_mat[1, :165000, 0] * 1e-3,
+    long_curr['DRN422'][1, 25000:190000, 0],
+    '-', lw = 1., color = 'gray'
 )
-plt.xlim(trace_xlim)
+plt.ylabel('$I$ (pA)')
+plt.xlabel('Time (s)')
 
 plt.subplot(spec_currsteprow[0, 1])
-plt.title(r'\textbf{D2}', loc = 'left')
+plt.title(r'\textbf{D2} Delayed firing SOM neuron', loc = 'left')
 plt.plot(
-    long_curr['DRN431'].t_mat[0, :, 0],
-    long_curr['DRN431'][0, :, 0],
-    'k-', lw = 0.5
+    long_curr['DRN431'].t_mat[0, :165000, 0] * 1e-3,
+    long_curr['DRN431'][0, 25000:190000, 0],
+    'k-', lw = 1.
 )
-plt.xlim(trace_xlim)
+plt.xticks([])
 
 plt.subplot(spec_currsteprow[1, 1])
 plt.plot(
-    long_curr['DRN431'].t_mat[1, :, 0],
-    long_curr['DRN431'][1, :, 0],
-    '-', lw = 0.5, color = 'gray'
+    long_curr['DRN431'].t_mat[1, :165000, 0] * 1e-3,
+    long_curr['DRN431'][1, 25000:190000, 0],
+    '-', lw = 1., color = 'gray'
 )
-plt.xlim(trace_xlim)
+plt.xlabel('Time (s)')
 
 ### Create row with histograms.
 
@@ -164,7 +170,7 @@ def plot_hist(data, xlabel, color = 'gray', ax = None):
     pltools.hide_border(sides = 'rlt')
     plt.yticks([])
     plt.xlabel(xlabel)
-    plt.ylim(0, plt.ylim()[1] * 1.1)
+    plt.ylim(0, plt.ylim()[1] * 1.2)
     shapiro_w, shapiro_p = stats.shapiro(data)
     plt.text(
         0.98, 0.98,
@@ -175,9 +181,8 @@ def plot_hist(data, xlabel, color = 'gray', ax = None):
     plt.text(
         0.5, 0.02,
         '$N = {}$ cells'.format(
-            len(data),
-            va = 'bottom', ha = 'center'
-        ),
+            len(data)),
+        va = 'bottom', ha = 'center',
         transform = ax.transAxes
     )
 

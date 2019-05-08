@@ -51,6 +51,17 @@ for rec in gating:
     processed.append(tmp)
 del tmp, rec
 
+
+### Load long current steps
+LONG_CURR_PATH = os.path.join('data', 'long_curr_steps', '5HT')
+long_curr = {
+    'DRN436': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19204008.abf'))[0],
+    'DRN439': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19204097.abf'))[0]
+}
+for key in long_curr.keys():
+    long_curr[key].set_dt(0.1)
+
+
 # Load/preprocess long current steps.
 
 
@@ -61,7 +72,7 @@ plt.style.use(os.path.join('figs', 'scripts', 'bhrd', 'poster_mplrc.dms'))
 IMG_PATH = os.path.join('figs', 'ims', '2019BHRD')
 hist_color = 'gray'
 
-plt.figure(figsize = (16,10))
+plt.figure(figsize = (16,9.5))
 
 # Define layout with GridSpec objects.
 spec_outer = gs.GridSpec(3, 1)
@@ -69,10 +80,10 @@ spec_firstrow = gs.GridSpecFromSubplotSpec(
     1, 3, spec_outer[0, :]
 )
 spec_wccurr = gs.GridSpecFromSubplotSpec(
-    2, 1, spec_firstrow[:, 2], hspace = 0, height_ratios = [1, 0.2]
+    2, 1, spec_firstrow[:, 2], hspace = 0.05, height_ratios = [1, 0.2]
 )
 spec_currsteprow = gs.GridSpecFromSubplotSpec(
-    2, 2, spec_outer[1, :], hspace = 0, height_ratios = [1, 0.2]
+    2, 2, spec_outer[1, :], hspace = 0.05, height_ratios = [1, 0.2]
 )
 spec_histrow = gs.GridSpecFromSubplotSpec(
     1, 4, spec_outer[2, :]
@@ -80,7 +91,7 @@ spec_histrow = gs.GridSpecFromSubplotSpec(
 
 ### Lay out first row.
 plt.subplot(spec_firstrow[:, 0])
-plt.title(r'\textbf{A} Schematic', loc = 'left')
+plt.title(r'\textbf{A}', loc = 'left')
 pltools.hide_ticks()
 
 plt.subplot(spec_firstrow[:, 1])
@@ -92,7 +103,7 @@ plt.title(r'\textbf{C} Whole cell currents', loc = 'left')
 for tr in processed:
     tr.set_dt(0.1)
     plt.plot(
-        tr.t_mat[0, :, -1], tr[0, :, -1],
+        tr.t_mat[0, :10000, -1], tr[0, 25000:35000, -1] * 1e-3,
         'k-', lw = 0.5, alpha = 0.8
     )
 plt.text(
@@ -101,26 +112,58 @@ plt.text(
     ha = 'right', va = 'top',
     transform = plt.gca().transAxes
 )
-plt.xlim(2400, 3500)
-plt.ylim(-100, plt.ylim()[1])
+#plt.xlim(2400, 3500)
+plt.ylim(-.1, plt.ylim()[1])
+plt.xticks([])
+plt.ylabel('$I$ (nA)')
 
 plt.subplot(spec_wccurr[1, :])
 plt.plot(
-    tr.t_mat[1, :, -1], tr[1, :, -1],
+    tr.t_mat[1, :10000, -1], tr[1, 25000:35000, -1],
     '-', lw = 0.5, color = 'gray'
 )
-plt.xlim(2400, 3500)
+#plt.xlim(2400, 3500)
+plt.yticks([-25, -75], ['$-25$', '$-75$'])
+plt.ylabel('$V$ (mV)')
 
 ### Create second row with sample current steps.
 plt.subplot(spec_currsteprow[0, 0])
 plt.title(r'\textbf{D1}', loc = 'left')
+plt.plot(
+    long_curr['DRN436'].t_mat[0, :165000, 0] * 1e-3,
+    long_curr['DRN436'][0, 25000:190000, 0],
+    'k-', lw = 1.
+)
+plt.ylabel('$V$ (mV)')
+plt.xticks([])
+plt.yticks([50, 0, -50], ['$50$', '$0$', '$-50$'])
 
 plt.subplot(spec_currsteprow[1, 0])
+plt.plot(
+    long_curr['DRN436'].t_mat[1, :165000, 0] * 1e-3,
+    long_curr['DRN436'][1, 25000:190000, 0],
+    '-', lw = 1., color = 'gray'
+)
+plt.ylabel('$I$ (pA)')
+plt.xlabel('Time (s)')
+plt.yticks([25, 75], ['$25$', '$75$'])
 
 plt.subplot(spec_currsteprow[0, 1])
 plt.title(r'\textbf{D2}', loc = 'left')
+plt.plot(
+    long_curr['DRN439'].t_mat[0, :165000, 0] * 1e-3,
+    long_curr['DRN439'][0, 25000:190000, 0],
+    'k-', lw = 1.
+)
+plt.xticks([])
 
 plt.subplot(spec_currsteprow[1, 1])
+plt.plot(
+    long_curr['DRN439'].t_mat[1, :165000, 0] * 1e-3,
+    long_curr['DRN439'][1, 25000:190000, 0],
+    '-', lw = 1., color = 'gray'
+)
+plt.xlabel('Time (s)')
 
 ### Create row with histograms.
 
@@ -133,7 +176,7 @@ def plot_hist(data, xlabel, color = 'gray', ax = None):
     pltools.hide_border(sides = 'rlt')
     plt.yticks([])
     plt.xlabel(xlabel)
-    plt.ylim(0, plt.ylim()[1] * 1.1)
+    plt.ylim(0, plt.ylim()[1] * 1.3)
     shapiro_w, shapiro_p = stats.shapiro(data)
     plt.text(
         0.98, 0.98,
@@ -143,9 +186,8 @@ def plot_hist(data, xlabel, color = 'gray', ax = None):
     )
     plt.text(
         0.5, 0.02,
-        '$N = {}$ cells'.format(len(data),
-            verticalalignment = 'bottom', horizontalalignment = 'center',
-        ),
+        '$N = {}$ cells'.format(len(data)),
+        verticalalignment = 'bottom', horizontalalignment = 'center',
         transform = ax.transAxes
     )
 
