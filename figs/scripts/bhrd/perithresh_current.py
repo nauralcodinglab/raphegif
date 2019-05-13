@@ -41,7 +41,7 @@ with open(os.path.join(DATA_PATH, 'gating_params.dat'), 'rb') as f:
     f.close()
 
 # Load a nice example trace.
-GATING_PATH = './data/gating/'
+GATING_PATH = './data/raw/5HT/gating/'
 beautiful_gating = Cell().read_ABF([GATING_PATH + '18619018.abf',
                                       GATING_PATH + '18619019.abf',
                                       GATING_PATH + '18619020.abf'])

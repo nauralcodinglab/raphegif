@@ -28,7 +28,7 @@ params_5HT.drop('TdT', axis = 1, inplace = True)
 
 ### Load/preprocess voltage steps.
 
-GATING_PATH = os.path.join('data', 'gating')
+GATING_PATH = os.path.join('data', 'raw', '5HT', 'gating')
 gating = Cell().read_ABF([os.path.join(GATING_PATH, '18411002.abf'),
                           os.path.join(GATING_PATH, '18411010.abf'),
                           os.path.join(GATING_PATH, '18411017.abf'),
@@ -53,7 +53,7 @@ del tmp, rec
 
 
 ### Load long current steps
-LONG_CURR_PATH = os.path.join('data', 'long_curr_steps', '5HT')
+LONG_CURR_PATH = os.path.join('data', 'raw','5HT', 'long_curr_steps')
 long_curr = {
     'DRN436': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19204008.abf'))[0],
     'DRN439': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19204097.abf'))[0]

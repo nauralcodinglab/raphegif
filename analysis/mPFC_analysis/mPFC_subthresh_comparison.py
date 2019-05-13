@@ -68,8 +68,8 @@ for i in range(len(sert_cells)):
     experiments['sert'].append(experiment_tmp)
 
 ### Load pyramidal cell data.
-FNAMES_PATH = './data/mPFC/fnames.csv'
-DATA_PATH = './data/mPFC/mPFC_subthresh/'
+FNAMES_PATH = './data/raw/mPFC/fnames.csv'
+DATA_PATH = './data/raw/mPFC/mPFC_subthresh/'
 dt = 0.1
 
 make_plots = True
@@ -190,7 +190,7 @@ Finagle data into a friendlier format and pickle.
 """
 
 # Grab data from experiments list.
-PICKLE_PATH = 'data/mPFC/mPFC_subthresh/'
+PICKLE_PATH = 'data/raw/mPFC/mPFC_subthresh/'
 
 print 'GRABBING EXPERIMENTAL DATA'
 for key, experiment_ls in experiments.iteritems():
@@ -207,7 +207,7 @@ for key, experiment_ls in experiments.iteritems():
 
 #%% UNPICKLE DATA
 
-PICKLE_PATH = 'data/mPFC/mPFC_subthresh/'
+PICKLE_PATH = 'data/raw/mPFC/mPFC_subthresh/'
 
 print 'LOADING DATA'
 model_matrices = {

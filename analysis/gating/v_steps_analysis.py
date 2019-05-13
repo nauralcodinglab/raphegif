@@ -96,7 +96,7 @@ def subtract_leak(cell, baseline_range, test_range, V_channel = 1, I_channel = 0
 #%% LOAD DATA
 
 OUTPUT_PATH = os.path.join('data', 'processed', 'gating')
-GATING_PATH = os.path.join('data', 'gating')
+GATING_PATH = os.path.join('data', 'raw', '5HT', 'gating')
 
 # Load gating data
 gating = Cell().read_ABF([os.path.join(GATING_PATH, '18411002.abf'),

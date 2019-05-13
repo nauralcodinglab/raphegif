@@ -25,8 +25,8 @@ import src.pltools as pltools
 
 #%% IMPORT FILES
 
-FNAMES_PATH = './data/mPFC/fnames.csv'
-DATA_PATH = './data/mPFC/mPFC_spiking/'
+FNAMES_PATH = './data/raw/mPFC/fnames.csv'
+DATA_PATH = './data/raw/mPFC/mPFC_spiking/'
 dt = 0.1
 
 make_plots = True

@@ -22,7 +22,7 @@ from gating_tools import *
 
 ### Load/preprocess membrane parameters data.
 params = pd.read_csv(os.path.join(
-    'data', 'current_steps', 'GABA', 'index.csv'
+    'data', 'raw', 'GABA', 'current_steps', 'index.csv'
 ))
 params['El_est'] = -params['hold'] * params['R'] * 1e-3 - 70
 
@@ -51,7 +51,7 @@ del tmp, rec
 
 # Load/preprocess long current steps.
 
-LONG_CURR_PATH = os.path.join('data', 'long_curr_steps', 'GABA')
+LONG_CURR_PATH = os.path.join('data', 'raw', 'GABA', 'long_curr_steps')
 long_curr = {
     'DRN422': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19114024.abf'))[0],
     'DRN431': Cell().read_ABF(os.path.join(LONG_CURR_PATH, '19121013.abf'))[0]

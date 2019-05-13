@@ -23,13 +23,13 @@ from src.Tools import gagProcess
 data_paths = {
     '5HT': './data/fast_noise_5HT/',
     'GABA': './data/GABA_cells/',
-    'mPFC': './data/mPFC/mPFC_spiking/'
+    'mPFC': './data/raw/mPFC/mPFC_spiking/'
 }
 
 fname_paths = {
     '5HT': './data/fast_noise_5HT/index.csv',
     'GABA': './data/GABA_cells/index.csv',
-    'mPFC': './data/mPFC/fnames.csv'
+    'mPFC': './data/raw/mPFC/fnames.csv'
 }
 
 experiments = {

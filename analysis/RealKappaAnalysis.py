@@ -20,10 +20,10 @@ Load recordings using the read_ABF method from my custom Cell class (depends on 
 Each recording is one sweep of recorded voltage noise in response to noisy current injection.
 """
 
-PATH = 'data/membrane_noise/'
+PATH = os.path.join('data', 'raw', '5HT', 'membrane_noise')
 fnames = [fname for fname in os.listdir(PATH) if fname[-4:].lower() == '.abf']
 fnames.sort()
-recs = [Cell.read_ABF(Cell(), PATH + fname)[0] for fname in fnames]
+recs = [Cell.read_ABF(Cell(), os.path.join(PATH, fname))[0] for fname in fnames]
 
 
 #%% GET MEMBRANE FILTER
