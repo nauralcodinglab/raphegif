@@ -61,6 +61,10 @@ subsample_gifnet = gfn.GIFnet(
     dt = DT
 )
 
+# Manually remove IA from each cell.
+for i in range(len(subsample_gifnet.ser_mod)):
+    subsample_gifnet.ser_mod[i].gbar_K1 = 0.
+
 #%% SAVE GIFNET MODEL
 
 # Remove interpolated filters first to save on disk space.
@@ -68,6 +72,6 @@ subsample_gifnet.clear_interpolated_filters()
 
 # Save to disk.
 OUTPUT_PATH = os.path.join('data', 'models', 'GIF_network')
-with open(os.path.join(OUTPUT_PATH, 'subsample.mod'), 'wb') as f:
+with open(os.path.join(OUTPUT_PATH, 'no_IA_subsample.mod'), 'wb') as f:
     pickle.dump(subsample_gifnet, f)
     f.close()

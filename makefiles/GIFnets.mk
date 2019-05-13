@@ -1,36 +1,43 @@
-SIM_PATH=data/simulations/GIF_network
-MOD_PATH=data/models/GIF_network
+SIMDATA_PATH=data/simulations/GIF_network
+GIFNET_PATH=data/models/GIF_network
 GEN_PATH=analysis/GIF_network/model_generators
-INGEN_PATH=./analysis/GIF_network/input_generators
+GIFMOD_PATH=data/models
 
 .PHONY : all
-all : $(SIM_PATH)/subsample.ldat $(SIM_PATH)/no_gaba_subsample.ldat
+all : $(SIMDATA_PATH)/subsample.ldat $(SIMDATA_PATH)/no_gaba_subsample.ldat $(SIMDATA_PATH)/no_IA_subsample.ldat
 
 # Rules for constructing models.
-# Incomplete because dependency on fitted GIFs isn't accounted for...
-#$(MOD_PATH)/median_gifs.mod $(MOD_PATH)/sergif_manual.mod $(MOD_PATH)/sergif_noIA.mod : $(GEN_PATH)/point_gifnets.py
+# Deprecated for now because point_gifnets.py and fuzzy_gifnets.py depend on fitted GIF paths that are out of date.
+#$(GIFNET_PATH)/median_gifs.mod $(GIFNET_PATH)/sergif_manual.mod $(GIFNET_PATH)/sergif_noIA.mod : $(GEN_PATH)/point_gifnets.py
 #	PYTHONPATH="$(shell pwd)" python $<
 
-#$(MOD_PATH)/fuzzy_mean_gifnet.mod $(MOD_PATH)/fuzzy_manual_gifnet.mod $(MOD_PATH)/fuzzy_manual_noIA_gifnet.mod : $(GEN_PATH)/fuzzy_gifnets.py
+#$(GIFNET_PATH)/fuzzy_mean_gifnet.mod $(GIFNET_PATH)/fuzzy_manual_gifnet.mod $(GIFNET_PATH)/fuzzy_manual_noIA_gifnet.mod : $(GEN_PATH)/fuzzy_gifnets.py
 #	PYTHONPATH="$(shell pwd)" python $<
 
 # Rule for running necessary simulations.
-$(SIM_PATH)/subsample.ldat : $(MOD_PATH)/subsample.mod  | $(SIM_PATH)
+$(SIMDATA_PATH)/subsample.ldat : $(GIFNET_PATH)/subsample.mod  | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python analysis/GIF_network/gifnet_sim.py $< $@ -v
 
-$(SIM_PATH)/no_gaba_subsample.ldat : $(MOD_PATH)/no_gaba_subsample.mod | $(SIM_PATH)
+$(SIMDATA_PATH)/no_IA_subsample.ldat : $(GIFNET_PATH)/no_IA_subsample.mod  | $(SIMDATA_PATH)
+	PYTHONPATH="$(shell pwd)" python analysis/GIF_network/gifnet_sim.py $< $@ -v
+
+$(SIMDATA_PATH)/no_gaba_subsample.ldat : $(GIFNET_PATH)/no_gaba_subsample.mod | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python analysis/GIF_network/no_gaba_gifnet_sim.py $< $@ -v
 
-$(MOD_PATH)/no_gaba_subsample.mod : $(GEN_PATH)/no_gaba_subsample.py
+# Rules to generate GIFnet models.
+$(GIFNET_PATH)/subsample.mod : $(GEN_PATH)/subsample.py $(GIFMOD_PATH)/5HT/serkgifs.lmod $(GIFMOD_PATH)/GABA/gaba_gifs.mod | $(GIFNET_PATH)
 	PYTHONPATH="$(shell pwd)" python $<
 
+$(GIFNET_PATH)/no_IA_subsample.mod : $(GEN_PATH)/no_IA_subsample.py $(GIFMOD_PATH)/5HT/serkgifs.lmod | $(GIFNET_PATH)
+	PYTHONPATH="$(shell pwd)" python $<
 
-#$(SIM_PATH)/subsample_input.ldat : $(INGEN_PATH)/OU_noise.py | $(SIM_PATH)
-#	PYTHONPATH="$(shell pwd)" python $<
+$(GIFNET_PATH)/no_gaba_subsample.mod : $(GEN_PATH)/no_gaba_subsample.py $(GIFMOD_PATH)/5HT/serkgifs.lmod | $(GIFNET_PATH)
+	PYTHONPATH="$(shell pwd)" python $<
 
-$(SIM_PATH) :
-	mkdir -p $(SIM_PATH)
+# Rules to create needed folders.
+$(SIMDATA_PATH) $(GIFNET_PATH) :
+	mkdir -p $@
 
 .PHONY : clean
 clean :
-	rm $(MOD_PATH)/*; rm $(SIM_PATH)/*;
+	rm $(GIFNET_PATH)/*; rm $(SIMDATA_PATH)/*;

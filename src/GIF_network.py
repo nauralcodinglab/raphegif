@@ -78,6 +78,21 @@ class GIFnet(object):
         if not ser_input.shape[0] == self.no_ser_neurons:
             raise ValueError('ser_input nrows and connectivity_matrix nrows do not match.')
 
+    def clear_interpolated_filters(self):
+
+        """Interpolated eta and gamma filters in the ser and gaba mods can be
+        large and expensive to store. This removes the cached interpolated
+        versions to cut down the disk size of the GIFnet.
+        """
+
+        for i in range(len(self.ser_mod)):
+            self.ser_mod[i].eta.clearInterpolatedFilter()
+            self.ser_mod[i].gamma.clearInterpolatedFilter()
+
+        for i in range(len(self.gaba_mod)):
+            self.gaba_mod[i].eta.clearInterpolatedFilter()
+            self.gaba_mod[i].gamma.clearInterpolatedFilter()
+
     def simulate(self, input_arrs):
         """
         Perform GIF network simulation.
@@ -126,7 +141,7 @@ class GIFnet(object):
 
         for ser_no in range(self.no_ser_neurons):
 
-            I = ser_input[ser_no, :] + gaba_inmat[ser_no, :] 
+            I = ser_input[ser_no, :] + gaba_inmat[ser_no, :]
             t, V, eta, v_T, spks = self.ser_mod[ser_no].simulate(
                 I,
                 self.ser_mod[ser_no].El

@@ -26,6 +26,7 @@ GABA_KERNEL = SynapticKernel(
     'alpha', tau = 25, ampli = -0.0025, kernel_len = 400, dt = DT
 ).centered_kernel
 
+# Create connectivity matrix with zero connectivity.
 NO_SER_NEURONS = 1200
 NO_GABA_NEURONS = 1
 CONNECTION_PROB = 10. / NO_GABA_NEURONS
@@ -47,6 +48,7 @@ with open(os.path.join(SOM_MOD_PATH, 'gaba_gifs.mod'), 'rb') as f:
 """Randomly subsample GIFs/KGIFs fitted to DRN neurons.
 """
 
+np.random.seed(515)
 subsample_gifnet = gfn.GIFnet(
     name = 'Subsample GIFs',
     ser_mod = np.random.choice(sergifs, NO_SER_NEURONS),
@@ -59,8 +61,11 @@ subsample_gifnet = gfn.GIFnet(
 
 #%% SAVE GIFNET MODEL
 
+# Remove interpolated filters first to save on disk space.
+subsample_gifnet.clear_interpolated_filters()
+
+# Save to disk.
 OUTPUT_PATH = os.path.join('data', 'models', 'GIF_network')
 with open(os.path.join(OUTPUT_PATH, 'no_gaba_subsample.mod'), 'wb') as f:
     pickle.dump(subsample_gifnet, f)
     f.close()
-
