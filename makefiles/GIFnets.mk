@@ -6,14 +6,6 @@ GIFMOD_PATH=data/models
 .PHONY : all
 all : $(SIMDATA_PATH)/subsample.ldat $(SIMDATA_PATH)/no_gaba_subsample.ldat $(SIMDATA_PATH)/no_IA_subsample.ldat
 
-# Rules for constructing models.
-# Deprecated for now because point_gifnets.py and fuzzy_gifnets.py depend on fitted GIF paths that are out of date.
-#$(GIFNET_PATH)/median_gifs.mod $(GIFNET_PATH)/sergif_manual.mod $(GIFNET_PATH)/sergif_noIA.mod : $(GEN_PATH)/point_gifnets.py
-#	PYTHONPATH="$(shell pwd)" python $<
-
-#$(GIFNET_PATH)/fuzzy_mean_gifnet.mod $(GIFNET_PATH)/fuzzy_manual_gifnet.mod $(GIFNET_PATH)/fuzzy_manual_noIA_gifnet.mod : $(GEN_PATH)/fuzzy_gifnets.py
-#	PYTHONPATH="$(shell pwd)" python $<
-
 # Rule for running necessary simulations.
 $(SIMDATA_PATH)/subsample.ldat : $(GIFNET_PATH)/subsample.mod  | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python analysis/GIF_network/gifnet_sim.py $< $@ -v
