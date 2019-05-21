@@ -85,44 +85,50 @@ args = parser.parse_args()
 if args.verbose:
     print 'Generating noise.'
 distal_input = {}
+distal_input['metaparams'] = {
+    'input_type': 'OU_noise',
+    'duration': args.duration,
+    'dt': args.dt
+}
 
 # Generate ser_input.
 distal_input['ser_input'] = generateOUprocess(
-    args.duration, getattr(args, 'tau-ser'),
-    getattr(args, 'mean-ser'), getattr(args, 'sigma-ser'),
-    args.dt, getattr(args, 'seed-ser')
+    args.duration, args.tau_ser,
+    args.mean_ser, args.sigma_ser,
+    args.dt, args.seed_ser
 ).astype(np.float32)
 
-distal_input['ser_metaparams'] = {
-    'duration': args.duration,
-    'tau': getattr(args, 'tau-ser'),
-    'mean': getattr(args, 'mean-ser'),
-    'sigma': getattr(args, 'sigma-ser'),
-    'dt': args.dt,
-    'seed': getattr(args, 'seed-ser')
-}
+distal_input['metaparams'].update({
+    'ser_tau': args.tau_ser,
+    'ser_mean': args.mean_ser,
+    'ser_sigma': args.sigma_ser,
+    'ser_seed': args.seed_ser
+})
 
 # Generate gaba_input.
-if getattr(args, 'copy-ser-params'):
+if args.copy_ser_params:
     distal_input['gaba_input'] = copy.deepcopy(distal_input['ser_input'])
 
-    distal_input['gaba_metaparams'] = copy.deepcopy(distal_input['ser_metaparams'])
+    distal_input['metaparams'].update({
+        'gaba_tau': args.tau_ser,
+        'gaba_mean': args.mean_ser,
+        'gaba_sigma': args.sigma_ser,
+        'gaba_seed': args.seed_ser
+    })
 
 else:
     distal_input['gaba_input'] = generateOUprocess(
-        args.duration, getattr(args, 'tau-gaba'),
-        getattr(args, 'mean-gaba'), getattr(args, 'sigma-gaba'),
-        args.dt, getattr(args, 'seed-gaba')
+        args.duration, args.tau_gaba,
+        args.mean_gaba, args.sigma_gaba,
+        args.dt, args.seed_gaba
     ).astype(np.float32)
 
-    distal_input['gaba_metaparams'] = {
-        'duration': args.duration,
-        'tau': getattr(args, 'tau-gaba'),
-        'mean': getattr(args, 'mean-gaba'),
-        'sigma': getattr(args, 'sigma-gaba'),
-        'dt': args.dt,
-        'seed': getattr(args, 'seed-gaba')
-    }
+    distal_input['metaparams'].update({
+        'gaba_tau': args.tau_gaba,
+        'gaba_mean': args.mean_gaba,
+        'gaba_sigma': args.sigma_gaba,
+        'gaba_seed': args.seed_gaba
+    })
 
 
 #%% SAVE NOISE
