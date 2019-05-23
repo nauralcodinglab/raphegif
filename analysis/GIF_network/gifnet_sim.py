@@ -137,7 +137,12 @@ if args.no_ser:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            gaba_input = distal_in['gaba_input'],
+            gaba_input = np.broadcast_to(
+                distal_in['gaba_input'], 
+                (distal_in['gaba_input'].shape[0],
+                 gifnet_mod.no_gaba_neurons,
+                 distal_in['gaba_input'].shape[2])
+            ),
             do_feedforward = ~args.no_feedforward, verbose = args.verbose
         )
 
@@ -170,7 +175,12 @@ elif args.no_gaba:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = distal_in['ser_input'],
+            ser_input = np.broadcast_to(
+                distal_in['ser_input'], 
+                (distal_in['ser_input'].shape[0],
+                 gifnet_mod.no_ser_neurons,
+                 distal_in['ser_input'].shape[2])
+            ),
             do_feedforward = ~args.no_feedforward, verbose = args.verbose
         )
 
@@ -204,8 +214,18 @@ else:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = distal_in['ser_input'],
-            gaba_input = distal_in['gaba_input'],
+            ser_input = np.broadcast_to(
+                distal_in['ser_input'], 
+                (distal_in['ser_input'].shape[0],
+                 gifnet_mod.no_ser_neurons,
+                 distal_in['ser_input'].shape[2])
+            ),
+            gaba_input = np.broadcast_to(
+                distal_in['gaba_input'], 
+                (distal_in['gaba_input'].shape[0],
+                 gifnet_mod.no_gaba_neurons,
+                 distal_in['gaba_input'].shape[2])
+            ),
             do_feedforward = ~args.no_feedforward, verbose = args.verbose
         )
 

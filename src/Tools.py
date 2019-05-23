@@ -66,7 +66,8 @@ def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed
 
     T_ind = int(T/dt)
 
-    np.random.seed(random_seed)
+    if random_seed is not None:
+        np.random.seed(random_seed)
     white_noise = np.random.randn(T_ind)
     white_noise = white_noise.astype("double")
 

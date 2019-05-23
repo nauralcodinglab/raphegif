@@ -26,8 +26,8 @@ GABA_KERNEL = SynapticKernel(
     'alpha', tau = 25, ampli = -0.0025, kernel_len = 400, dt = DT
 ).centered_kernel
 
-NO_SER_NEURONS = 1200
-NO_GABA_NEURONS = 800
+NO_SER_NEURONS = 600
+NO_GABA_NEURONS = 400
 CONNECTION_PROB = 10. / NO_GABA_NEURONS
 np.random.seed(514)
 CONNECTIVITY_MATRIX = (
