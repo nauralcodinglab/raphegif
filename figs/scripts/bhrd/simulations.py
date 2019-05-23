@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-import osex
+import os
 import pickle
 
 import matplotlib.pyplot as plt
