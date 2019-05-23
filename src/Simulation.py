@@ -521,3 +521,71 @@ class GIFnet_Simulation(h5py.File):
                         spktimes[i][j], self.get_T(), self.get_dt()
                     )
 
+    ### Data processing and support arrays.
+    def get_ser_spktimes(self):
+        """Get nested list of 5HT neuron spktimes.
+
+        Nested list should be indexed according
+        to [sweep_no][cell_no][spk_no].
+        """
+
+        spktimes = []
+        for sweep_no in range(self.get_no_sweeps()):
+            spktimes_singlesweep = []
+            for cell_no in range(self.get_no_ser_neurons()):
+                spktimes_singlesweep.append(
+                    np.where(
+                        self.ser_spktrains[sweep_no, cell_no, :] > 0.5
+                    )[0] * self.get_dt()
+                )
+            spktimes.append(spktimes_singlesweep)
+        return spktimes
+
+    def get_gaba_spktimes(self):
+        """Get nested list of GABA neuron spktimes.
+
+        Nested list should be indexed according
+        to [sweep_no][cell_no][spk_no].
+        """
+
+        spktimes = []
+        for sweep_no in range(self.get_no_sweeps()):
+            spktimes_singlesweep = []
+            for cell_no in range(self.get_no_gaba_neurons()):
+                spktimes_singlesweep.append(
+                    np.where(
+                        self.gaba_spktrains[sweep_no, cell_no, :] > 0.5
+                    )[0] * self.get_dt()
+                )
+            spktimes.append(spktimes_singlesweep)
+        return spktimes
+
+    def get_t_vec(self):
+        """Return a time support vector (ms).
+        """
+        t_vec = np.arange(0, self.get_T(), self.get_dt())
+
+        # Shape checks.
+        if 'ser' in self.keys() and 'spktrains' in self['ser'].keys():
+            assert self.ser_spktrains.shape[2] == len(t_vec), 'Bad t_vec length ({})'.format(len(t_vec))
+        if 'gaba' in self.keys() and 'spktrains' in self['gaba'].keys():
+            assert self.gaba_spktrains.shape[2] == len(t_vec), 'Bad t_vec length ({})'.format(len(t_vec))
+
+        return t_vec
+
+    def get_ser_examples_supp(self):
+        """Get support array for ser_examples.
+        """
+        return np.broadcast_to(
+            self.get_t_vec(),
+            self.ser_examples[self.ser_examples.keys()[0]].shape
+        )
+
+    def get_gaba_examples_supp(self):
+        """Get support array for gaba_examples.
+        """
+        return np.broadcast_to(
+            self.get_t_vec(),
+            self.gaba_examples[self.gaba_examples.keys()[0]].shape
+        )
+
