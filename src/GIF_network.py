@@ -395,16 +395,12 @@ class GIFnet(object):
                 'No inputs provided from which to get simulation length '
                 'or number of sweeps.'
             )
-        out.set_no_ser_neurons(self.no_ser_neurons)
-        out.set_no_gaba_neurons(self.no_gaba_neurons)
-        out.set_propagation_delay(self.propagation_delay)
-        if self.connectivity_matrix is not None:
-            out.set_connectivity_matrix(self.connectivity_matrix)
 
         ### Run simulations.
 
         # Simulate GABA neurons (if applicable).
         if gaba_input is not None:
+            out.set_no_gaba_neurons(self.no_gaba_neurons)
             out.init_gaba_spktrains()
             gaba_spktimes = self._simulate_gaba(out, gaba_input, verbose)
 
@@ -413,11 +409,14 @@ class GIFnet(object):
 
             # Generate GABA input to 5HT cells based on GABA spks.
             if gaba_input is not None and do_feedforward:
+                out.set_propagation_delay(self.propagation_delay)
+                out.set_connectivity_matrix(self.connectivity_matrix)
                 feedforward_input = self._convolve_feedforward(out, gaba_spktimes)
             else:
                 feedforward_input = None
 
             # Simulate 5HT neurons.
+            out.set_no_ser_neurons(self.no_ser_neurons)
             out.init_ser_spktrains()
             self._simulate_ser(out, ser_input, feedforward_input, verbose)
 

@@ -12,8 +12,7 @@ import pickle
 
 import numpy as np
 
-import src.GIF_network as gfn
-from src.Tools import generateOUprocess
+from src.Simulation import GIFnet_Simulation
 
 
 #%% PARSE COMMANDLINE ARGUMENTS
@@ -31,8 +30,18 @@ parser.add_argument(
     'the number of neurons of each type.'
 )
 parser.add_argument(
-    'destination_path',
+    'output',
     help = 'Filepath for storing the results of the simulation.'
+)
+parser.add_argument(
+    '--num-ser-examples',
+    help = 'Number of 5HT example traces to save.',
+    type = int, default = 20
+)
+parser.add_argument(
+    '--num-gaba-examples',
+    help = 'Number of GABA example traces to save.',
+    type = int, default = 20
 )
 parser.add_argument(
     '--no-ser',
@@ -75,52 +84,133 @@ if args.verbose:
 with open(args.input, 'rb') as f:
     distal_in = pickle.load(f)
     f.close()
-if hasattr(distal_in, 'ser_input') and distal_in['ser_input'].ndim == 1:
-    distal_in['ser_input'] = np.broadcast_to(
-        distal_in['ser_input'],
-        (distal_in['ser_input'].shape[0], gifnet_mod.no_ser_neurons)
-    )
-if hasattr(distal_in, 'gaba_input') and distal_in['gaba_input'].ndim == 1:
-    distal_in['gaba_input'] = np.broadcast_to(
-        distal_in['gaba_input'],
-        (distal_in['gaba_input'].shape[0], gifnet_mod.no_gaba_neurons)
-    )
+if 'ser_input' in distal_in.keys():
+    if distal_in['ser_input'].ndim == 1:
+        distal_in['ser_input'] = np.broadcast_to(
+            distal_in['ser_input'],
+            (1, gifnet_mod.no_ser_neurons, distal_in['ser_input'].shape[0])
+        )
+    elif distal_in['ser_input'].ndim != 3:
+        raise ValueError(
+            'ser_input must be a 1D or 3D array'
+        )
+if 'gaba_input' in distal_in.keys():
+    if distal_in['gaba_input'].ndim == 1:
+        distal_in['gaba_input'] = np.broadcast_to(
+            distal_in['gaba_input'],
+            (1, gifnet_mod.no_gaba_neurons, distal_in['gaba_input'].shape[0])
+        )
+    elif distal_in['gaba_input'].ndim != 3:
+        raise ValueError(
+            'gaba_input must be a 1D or 3D array'
+        )
 
 
 #%% RUN SIMULATION
 
+meta_args = {
+    'name': getattr(gifnet_mod, 'name', 'Untitled'),
+    'dt': gifnet_mod.dt
+}
+
+# Simulations without 5HT neurons.
 if args.no_ser:
     if args.verbose:
-        print 'Running simulations without 5HT neurons.'
-    results = gifnet_mod.simulate(
-        gaba_input = distal_in['gaba_input'], 
-        do_feedforward = ~args.no_feedforward, verbose = args.verbose
-    )
+        print(
+            'Running simulations without 5HT neurons '
+            'and saving output to {}'.format(args.output)
+        )
+
+    # Update metaparameters.
+    meta_args.update({
+        'T': int(distal_in['gaba_input'].shape[2] * gifnet_mod.dt),
+        'no_sweeps': distal_in['gaba_input'].shape[0],
+        'no_ser_examples': 0,
+        'no_gaba_examples': args.num_gaba_examples
+    })
+
+    # Run and save simulation simultaneously.
+    with GIFnet_Simulation(args.output, **meta_args) as outfile:
+        # Set channels to save in examples.
+        outfile.init_gaba_examples()
+
+        # Run simulation.
+        gifnet_mod.simulate(
+            outfile,
+            gaba_input = distal_in['gaba_input'],
+            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+        )
+
+        outfile.close()
+
+    if args.verbose:
+        print 'Done!'
+
+# Simulations without GABA neurons.
 elif args.no_gaba:
     if args.verbose:
-        print 'Running simulations without GABA neurons.'
-    results = gifnet_mod.simulate(
-        ser_input = distal_in['ser_input'], 
-        do_feedforward = ~args.no_feedforward, verbose = args.verbose
-    )
+        print(
+            'Running simulations without GABA neurons '
+            'and saving output to {}'.format(args.output)
+        )
+
+    # Update metaparameters.
+    meta_args.update({
+        'T': int(distal_in['ser_input'].shape[2] * gifnet_mod.dt),
+        'no_sweeps': distal_in['ser_input'].shape[0],
+        'no_ser_examples': args.num_ser_examples,
+        'no_gaba_examples': 0
+    })
+
+    # Run and save simulation simultaneously.
+    with GIFnet_Simulation(args.output, **meta_args) as outfile:
+        # Set channels to save in examples.
+        outfile.init_ser_examples()
+
+        # Run simulation.
+        gifnet_mod.simulate(
+            outfile,
+            ser_input = distal_in['ser_input'],
+            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+        )
+
+        outfile.close()
+
+    if args.verbose:
+        print 'Done!'
+
+# Run full simulations.
 else:
     if args.verbose:
-        print 'Running simulations.'
-    results = gifnet_mod.simulate(
-        **distal_in, 
-        do_feedforward = ~args.no_feedforward, verbose = args.verbose
-    )
+        print(
+            'Running simulations and saving output '
+            'to {}'.format(args.output)
+        )
 
+    # Update metaparameters.
+    meta_args.update({
+        'T': int(distal_in['ser_input'].shape[2] * gifnet_mod.dt),
+        'no_sweeps': distal_in['ser_input'].shape[0],
+        'no_ser_examples': args.num_ser_examples,
+        'no_gaba_examples': args.num_gaba_examples
+    })
 
-#%% ADD METADATA TO RESULTS
+    # Run and save simulation simultaneously.
+    with GIFnet_Simulation(args.output, **meta_args) as outfile:
+        # Set channels to save in examples.
+        outfile.init_ser_examples()
+        outfile.init_gaba_examples()
 
-results.set_metadata({'input': args.input, 'model': args.model})
+        # Run simulation.
+        gifnet_mod.simulate(
+            outfile,
+            ser_input = distal_in['ser_input'],
+            gaba_input = distal_in['gaba_input'],
+            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+        )
 
+        outfile.close()
 
-#%% SAVE OUTPUT
+    if args.verbose:
+        print 'Done!'
 
-if args.verbose:
-    print 'Saving output to {}'.format(args.destination_path)
-results.save_hdf(args.destination_path)
-if args.verbose:
-    print 'Done!'
