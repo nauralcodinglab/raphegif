@@ -47,7 +47,7 @@ parser.add_argument(
     help = 'Time constant of background OU noise input to 5HT cells.'
 )
 parser.add_argument(
-    '--sigma-ser-background', type = float, default = 0.005,
+    '--sigma-ser-background', type = float, default = 0.,
     help = 'Spread of background OU noise input to 5HT cells. '
     'Set to zero to skip.'
 )
@@ -83,9 +83,9 @@ parser.add_argument(
     help = 'Time constant of background OU noise input to GABA cells.'
 )
 parser.add_argument(
-    '--sigma-gaba-background', type = float, default = 0.005,
+    '--sigma-gaba-background', type = float, default = 0.,
     help = 'Spread of background OU noise input to GABA cells. '
-    'Set to zero to skip.'
+    'Set to zero (default) to skip.'
 )
 parser.add_argument(
     '--seed-gaba-background', type = int, default = 43,
@@ -155,16 +155,18 @@ ser_convolved *= np.linspace(
 ser_convolved += args.baseline_ser
 
 # Add noise.
-np.random.seed(args.seed_ser_background)
-for sweep_no in range(ser_convolved.shape[0]):
-    tmp_bg_noise = generateOUprocess(
-        args.duration, args.tau_ser_background,
-        0., args.sigma_ser_background,
-        args.dt,
-        None
-    ).astype(np.float32)
+if args.sigma_ser_background != 0.:
+    if args.verbose:
+        print 'Adding noise to ser pulses.'
 
-    ser_convolved[sweep_no, 0, :] += tmp_bg_noise
+    np.random.seed(args.seed_ser_background)
+    for sweep_no in range(ser_convolved.shape[0]):
+        ser_convolved[sweep_no, 0, :] += generateOUprocess(
+            args.duration, args.tau_ser_background,
+            0., args.sigma_ser_background,
+            args.dt,
+            None
+        ).astype(np.float32)
 
 # Add to output dict.
 distal_input['ser_input'] = ser_convolved
@@ -207,14 +209,18 @@ gaba_convolved *= np.linspace(
 gaba_convolved += args.baseline_gaba
 
 # Add noise.
-np.random.seed(args.seed_gaba_background)
-for sweep_no in range(gaba_convolved.shape[0]):
-    gaba_convolved[sweep_no, 0, :] += generateOUprocess(
-        args.duration, args.tau_gaba_background,
-        0., args.sigma_gaba_background,
-        args.dt,
-        None
-    ).astype(np.float32)
+if args.sigma_gaba_background != 0.:
+    if args.verbose:
+        print 'Adding noise to gaba pulses.'
+
+    np.random.seed(args.seed_gaba_background)
+    for sweep_no in range(gaba_convolved.shape[0]):
+        gaba_convolved[sweep_no, 0, :] += generateOUprocess(
+            args.duration, args.tau_gaba_background,
+            0., args.sigma_gaba_background,
+            args.dt,
+            None
+        ).astype(np.float32)
 
 # Add to output dict.
 distal_input['gaba_input'] = gaba_convolved

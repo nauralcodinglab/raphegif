@@ -60,6 +60,30 @@ parser.add_argument(
     'connect them.',
     action = 'store_true'
 )
+
+# Background noise params.
+# For efficiency, same noise is used for all sweeps.
+parser.add_argument(
+    '--no-noise', help = 'Turn off background network noise.',
+    action = 'store_true'
+)
+parser.add_argument(
+    '--tau-background',
+    help = 'Time constant of background noise (ms).',
+    type = float, default = 3.
+)
+parser.add_argument(
+    '--sigma-background',
+    help = 'Spread of background noise (nA).',
+    type = float, default = 0.005
+)
+parser.add_argument(
+    '--seed-background',
+    help = 'Seed for background noise random number generator.',
+    type = int, default = 42
+)
+
+# Misc.
 parser.add_argument(
     '-v', '--verbose',
     help = 'Increase output verbosity.',
@@ -84,26 +108,80 @@ if args.verbose:
 with open(args.input, 'rb') as f:
     distal_in = pickle.load(f)
     f.close()
+
 if 'ser_input' in distal_in.keys():
     if distal_in['ser_input'].ndim == 1:
         distal_in['ser_input'] = np.broadcast_to(
             distal_in['ser_input'],
             (1, gifnet_mod.no_ser_neurons, distal_in['ser_input'].shape[0])
         )
-    elif distal_in['ser_input'].ndim != 3:
+    elif distal_in['ser_input'].ndim == 3:
+        distal_in['ser_input'] = np.broadcast_to(
+            distal_in['ser_input'],
+            (distal_in['ser_input'].shape[0],
+            gifnet_mod.no_ser_neurons,
+            distal_in['ser_input'].shape[2])
+        )
+    else:
         raise ValueError(
             'ser_input must be a 1D or 3D array'
         )
+
 if 'gaba_input' in distal_in.keys():
     if distal_in['gaba_input'].ndim == 1:
         distal_in['gaba_input'] = np.broadcast_to(
             distal_in['gaba_input'],
             (1, gifnet_mod.no_gaba_neurons, distal_in['gaba_input'].shape[0])
         )
-    elif distal_in['gaba_input'].ndim != 3:
+    elif distal_in['gaba_input'].ndim == 3:
+        distal_in['gaba_input'] = np.broadcast_to(
+            distal_in['gaba_input'],
+            (distal_in['gaba_input'].shape[0],
+            gifnet_mod.no_gaba_neurons,
+            distal_in['gaba_input'].shape[2])
+        )
+    else:
         raise ValueError(
             'gaba_input must be a 1D or 3D array'
         )
+
+
+#%% OPTIONALLY, ADD BACKGROUND NOISE TO INPUT
+
+if not args.no_noise:
+
+    if args.verbose:
+        print 'Adding background noise.'
+
+    for i, input_type in enumerate(distal_in.keys()):
+
+        # Ensure input_type is allowable.
+        # (distal_in might also have a key for metaparams)
+        if input_type not in ['ser_input', 'gaba_input']:
+            continue
+
+        # Copy distal_in to ensure it is writable.
+        distal_in[input_type] = np.copy(distal_in[input_type])
+
+        # Generate random input for each cell.
+        np.random.seed(args.seed_background + i)
+        for cell_no in range(distal_in[input_type].shape[1]):
+
+            # Generate background noise.
+            tmp_bg_noise = generateOUprocess(
+                int(distal_in[input_type].shape[2] * gifnet_mod.dt),
+                args.tau_background,
+                0., args.sigma_background,
+                gifnet_mod.dt,
+                None
+            ).astype(np.float32)
+
+            # Broadcast bg noise to right shape and add.
+            distal_in[input_type][:, cell_no, :] += np.broadcast_to(
+                tmp_bg_noise,
+                (distal_in[input_type].shape[0],
+                distal_in[input_type].shape[2])
+            )
 
 
 #%% RUN SIMULATION
@@ -137,12 +215,7 @@ if args.no_ser:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            gaba_input = np.broadcast_to(
-                distal_in['gaba_input'], 
-                (distal_in['gaba_input'].shape[0],
-                 gifnet_mod.no_gaba_neurons,
-                 distal_in['gaba_input'].shape[2])
-            ),
+            gaba_input = distal_in['gaba_input'],
             do_feedforward = ~args.no_feedforward, verbose = args.verbose
         )
 
@@ -175,12 +248,7 @@ elif args.no_gaba:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = np.broadcast_to(
-                distal_in['ser_input'], 
-                (distal_in['ser_input'].shape[0],
-                 gifnet_mod.no_ser_neurons,
-                 distal_in['ser_input'].shape[2])
-            ),
+            ser_input = distal_in['ser_input'],
             do_feedforward = ~args.no_feedforward, verbose = args.verbose
         )
 
@@ -214,19 +282,10 @@ else:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = np.broadcast_to(
-                distal_in['ser_input'], 
-                (distal_in['ser_input'].shape[0],
-                 gifnet_mod.no_ser_neurons,
-                 distal_in['ser_input'].shape[2])
-            ),
-            gaba_input = np.broadcast_to(
-                distal_in['gaba_input'], 
-                (distal_in['gaba_input'].shape[0],
-                 gifnet_mod.no_gaba_neurons,
-                 distal_in['gaba_input'].shape[2])
-            ),
-            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+            ser_input = distal_in['ser_input'],
+            gaba_input = distal_in['gaba_input'],
+            do_feedforward = ~args.no_feedforward,
+            verbose = args.verbose
         )
 
         outfile.close()
