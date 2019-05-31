@@ -53,9 +53,9 @@ class GIFnet_Simulation(h5py.File):
     def __init__(self, fname, name = None,
                  T = None, dt = None, no_sweeps = None,
                  no_ser_neurons = None,
-                 no_ser_examples = 0,
+                 no_ser_examples = None,
                  no_gaba_neurons = None,
-                 no_gaba_examples = 0,
+                 no_gaba_examples = None,
                  propagation_delay = None,
                  **kwargs):
 
@@ -89,8 +89,11 @@ class GIFnet_Simulation(h5py.File):
                 initializer.
         """
 
+        if kwargs.get('mode', 'a') not in ['r', 'a']:
+            raise ValueError('\'mode\' must be \'r\' or \'a\'')
+
         super(GIFnet_Simulation, self).__init__(
-            name = fname, mode = 'a', **kwargs
+            name = fname, mode = kwargs.pop('mode', 'a'), **kwargs
         )
 
         if name is not None:
