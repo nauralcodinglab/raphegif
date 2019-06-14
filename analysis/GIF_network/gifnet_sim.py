@@ -13,7 +13,7 @@ import pickle
 import numpy as np
 
 from src.Simulation import GIFnet_Simulation
-
+from src.Tools import generateOUprocess
 
 #%% PARSE COMMANDLINE ARGUMENTS
 
