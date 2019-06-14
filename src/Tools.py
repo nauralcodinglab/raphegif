@@ -252,3 +252,15 @@ def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt) :
     selection = np.where(flag>0.1)[0]
 
     return selection
+
+def PSTH(spktrain, window_width, no_neurons, dt = 0.1):
+    """
+    Obtain the population firing rate with a resolution of `window_width`.
+    """
+
+    window_width *= 1e-3
+    dt *= 1e-3
+
+    kernel = np.ones(int(window_width / dt)) / (window_width * no_neurons)
+    psth = np.convolve(spktrain, kernel, 'same')
+    return psth
