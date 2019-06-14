@@ -83,13 +83,15 @@ class GIFnet(object):
         versions to cut down the disk size of the GIFnet.
         """
 
-        for i in range(len(self.ser_mod)):
-            self.ser_mod[i].eta.clearInterpolatedFilter()
-            self.ser_mod[i].gamma.clearInterpolatedFilter()
+        if self.ser_mod is not None:
+            for i in range(len(self.ser_mod)):
+                self.ser_mod[i].eta.clearInterpolatedFilter()
+                self.ser_mod[i].gamma.clearInterpolatedFilter()
 
-        for i in range(len(self.gaba_mod)):
-            self.gaba_mod[i].eta.clearInterpolatedFilter()
-            self.gaba_mod[i].gamma.clearInterpolatedFilter()
+        if self.gaba_mod is not None:
+            for i in range(len(self.gaba_mod)):
+                self.gaba_mod[i].eta.clearInterpolatedFilter()
+                self.gaba_mod[i].gamma.clearInterpolatedFilter()
 
     def _simulate_gaba(self, out, gaba_input, verbose = False):
         """Simulate response of GABA neurons to gaba_input.
@@ -470,4 +472,3 @@ if __name__ == '__main__':
 
     # Try saving output.
     os.remove(testfname)
-

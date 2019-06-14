@@ -29,6 +29,9 @@ $(SIMDATA_PATH)/subsample_%_h_g.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFN
 $(SIMDATA_PATH)/subsample_%_h_ng.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_hi.dat | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 --no-gaba -v
 
+$(SIMDATA_PATH)/condgrad_l.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/condgrad.mod $(SIMDATA_PATH)/input/synpulse_low.dat | $(SIMDATA_PATH)
+	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0. --no-gaba -v
+
 # Rules to generate model inputs.
 $(SIMDATA_PATH)/input/synpulse_low.dat : analysis/GIF_network/input_generators/synaptic_pulse.py | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $< $@ \
@@ -51,6 +54,8 @@ $(GIFNET_PATH)/subsample.mod : $(GEN_PATH)/subsample.py $(GIFMOD_PATH)/5HT/serkg
 $(GIFNET_PATH)/subsample_%.mod : $(GEN_PATH)/subsample_%.py $(GIFNET_PATH)/subsample.mod | $(GIFNET_PATH)
 	PYTHONPATH="$(shell pwd)" python $<
 
+$(GIFNET_PATH)/condgrad.mod : $(GEN_PATH)/cond_gradient.py $(GIFMOD_PATH)/5HT/serkgifs.lmod | $(GIFNET_PATH)
+	PYTHONPATH="$(shell pwd)" python $<
 
 # Rules to create needed folders.
 $(SIMDATA_PATH) $(GIFNET_PATH) $(SIMDATA_PATH)/input :
