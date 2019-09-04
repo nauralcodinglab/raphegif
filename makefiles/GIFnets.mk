@@ -35,16 +35,16 @@ $(SIMDATA_PATH)/condgrad_l.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PA
 # Rules to generate model inputs.
 $(SIMDATA_PATH)/input/synpulse_low.dat : analysis/GIF_network/input_generators/synaptic_pulse.py | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $< $@ \
-		--baseline-ser -0.01 --min-ser 0.02 --max-ser 0.160 \
-		--baseline-gaba -0.01 --min-gaba 0.02 --max-gaba 0.160
+		--baseline-ser -0.01 --min-ser 0.02 --max-ser 0.070 \
+		--baseline-gaba -0.01 --min-gaba 0.02 --max-gaba 0.070
 $(SIMDATA_PATH)/input/synpulse_med.dat : analysis/GIF_network/input_generators/synaptic_pulse.py | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $< $@ \
-		--baseline-ser 0. --min-ser 0.01 --max-ser 0.150 \
-	     	--baseline-gaba 0. --min-gaba 0.01 --max-gaba 0.150
+		--baseline-ser 0. --min-ser 0.01 --max-ser 0.060 \
+	     	--baseline-gaba 0. --min-gaba 0.01 --max-gaba 0.060
 $(SIMDATA_PATH)/input/synpulse_hi.dat : analysis/GIF_network/input_generators/synaptic_pulse.py | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $< $@ \
-		--baseline-ser 0.01 --min-ser 0.00 --max-ser 0.140 \
-	       	--baseline-gaba 0.01 --min-gaba 0.00 --max-gaba 0.140
+		--baseline-ser 0.01 --min-ser 0.00 --max-ser 0.050 \
+	       	--baseline-gaba 0.01 --min-gaba 0.00 --max-gaba 0.050
 
 # Rules to generate GIFnet models.
 $(GIFNET_PATH)/subsample.mod : $(GEN_PATH)/subsample.py $(GIFMOD_PATH)/5HT/serkgifs.lmod $(GIFMOD_PATH)/GABA/gaba_gifs.mod | $(GIFNET_PATH)
