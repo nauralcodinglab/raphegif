@@ -3,31 +3,36 @@ GIFNET_PATH=data/models/GIF_network
 GEN_PATH=analysis/GIF_network/model_generators
 GIFMOD_PATH=data/models
 
+REPS = 3
+
 .PHONY : all
-all : \
-$(SIMDATA_PATH)/subsample_base_l_g.hdf5 $(SIMDATA_PATH)/subsample_base_l_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_base_m_g.hdf5 $(SIMDATA_PATH)/subsample_base_m_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_base_h_g.hdf5 $(SIMDATA_PATH)/subsample_base_h_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_noIA_l_g.hdf5 $(SIMDATA_PATH)/subsample_noIA_l_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_noIA_m_g.hdf5 $(SIMDATA_PATH)/subsample_noIA_m_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_noIA_h_g.hdf5 $(SIMDATA_PATH)/subsample_noIA_h_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_fixedIA_l_g.hdf5 $(SIMDATA_PATH)/subsample_fixedIA_l_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_fixedIA_m_g.hdf5 $(SIMDATA_PATH)/subsample_fixedIA_m_ng.hdf5 \
-$(SIMDATA_PATH)/subsample_fixedIA_h_g.hdf5 $(SIMDATA_PATH)/subsample_fixedIA_h_ng.hdf5 \
+all : $(SIMDATA_PATH)/subsample_base $(SIMDATA_PATH)/subsample_noIA $(SIMDATA_PATH)/subsample_fixedIA
 
 # Rule for running necessary simulations.
-$(SIMDATA_PATH)/subsample_%_l_g.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod  $(SIMDATA_PATH)/input/synpulse_low.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 -v
-$(SIMDATA_PATH)/subsample_%_l_ng.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_low.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 --no-gaba -v
-$(SIMDATA_PATH)/subsample_%_m_g.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_med.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 -v
-$(SIMDATA_PATH)/subsample_%_m_ng.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_med.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 --no-gaba -v
-$(SIMDATA_PATH)/subsample_%_h_g.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_hi.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 -v
-$(SIMDATA_PATH)/subsample_%_h_ng.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_hi.dat | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0.005 --no-gaba -v
+$(SIMDATA_PATH)/subsample_% : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/subsample_%.mod $(SIMDATA_PATH)/input/synpulse_low.dat $(SIMDATA_PATH)/input/synpulse_med.dat | $(SIMDATA_PATH)
+	if [ ! -d "$@" ]; then \
+		mkdir -p "$@" ; \
+	fi; \
+	for r in $$(seq 1 $(REPS)); do \
+		PYTHONPATH="$(shell pwd)" python $< $(word 2, $^) $(SIMDATA_PATH)/input/synpulse_low.dat "$@/l_g_$$r.hdf5" --sigma-background 0.005 --seed-background $$r & \
+	done ; \
+	echo "Waiting for synpulse_low simulations with GABA..." ; \
+	wait $$(jobs -rp) ; \
+	for r in $$(seq 1 $(REPS)); do \
+		PYTHONPATH="$(shell pwd)" python $< $(word 2, $^) $(SIMDATA_PATH)/input/synpulse_med.dat "$@/m_g_$$r.hdf5" --sigma-background 0.005 --seed-background $$r & \
+	done ; \
+	echo "Waiting for synpulse_med simulations with GABA..." ; \
+	wait $$(jobs -rp) ; \
+	for r in $$(seq 1 $(REPS)); do \
+		PYTHONPATH="$(shell pwd)" python $< $(word 2, $^) $(SIMDATA_PATH)/input/synpulse_low.dat "$@/l_ng_$$r.hdf5" --sigma-background 0.005 --seed-background $$r --no-gaba & \
+	done ; \
+	echo "Waiting for synpulse_low simulations without GABA..." ; \
+	wait $$(jobs -rp) ; \
+	for r in $$(seq 1 $(REPS)); do \
+		PYTHONPATH="$(shell pwd)" python $< $(word 2, $^) $(SIMDATA_PATH)/input/synpulse_med.dat "$@/m_ng_$$r.hdf5" --sigma-background 0.005 --seed-background $$r --no-gaba & \
+	done ; \
+	echo "Waiting for synpulse_med simulations without GABA..." ; \
+	wait $$(jobs -rp) ; \
 
 $(SIMDATA_PATH)/condgrad_l.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/condgrad.mod $(SIMDATA_PATH)/input/synpulse_low.dat | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0. --no-gaba -v
@@ -41,10 +46,6 @@ $(SIMDATA_PATH)/input/synpulse_med.dat : analysis/GIF_network/input_generators/s
 	PYTHONPATH="$(shell pwd)" python $< $@ \
 		--baseline-ser 0. --min-ser 0.01 --max-ser 0.060 \
 	     	--baseline-gaba 0. --min-gaba 0.01 --max-gaba 0.060
-$(SIMDATA_PATH)/input/synpulse_hi.dat : analysis/GIF_network/input_generators/synaptic_pulse.py | $(SIMDATA_PATH)
-	PYTHONPATH="$(shell pwd)" python $< $@ \
-		--baseline-ser 0.01 --min-ser 0.00 --max-ser 0.050 \
-	       	--baseline-gaba 0.01 --min-gaba 0.00 --max-gaba 0.050
 
 # Rules to generate GIFnet models.
 $(GIFNET_PATH)/subsample.mod : $(GEN_PATH)/subsample.py $(GIFMOD_PATH)/5HT/serkgifs.lmod $(GIFMOD_PATH)/GABA/gaba_gifs.mod | $(GIFNET_PATH)
