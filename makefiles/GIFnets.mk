@@ -3,7 +3,7 @@ GIFNET_PATH=data/models/GIF_network
 GEN_PATH=analysis/GIF_network/model_generators
 GIFMOD_PATH=data/models
 
-REPS = 5
+REPS = 3
 
 .PHONY : all
 all : $(SIMDATA_PATH)/subsample_base $(SIMDATA_PATH)/subsample_noIA $(SIMDATA_PATH)/subsample_fixedIA
@@ -22,6 +22,7 @@ $(SIMDATA_PATH)/subsample_% : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/
 		PYTHONPATH="$(shell pwd)" python $< $(word 2, $^) $(SIMDATA_PATH)/input/curr_step.dat "$@/m_ng_$$r.hdf5" --sigma-background 0.010 --seed-background $$r --no-gaba & \
 	done ; \
 	echo "Waiting for current step simulations without GABA..." ; \
+	wait $$(jobs -rp) ;
 
 $(SIMDATA_PATH)/condgrad_l.hdf5 : analysis/GIF_network/gifnet_sim.py $(GIFNET_PATH)/condgrad.mod $(SIMDATA_PATH)/input/synpulse_low.dat | $(SIMDATA_PATH)
 	PYTHONPATH="$(shell pwd)" python $^ $@ --sigma-background 0. --no-gaba -v
