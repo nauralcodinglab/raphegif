@@ -294,7 +294,7 @@ class CalciumGIF(AugmentedGIF):
                     r = rand()/rand_max;
                     if (r > p_dontspike) {
 
-                        spks[t+1] = 1.0;
+                        spks[t] = 1.0;
 
                         t = t + Tref_ind;
 
