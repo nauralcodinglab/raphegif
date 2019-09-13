@@ -298,7 +298,8 @@ class CalciumGIF(AugmentedGIF):
 
                         t = t + Tref_ind;
 
-                        V[t] = Vr;
+                        if (t < T_ind)
+                            V[t] = Vr;
 
 
                         // UPDATE ADAPTATION PROCESSES

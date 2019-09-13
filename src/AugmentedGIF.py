@@ -318,8 +318,8 @@ class AugmentedGIF(GIF):
                         spks[t] = 1.0;
 
                         t = t + Tref_ind;
-
-                        V[t] = Vr;
+                        if (t < T_ind)
+                            V[t] = Vr;
 
 
                         // UPDATE ADAPTATION PROCESSES
