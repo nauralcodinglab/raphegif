@@ -342,22 +342,21 @@ class jitterGIF(GIF) :
                     if (V[t] > Vthresh){
 
                     // Log spike
-                    spks[t + 1] = 1;
-                    V[t + 1] = 0;
+                    spks[t] = 1;
+                    V[t] = 0;
 
                     // Reset condition
-                    V[t + 2] = Vreset;
+                    if (t+1 < T_ind){
+                        V[t + 1] = Vreset;
 
-                    // Leave nonlinearities unperturbed
-                    m[t + 1] = m[t];
-                    m[t + 2] = m[t];
-                    h[t + 1] = h[t];
-                    h[t + 2] = h[t];
-                    n[t + 1] = n[t];
-                    n[t + 2] = n[t];
+                        // Leave nonlinearities unperturbed
+                        m[t + 1] = m[t];
+                        h[t + 1] = h[t];
+                        n[t + 1] = n[t];
+                    }
 
                     // Increment t
-                    t = t + 2;
+                    t = t + 1;
 
                     }
 
