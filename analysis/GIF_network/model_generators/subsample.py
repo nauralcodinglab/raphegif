@@ -23,7 +23,7 @@ DT = 0.1
 
 PROPAGATION_DELAY = int(2 / DT)
 GABA_KERNEL = SynapticKernel(
-    'alpha', tau = 25, ampli = -0.0075, kernel_len = 400, dt = DT
+    'alpha', tau = 25, ampli = -0.005, kernel_len = 400, dt = DT
 ).centered_kernel
 
 NO_SER_NEURONS = 600

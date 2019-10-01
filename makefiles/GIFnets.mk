@@ -3,7 +3,7 @@ GIFNET_PATH=data/models/GIF_network
 GEN_PATH=analysis/GIF_network/model_generators
 GIFMOD_PATH=data/models
 
-REPS = 3
+REPS=15
 
 .PHONY : all
 all : $(SIMDATA_PATH)/subsample_base $(SIMDATA_PATH)/subsample_noIA $(SIMDATA_PATH)/subsample_fixedIA
