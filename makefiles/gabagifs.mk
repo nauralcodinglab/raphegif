@@ -7,8 +7,11 @@ SCRIPT_PATH = figs/scripts/gaba_neurons
 .PHONY : all
 all : $(DATA_PATH)/gaba_goodcells.ldat 
 
-$(DATA_PATH)/gaba_goodcells.ldat : data/GABA_cells/index.csv $(SCRIPT_PATH)/preprocess_fast_noise.py
+$(DATA_PATH)/gaba_goodcells.ldat : data/GABA_cells/index.csv $(SCRIPT_PATH)/preprocess_fast_noise.py | $(DATA_PATH)
 	python $(SCRIPT_PATH)/preprocess_fast_noise.py
+
+$(DATA_PATH) :
+	mkdir -p $(DATA_PATH)
 
 .PHONY : clean
 clean :
