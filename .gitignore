@@ -9,6 +9,4 @@ mydata
 ./src/myexamples
 *.ipynb_checkpoints
 */__pycache__
-*.ldat
-*.lmod
 *.swp
