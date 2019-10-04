@@ -1,0 +1,4 @@
+* annex.largefiles=(largerthan=1Mb)
+*.py annex.largefiles=nothing
+*.mk annex.largefiles=nothing
+*.ipynb annex.largefiles=nothing
