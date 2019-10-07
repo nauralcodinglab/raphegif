@@ -12,7 +12,7 @@ from .AEC import AEC_Dummy
 from . import ReadIBW
 
 
-class Experiment :
+class Experiment:
 
     """
     Objects of this class contain the experimental data.
@@ -24,7 +24,6 @@ class Experiment :
     """
 
     def __init__(self, name, dt):
-
         """
         Name: string, name of the experiment
         dt: experimental time step (in ms). That is, 1/sampling frequency.
@@ -32,32 +31,27 @@ class Experiment :
 
         print "Create a new Experiment"
 
-        self.name               = name          # Experiment name
+        self.name = name          # Experiment name
 
-        self.dt                 = dt            # ms, experimental time step (all traces in same experiment must have the same sampling frequency)
-
+        self.dt = dt            # ms, experimental time step (all traces in same experiment must have the same sampling frequency)
 
         # Voltage traces
 
-        self.AEC_trace          = 0             # Trace object containing voltage and input current used for AEC
+        self.AEC_trace = 0             # Trace object containing voltage and input current used for AEC
 
         self.trainingset_traces = []            # List of traces for training set data
 
-        self.testset_traces     = []            # List of traces of test set data (typically multiple experiments conducted with frozen noise)
-
+        self.testset_traces = []            # List of traces of test set data (typically multiple experiments conducted with frozen noise)
 
         # AEC object
 
-        self.AEC                = AEC_Dummy()   # Object that performs AEC on experimental voltage traces
-
+        self.AEC = AEC_Dummy()   # Object that performs AEC on experimental voltage traces
 
         # Parameters used to define spike times
 
-        self.spikeDetection_threshold    = 0.0  # mV, voltage threshold used to detect spikes
+        self.spikeDetection_threshold = 0.0  # mV, voltage threshold used to detect spikes
 
-        self.spikeDetection_ref          = 3.0  # ms, absolute refractory period used for spike detection to avoid double counting of spikes
-
-
+        self.spikeDetection_ref = 3.0  # ms, absolute refractory period used for spike detection to avoid double counting of spikes
 
     ############################################################################################
     # FUNCTIONS TO ADD TRACES TO THE EXPERIMENT
@@ -65,7 +59,6 @@ class Experiment :
 
     @staticmethod
     def _readIgor(V, V_units, I, I_units, T, dt):
-
         """
         Internal method used to create Traces from Igor files.
 
@@ -88,10 +81,8 @@ class Experiment :
 
         return [Trace(V_rec, I, T, dt)]
 
-
     @staticmethod
     def _readABF(fname, V_channel, I_channel, dt):
-
         """
         Internal method used to create Traces from Axon Binary Format files.
 
@@ -123,7 +114,7 @@ class Experiment :
 
         # Extract sampling rate from first sweep of V_channel
         dt_tmp = 1./sweeps[0].analogsignals[V_channel].sampling_rate.rescale(pq.Hz)
-        dt_tmp = 1000. * float(dt_tmp) # Convert to ms
+        dt_tmp = 1000. * float(dt_tmp)  # Convert to ms
 
         # Verify that dt of recording is same as value passed to method
         if dt_tmp != dt:
@@ -150,10 +141,8 @@ class Experiment :
 
         return tr_list
 
-
     @staticmethod
     def _readArray(V, V_units, I, I_units, T, dt):
-
         """
         Internal method used to create Traces from vectors.
         Trims vectors to length T/dt and converts units to mV and nA before instantiating Trace.
@@ -169,14 +158,12 @@ class Experiment :
         (A list is returned for consistency with Experiment._readABF.)
         """
 
-        V_rec   = np.array(V[:int(T/dt)])*V_units/10**-3  # Convert to mV
-        I       = np.array(I[:int(T/dt)])*I_units/10**-9  # Convert to nA
+        V_rec = np.array(V[:int(T/dt)])*V_units/10**-3  # Convert to mV
+        I = np.array(I[:int(T/dt)])*I_units/10**-9  # Convert to nA
 
         return [Trace(V_rec, I, T, dt)]
 
-
     def _createTraces(self, FILETYPE='Axon', **kwargs):
-
         """
         Internal method used to create Traces from files or vectors.
 
@@ -185,18 +172,18 @@ class Experiment :
         See help for Experiment._readIgor, Experiment._readABF, and Experiment._readArray methods for more information on which arguments to provide.
         """
 
-        if FILETYPE=='Axon':
+        if FILETYPE == 'Axon':
 
             # Check for required arguments
             required_kwargs = ['fname', 'V_channel', 'I_channel']
-            if not all([kw in kwargs.keys() for kw in required_kwargs]) :
+            if not all([kw in kwargs.keys() for kw in required_kwargs]):
                 raise TypeError(', '.join(required_kwargs) + ' must be'
                                 ' supplied as kwargs for Axon FILETYPE.')
 
             # Warn user about unused arguments
             unused_kwargs = [
                     kw for kw in kwargs.keys() if kw not in required_kwargs]
-            if len(unused_kwargs) > 0 :
+            if len(unused_kwargs) > 0:
                 warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
                                     ' required for Axon FILETYPE and will not'
                                     ' be used.'))
@@ -210,18 +197,18 @@ class Experiment :
 
             return tr_list_tmp
 
-        elif FILETYPE=='Igor':
+        elif FILETYPE == 'Igor':
 
             # Check for required arguments
             required_kwargs = ['V', 'V_units', 'I', 'I_units', 'T']
-            if not all([kw in kwargs.keys() for kw in required_kwargs]) :
+            if not all([kw in kwargs.keys() for kw in required_kwargs]):
                 raise TypeError(', '.join(required_kwargs) + 'must be supplied'
                                 ' as kwargs for Igor FILETYPE.')
 
             # Warn user about unused arguments
             unused_kwargs = [
                     kw for kw in kwargs.keys() if kw not in required_kwargs]
-            if len(unused_kwargs) > 0 :
+            if len(unused_kwargs) > 0:
                 warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
                                     ' required for Igor FILETYPE and will not'
                                     ' be used.'))
@@ -236,18 +223,18 @@ class Experiment :
 
             return tr_list_tmp
 
-        elif FILETYPE=='Array':
+        elif FILETYPE == 'Array':
 
             # Check for required arguments
             required_kwargs = ['V', 'V_units', 'I', 'I_units', 'T', 'dt']
-            if not all([kw in kwargs.keys() for kw in required_kwargs]) :
+            if not all([kw in kwargs.keys() for kw in required_kwargs]):
                 raise TypeError(', '.join(required_kwargs) + 'must be supplied'
                                 'as kwargs for Array FILETYPE.')
 
             # Warn user about unused kwargs
             unused_kwargs = [
                     kw for kw in kwargs.keys() if kw not in required_kwargs]
-            if len(unused_kwargs) > 0 :
+            if len(unused_kwargs) > 0:
                 warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
                                     ' required for Array FILETYPE and will not'
                                     ' be used.'))
@@ -266,10 +253,7 @@ class Experiment :
             raise ValueError('Expected one of Axon, Igor, or Array for'
                              ' FILETYPE. Got {} instead.'.format(FILETYPE))
 
-
-
     def setAECTrace(self, FILETYPE='Axon', **kwargs):
-
         """
         Set AEC trace to experiment.
 
@@ -290,9 +274,7 @@ class Experiment :
 
         return tr_list_tmp[0]
 
-
     def addTrainingSetTrace(self, FILETYPE='Axon', **kwargs):
-
         """
         Add one or more training set traces to experiment.
 
@@ -303,13 +285,11 @@ class Experiment :
 
         print "Add Training Set trace..."
         tr_list_tmp = self._createTraces(FILETYPE, **kwargs)
-        self.trainingset_traces.extend( tr_list_tmp )
+        self.trainingset_traces.extend(tr_list_tmp)
 
         return tr_list_tmp
 
-
     def addTestSetTrace(self, FILETYPE='Axon', **kwargs):
-
         """
         Add one or more test set traces to experiment.
 
@@ -320,11 +300,9 @@ class Experiment :
 
         print "Add Test Set trace..."
         tr_list_tmp = self._createTraces(FILETYPE, **kwargs)
-        self.testset_traces.extend( tr_list_tmp )
+        self.testset_traces.extend(tr_list_tmp)
 
         return tr_list_tmp
-
-
 
     ############################################################################################
     # FUNCTIONS ASSOCIATED WITH ACTIVE ELECTRODE COMPENSATION
@@ -333,22 +311,18 @@ class Experiment :
 
         self.AEC = AEC
 
-
     def getAEC(self):
 
         return self.AEC
-
 
     def performAEC(self):
 
         self.AEC.performAEC(self)
 
-
     ############################################################################################
     # FUNCTIONS FOR SAVING AND LOADING AN EXPERIMENT
     ############################################################################################
     def save(self, path):
-
         """
         Save experiment.
         """
@@ -356,33 +330,29 @@ class Experiment :
         filename = path + "/Experiment_" + self.name + '.pkl'
 
         print "Saving: " + filename + "..."
-        f = open(filename,'w')
+        f = open(filename, 'w')
         pkl.dump(self, f)
         print "Done!"
 
-
     @classmethod
     def load(cls, filename):
-
         """
         Load experiment from file.
         """
 
         print "Load experiment: " + filename + "..."
 
-        f = open(filename,'r')
+        f = open(filename, 'r')
         expr = pkl.load(f)
 
         print "Done!"
 
         return expr
 
-
     ############################################################################################
     # EVALUATE PERFORMANCES OF A MODEL
     ############################################################################################
     def predictSpikes(self, spiking_model, nb_rep=500):
-
         """
         Evaluate the predictive power of a spiking model in predicting the spike timing of the test traces.
         Since the spiking_model can be stochastic, the model is simulated several times.
@@ -399,11 +369,10 @@ class Experiment :
 
         for tr in self.testset_traces:
 
-            if tr.useTrace :
+            if tr.useTrace:
 
                 spks_times = tr.getSpikeTimes()
                 all_spks_times_testset.append(spks_times)
-
 
         # Predict spike times using model
 
@@ -414,7 +383,7 @@ class Experiment :
 
         print "Predict spike times..."
 
-        for rep in np.arange(nb_rep) :
+        for rep in np.arange(nb_rep):
             print "Progress: %2.1f %% \r" % (100*(rep+1)/nb_rep),
             spks_times = spiking_model.simulateSpikingResponse(I_test, self.dt)
             all_spks_times_prediction.append(spks_times)
@@ -425,13 +394,10 @@ class Experiment :
 
         return prediction
 
-
-
     ############################################################################################
     # AUXILIARY FUNCTIONS
     ############################################################################################
     def detectSpikes_python(self, threshold=0.0, ref=3.0):
-
         """
         Extract spike times form all experimental traces.
         Python implementation (to speed up, use the function detectSpikes implemented in C).
@@ -442,20 +408,18 @@ class Experiment :
         self.spikeDetection_threshold = threshold
         self.spikeDetection_ref = ref
 
-        if self.AEC_trace != 0 :
+        if self.AEC_trace != 0:
             self.AEC_trace.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
 
-        for tr in self.trainingset_traces :
+        for tr in self.trainingset_traces:
             tr.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
 
-        for tr in self.testset_traces :
+        for tr in self.testset_traces:
             tr.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
 
         print "Done!"
 
-
     def detectSpikes(self, threshold=0.0, ref=3.0):
-
         """
         Extract spike times form all experimental traces.
         C implementation.
@@ -466,20 +430,18 @@ class Experiment :
         self.spikeDetection_threshold = threshold
         self.spikeDetection_ref = ref
 
-        if self.AEC_trace != 0 :
+        if self.AEC_trace != 0:
             self.AEC_trace.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
 
-        for tr in self.trainingset_traces :
+        for tr in self.trainingset_traces:
             tr.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
 
-        for tr in self.testset_traces :
+        for tr in self.testset_traces:
             tr.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
 
         print "Done!"
 
-
     def getTrainingSetNb(self):
-
         """
         Return the number of training set traces.
         According to the experimental protocol proposed in Pozzorini et al. PLOS Comp. Biol. there is only one training set trace,
@@ -488,47 +450,39 @@ class Experiment :
 
         return len(self.trainingset_traces)
 
-
     def getTrainingSetNbOfSpikes(self):
-
         """
         Return the number of spikes in the training set data (only consider ROI)
         """
 
-        nbSpksTot  = 0
+        nbSpksTot = 0
 
-        for tr in self.trainingset_traces :
+        for tr in self.trainingset_traces:
 
-            if tr.useTrace :
+            if tr.useTrace:
 
                 nbSpksTot += tr.getSpikeNbInROI()
 
-
-
         return nbSpksTot
-
-
-
-
 
     ############################################################################################
     # FUNCTIONS FOR PLOTTING
     ############################################################################################
     def plotTrainingSet(self):
 
-        plt.figure(figsize=(12,8), facecolor='white')
+        plt.figure(figsize=(12, 8), facecolor='white')
 
         cnt = 0
 
-        for tr in self.trainingset_traces :
+        for tr in self.trainingset_traces:
 
             # Plot input current
-            plt.subplot(2*self.getTrainingSetNb(),1,cnt*2+1)
+            plt.subplot(2*self.getTrainingSetNb(), 1, cnt*2+1)
             plt.plot(tr.getTime(), tr.I, 'gray')
 
             # Plot ROI
             ROI_vector = -10.0*np.ones(int(tr.T/tr.dt))
-            if tr.useTrace :
+            if tr.useTrace:
                 ROI_vector[tr.getROI()] = 10.0
 
             plt.fill_between(tr.getTime(), ROI_vector, 10.0, color='0.2')
@@ -538,19 +492,18 @@ class Experiment :
             plt.xticks([])
 
             # Plot membrane potential
-            plt.subplot(2*self.getTrainingSetNb(),1,cnt*2+2)
+            plt.subplot(2*self.getTrainingSetNb(), 1, cnt*2+2)
             plt.plot(tr.getTime(), tr.V_rec, 'black')
 
-            if tr.AEC_flag :
+            if tr.AEC_flag:
                 plt.plot(tr.getTime(), tr.V, 'blue')
 
-
-            if tr.spks_flag :
+            if tr.spks_flag:
                 plt.plot(tr.getSpikeTimes(), np.zeros(tr.getSpikeNb()), '.', color='red')
 
             # Plot ROI
             ROI_vector = -100.0*np.ones(int(tr.T/tr.dt))
-            if tr.useTrace :
+            if tr.useTrace:
                 ROI_vector[tr.getROI()] = 100.0
 
             plt.fill_between(tr.getTime(), ROI_vector, 100.0, color='0.2')
@@ -558,41 +511,40 @@ class Experiment :
             plt.ylim([min(tr.V)-5.0, max(tr.V)+5.0])
             plt.ylabel("Voltage (mV)")
 
-            cnt +=1
+            cnt += 1
 
         plt.xlabel("Time (ms)")
 
-        plt.subplot(2*self.getTrainingSetNb(),1,1)
+        plt.subplot(2*self.getTrainingSetNb(), 1, 1)
         plt.title('Experiment ' + self.name + " - Training Set (dark region not selected)")
         plt.subplots_adjust(left=0.10, bottom=0.07, right=0.95, top=0.92, wspace=0.25, hspace=0.25)
 
         plt.show()
 
-
     def plotTestSet(self):
 
-        plt.figure(figsize=(12,6), facecolor='white')
+        plt.figure(figsize=(12, 6), facecolor='white')
 
         # Plot  test set currents
-        plt.subplot(3,1,1)
+        plt.subplot(3, 1, 1)
 
-        for tr in self.testset_traces :
+        for tr in self.testset_traces:
             plt.plot(tr.getTime(), tr.I, 'gray')
         plt.ylabel("I (nA)")
         plt.title('Experiment ' + self.name + " - Test Set")
         # Plot  test set voltage
-        plt.subplot(3,1,2)
-        for tr in self.testset_traces :
+        plt.subplot(3, 1, 2)
+        for tr in self.testset_traces:
             plt.plot(tr.getTime(), tr.V, 'black')
         plt.ylabel("Voltage (mV)")
 
         # Plot test set raster
-        plt.subplot(3,1,3)
+        plt.subplot(3, 1, 3)
 
         cnt = 0
-        for tr in self.testset_traces :
+        for tr in self.testset_traces:
             cnt += 1
-            if tr.spks_flag :
+            if tr.spks_flag:
                 plt.plot(tr.getSpikeTimes(), cnt*np.ones(tr.getSpikeNb()), '|', color='black', ms=5, mew=2)
 
         plt.yticks([])

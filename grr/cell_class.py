@@ -33,8 +33,7 @@ single neuron.
 class Cell(object):
 
     # Initialize cell instance.
-    def __init__(self, name = None, **recordings):
-
+    def __init__(self, name=None, **recordings):
         """Initialize cell.
         """
 
@@ -43,18 +42,14 @@ class Cell(object):
         self.rec_names = tuple(recordings.keys())
         self._rec_dict = recordings
 
-
         # Read in ABF recordings named in kwargs and place in eponymous attrs.
         for key in recordings.keys():
 
             # Initialize list to hold recordings.
             self.__setattr__(key, self.read_ABF(recordings[key]))
 
-
-
     # Define repr magic method.
     def __repr__(self):
-
         """Unambiguous representation of cell instance.
         """
 
@@ -74,11 +69,9 @@ class Cell(object):
 
         return representation
 
-
     # Method to read ABF files into a list of np.arrays.
     # Arrays have dimensionality [channels, samples, sweeps].
     def read_ABF(self, fnames):
-
         """Import ABF files into a list of np.arrays.
 
         \rInputs:
@@ -113,7 +106,7 @@ class Cell(object):
 
             sweeps_arr = Recording(np.empty(
                     (no_channels, no_samples, no_sweeps),
-                    dtype = np.float64))
+                    dtype=np.float64))
 
             # Fill the array one sweep at a time.
             for sweep_ind in range(no_sweeps):
@@ -145,7 +138,6 @@ class Recording(np.ndarray):
     """
 
     def __new__(cls, input_array):
-
         """Instantiate new Recording given an array of data.
 
         Allows new Recording objects to be created using np.array-type syntax;
@@ -174,8 +166,7 @@ class Recording(np.ndarray):
 
         return np.tile(t_vec, shape)
 
-    def plot(self, single_sweep = False, downsample = 10):
-
+    def plot(self, single_sweep=False, downsample=10):
         """Plotting function for quick inspection of Recording.
 
         Note that x-axis values correspond to inds of the time axis of the array.
@@ -197,17 +188,15 @@ class Recording(np.ndarray):
         elif downsample < 1:
             raise ValueError('`downsample` must be an int > 0. or None.')
 
-
         ### Select data to plot ###
         if not single_sweep:
             plotting_data = self
         else:
             plotting_data = self[:, :, 0][:, :, np.newaxis]
 
-
         ### Make plot ###
-        x_vector = np.arange(0, self.shape[1], downsample) # Preserves indexes.
-        plt.figure(figsize = (10, 7))
+        x_vector = np.arange(0, self.shape[1], downsample)  # Preserves indexes.
+        plt.figure(figsize=(10, 7))
 
         for i in range(self.shape[0]):
 
@@ -215,20 +204,18 @@ class Recording(np.ndarray):
             if i == 0:
                 ax0 = plt.subplot(self.shape[0], 1, 1)
             else:
-                plt.subplot(self.shape[0], 1, i + 1, sharex = ax0)
+                plt.subplot(self.shape[0], 1, i + 1, sharex=ax0)
 
             plt.title('Channel {}'.format(i))
             plt.plot(x_vector, plotting_data[i, ::downsample, :],
                      'k-',
-                     linewidth = 0.5)
+                     linewidth=0.5)
             plt.xlabel('Time (timesteps)')
 
         plt.tight_layout()
         plt.show()
 
-
     def fit_test_pulse(self, baseline, steady_state, **kwargs):
-
         """Extract R_input and (optionally) R_a from test pulse.
 
         `baseline` and `steady_state` should be passed tuples of indexes over
@@ -289,17 +276,16 @@ class Recording(np.ndarray):
             raise TypeError('Expected `verbose` to be type bool; got {} '
                             'instead.'.format(type(kwargs['verbose'])))
 
-
         ### Main ###
 
         # Create dict to hold output.
         output = {}
 
         # Calculate R_input.
-        V_baseline = self[kwargs['V_chan'], slice(*baseline), :].mean(axis = 0)
-        I_baseline = self[kwargs['I_chan'], slice(*baseline), :].mean(axis = 0)
-        V_test = self[kwargs['V_chan'], slice(*steady_state), :].mean(axis = 0)
-        I_test = self[kwargs['I_chan'], slice(*steady_state), :].mean(axis = 0)
+        V_baseline = self[kwargs['V_chan'], slice(*baseline), :].mean(axis=0)
+        I_baseline = self[kwargs['I_chan'], slice(*baseline), :].mean(axis=0)
+        V_test = self[kwargs['V_chan'], slice(*steady_state), :].mean(axis=0)
+        I_test = self[kwargs['I_chan'], slice(*steady_state), :].mean(axis=0)
 
         delta_V_ss = V_test - V_baseline
         delta_I_ss = I_test - I_baseline
@@ -313,11 +299,11 @@ class Recording(np.ndarray):
             if delta_V_ss.mean() < 0:
                 I_peak = self[kwargs['I_chan'],
                               slice(baseline[1], steady_state[0]),
-                              :].min(axis = 0)
+                              :].min(axis=0)
             else:
                 I_peak = self[kwargs['I_chan'],
                               slice(baseline[1], steady_state[0]),
-                              :].max(axis = 0)
+                              :].max(axis=0)
 
             R_a = 1000 * delta_V_ss / (I_peak - I_baseline)
             output['R_a'] = R_a
@@ -331,7 +317,7 @@ class Recording(np.ndarray):
             if not kwargs['V_clamp']:
 
                 V_copy = deepcopy(self[kwargs['V_chan'], :, :])
-                V_copy = V_copy.mean(axis = 1)
+                V_copy = V_copy.mean(axis=1)
 
                 pulse_start = kwargs['tau'][0]
                 fitting_range = kwargs['tau'][-2:]
@@ -345,7 +331,7 @@ class Recording(np.ndarray):
                     plt.figure()
                     plt.plot(
                         np.arange(0, (len(V_copy) - 0.5) * self.dt, self.dt), V_copy,
-                        'k-', lw = 0.5
+                        'k-', lw=0.5
                     )
                     plt.plot(
                         np.linspace(fitting_range[0] * self.dt, fitting_range[1] * self.dt, fitted_pts.shape[1]),
@@ -367,9 +353,7 @@ class Recording(np.ndarray):
                 print('R_a: {} +/- {} MOhm'.format(round(R_a.mean()),
                       round(R_a.std())))
 
-
         return output
-
 
     def _exponential_curve(self, p, t):
         """Three parameter exponential.
@@ -379,9 +363,9 @@ class Recording(np.ndarray):
         p = [A, C, tau]
         """
 
-        A       = p[0]
-        C       = p[1]
-        tau     = p[2]
+        A = p[0]
+        C = p[1]
+        tau = p[2]
 
         return (A + C) * np.exp(-t/tau) + C
 
@@ -405,11 +389,11 @@ class Recording(np.ndarray):
 
         return Y - Y_hat
 
-    def _exponential_optimizer_wrapper(self, I, p0, dt = 0.1):
+    def _exponential_optimizer_wrapper(self, I, p0, dt=0.1):
 
         t = np.arange(0, len(I) * dt, dt)[:len(I)]
 
-        p = optimize.least_squares(self._compute_residuals, p0, kwargs = {
+        p = optimize.least_squares(self._compute_residuals, p0, kwargs={
         'func': self._exponential_curve,
         'X': t,
         'Y': I

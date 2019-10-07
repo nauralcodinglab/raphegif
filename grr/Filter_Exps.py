@@ -8,8 +8,7 @@ from .Filter import Filter
 from . import Tools
 
 
-
-class Filter_Exps(Filter) :
+class Filter_Exps(Filter):
 
     """
     Filter f(t) defined as linear combination of exponential functions:
@@ -25,14 +24,11 @@ class Filter_Exps(Filter) :
 
         # Auxiliary variables that can be computed using the parameters above
 
-        self.taus    = []       # ms, vector defining the timescales {tau_j} used to describe the filter f(t)
+        self.taus = []       # ms, vector defining the timescales {tau_j} used to describe the filter f(t)
 
         self.length_coeff = 10  # the filter length is computed by multiplying the slowest timescale in taus by this coefficient
 
-
-
     def setFilter_Timescales(self, taus):
-
         """
         Set timescales used to define the filter.
         taus : array values that defines the timescales (in ms)
@@ -40,8 +36,6 @@ class Filter_Exps(Filter) :
 
         self.taus = taus
         self.filter_coeffNb = len(taus)
-
-
 
     ############################################################################
     # IMPLEMENT SOME OF THE ABSTRACT METHODS
@@ -51,47 +45,38 @@ class Filter_Exps(Filter) :
 
         print "This function is not yet available."
 
-
-
     def getLength(self):
-
         """
         Return the duration (in ms) of the filter.
         """
 
         return self.length_coeff*max(self.taus)
 
-
     def computeInterpolatedFilter(self, dt):
-
         """
         Compute the interpolated filter self.filter h(t) = sum_j b_j*exp(-t/tau_j) with a given time resolution dt as well as its support self.supportfilter (i.e., time vector)
         """
 
-        if self.filter_coeffNb == len(self.filter_coeff) :
+        if self.filter_coeffNb == len(self.filter_coeff):
 
             filter_interpol_support = np.arange(self.getLength()/dt)*dt
 
             filter_interpol = np.zeros(len(filter_interpol_support))
 
-            for i in np.arange(self.filter_coeffNb) :
+            for i in np.arange(self.filter_coeffNb):
 
                 filter_interpol += self.filter_coeff[i] * np.exp(-filter_interpol_support/self.taus[i])
-
 
             self.filtersupport = filter_interpol_support
             self.filter = filter_interpol
 
-        else :
+        else:
 
             print "Error: number of filter coefficients does not match the number of basis functions!"
 
         return 0
 
-
-
     def convolution_ContinuousSignal_basisfunctions(self, I, dt):
-
         """
         Return matrix containing the result of the convolutional integral between a continuous signal I and all basis functions that define the filter.
 
@@ -106,7 +91,7 @@ class Filter_Exps(Filter) :
         """
 
         # Number of timescales
-        R      = int(self.filter_coeffNb)
+        R = int(self.filter_coeffNb)
 
         # Number of time steps
         p_T = int(len(I))
@@ -121,11 +106,10 @@ class Filter_Exps(Filter) :
 
         # Matrix in which the result is stored
         # ie, spike train filtered with different basis functions
-        X  = np.zeros((p_T,R))
-        X  = X.astype("double")
+        X = np.zeros((p_T, R))
+        X = X.astype("double")
 
-
-        code =  """
+        code = """
                 #include <math.h>
 
                 int   T_ind      = int(p_T);
@@ -143,15 +127,13 @@ class Filter_Exps(Filter) :
 
                 """
 
-        vars = [ 'p_T', 'p_dt', 'I', 'p_taus', 'X', 'R']
+        vars = ['p_T', 'p_dt', 'I', 'p_taus', 'X', 'R']
 
         v = weave.inline(code, vars, type_converters=converters.blitz)
 
         return X
 
-
     def convolution_Spiketrain_basisfunctions(self, spks, T, dt):
-
         """
         Return matrix containing the result of the convolutional integral between a spike train spks and all basis functions that define the filter.
 
@@ -164,7 +146,7 @@ class Filter_Exps(Filter) :
         """
 
         # Number of timescales
-        R      = int(self.filter_coeffNb)
+        R = int(self.filter_coeffNb)
 
         # Number of time steps
         p_T = int(T/dt)
@@ -174,20 +156,17 @@ class Filter_Exps(Filter) :
         p_taus = np.array(self.taus)
         p_taus = p_taus.astype("double")
 
-
         # Spike train
         p_spks_i = Tools.timeToIndex(spks, dt)        # spike times (in time indices)
         p_spks_i = p_spks_i.astype("double")
         p_spks_L = len(p_spks_i)
 
-
         # Matrix in which the result is stored
         # ie, spike train filtered with different basis functions
-        X  = np.zeros((p_T,R))
-        X  = X.astype("double")
+        X = np.zeros((p_T, R))
+        X = X.astype("double")
 
-
-        code =  """
+        code = """
                 #include <math.h>
 
                 int   T_ind      = int(p_T);
@@ -222,9 +201,8 @@ class Filter_Exps(Filter) :
 
                 """
 
-        vars = [ 'p_T', 'p_dt', 'p_spks_L', 'p_spks_i', 'p_taus', 'X', 'R']
+        vars = ['p_T', 'p_dt', 'p_spks_L', 'p_spks_i', 'p_taus', 'X', 'R']
 
         v = weave.inline(code, vars, type_converters=converters.blitz)
-
 
         return X

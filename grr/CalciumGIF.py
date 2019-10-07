@@ -40,45 +40,37 @@ class CalciumGIF(AugmentedGIF):
         self.gbar_K1 = 0.010
         self.gbar_K2 = 0.001
 
-
     ### Calcium gate related methods.
 
     def mInf(self, V):
-
         """Compute the equilibrium activation gate state of the calcium conductance.
         """
 
         return (self.m_A/(1 + np.exp(-self.m_k * (V - self.m_Vhalf))))**4
 
-
     def hInf(self, V):
-
         """Compute the equilibrium state of the inactivation gate of the calcium conductance.
         """
 
         return self.h_A/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
 
     @staticmethod
-    @nb.jit(cache = True, nopython = True)
+    @nb.jit(cache=True, nopython=True)
     def m_tau(V):
-
         """Compute the activation time of the calcium conductance.
         """
 
         return 2.4 + 22.5/np.cosh((V + 39.)/12.)
 
     @staticmethod
-    @nb.jit(cache = True, nopython = True)
+    @nb.jit(cache=True, nopython=True)
     def h_tau(V):
-
         """Compute the inactivation time of the calcium conductance.
         """
 
         return 127. + 0.21 * np.exp(np.minimum(50, -V)/6.5)
 
-
     def computeGating(self, V, inf_vec, tau):
-
         """
         Compute the state of a gate over time.
 
@@ -90,20 +82,18 @@ class CalciumGIF(AugmentedGIF):
         try:
             tau_vec = tau(V)
         except TypeError:
-            tau_vec = np.array([tau] * len(V), dtype = np.float64)
+            tau_vec = np.array([tau] * len(V), dtype=np.float64)
 
         return self._computeGatingInternal(V, inf_vec, tau_vec, self.dt)
-
 
     @staticmethod
     @nb.jit(nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.float64))
     def _computeGatingInternal(V, inf_vec, tau_vec, dt):
-
         """
         Internal method called by computeGating.
         """
 
-        output = np.empty_like(V, dtype = np.float64)
+        output = np.empty_like(V, dtype=np.float64)
         output[0] = inf_vec[0]
 
         for i in range(1, len(V)):
@@ -115,11 +105,9 @@ class CalciumGIF(AugmentedGIF):
     def getDF_Ca(self, V):
         return V - self.E_Ca
 
-
     ### Simulation methods.
 
     def simulate(self, I, V0):
-
         """
         Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
         V0 indicate the initial condition V(0)=V0.
@@ -132,48 +120,48 @@ class CalciumGIF(AugmentedGIF):
         """
 
         # Input parameters
-        p_T         = len(I)
-        p_dt        = self.dt
+        p_T = len(I)
+        p_dt = self.dt
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
 
-        p_m_Vhalf   = self.m_Vhalf
-        p_m_k       = self.m_k
-        p_m_A       = self.m_A
+        p_m_Vhalf = self.m_Vhalf
+        p_m_k = self.m_k
+        p_m_A = self.m_A
 
-        p_h_Vhalf   = self.h_Vhalf
-        p_h_k       = self.h_k
-        p_h_A       = self.h_A
+        p_h_Vhalf = self.h_Vhalf
+        p_h_k = self.h_k
+        p_h_A = self.h_A
 
-        p_E_Ca      = self.E_Ca
+        p_E_Ca = self.E_Ca
 
-        p_n_Vhalf   = self.n_Vhalf
-        p_n_k       = self.n_k
-        p_n_A       = self.n_A
-        p_n_tau     = self.n_tau
+        p_n_Vhalf = self.n_Vhalf
+        p_n_k = self.n_k
+        p_n_A = self.n_A
+        p_n_tau = self.n_tau
 
-        p_E_K       = self.E_K
+        p_E_K = self.E_K
 
-        p_gbar_K1   = self.gbar_K1
-        p_gbar_K2   = self.gbar_K2
+        p_gbar_K1 = self.gbar_K1
+        p_gbar_K2 = self.gbar_K2
 
-        p_Vr        = self.Vr
-        p_Tref      = self.Tref
-        p_Vt_star   = self.Vt_star
-        p_DV        = self.DV
-        p_lambda0   = self.lambda0
+        p_Vr = self.Vr
+        p_Tref = self.Tref
+        p_Vt_star = self.Vt_star
+        p_DV = self.DV
+        p_lambda0 = self.lambda0
 
         # Model kernels
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
-        p_eta       = p_eta.astype('double')
-        p_eta_l     = len(p_eta)
+        p_eta = p_eta.astype('double')
+        p_eta_l = len(p_eta)
 
         (p_gamma_support, p_gamma) = self.gamma.getInterpolatedFilter(self.dt)
-        p_gamma     = p_gamma.astype('double')
-        p_gamma_l   = len(p_gamma)
+        p_gamma = p_gamma.astype('double')
+        p_gamma_l = len(p_gamma)
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
@@ -182,9 +170,9 @@ class CalciumGIF(AugmentedGIF):
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
 
-        m = np.zeros_like(V, dtype = "double")
-        h = np.zeros_like(V, dtype = "double")
-        n = np.zeros_like(V, dtype = "double")
+        m = np.zeros_like(V, dtype="double")
+        h = np.zeros_like(V, dtype="double")
+        n = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -193,8 +181,7 @@ class CalciumGIF(AugmentedGIF):
         h[0] = self.hInf(V0)
         n[0] = self.nInf(V0)
 
-
-        code =  """
+        code = """
                 #include <math.h>
 
                 int   T_ind      = int(p_T);
@@ -315,29 +302,27 @@ class CalciumGIF(AugmentedGIF):
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_A',
                 'p_n_Vhalf', 'p_n_k', 'p_n_tau', 'p_n_A',
                 'p_E_Ca', 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V','I','m','h','n',
-                'p_Vr','p_Tref','p_Vt_star','p_DV','p_lambda0',
-                'p_eta','p_eta_l','eta_sum','p_gamma','gamma_sum','p_gamma_l','spks']
+                'V', 'I', 'm', 'h', 'n',
+                'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
+                'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
 
         time = np.arange(p_T)*self.dt
 
-        eta_sum   = eta_sum[:p_T]
+        eta_sum = eta_sum[:p_T]
         V_T = gamma_sum[:p_T] + p_Vt_star
 
-        spks = (np.where(spks==1)[0])*self.dt
+        spks = (np.where(spks == 1)[0])*self.dt
 
         return (time, V, eta_sum, V_T, spks)
 
-
     def simulateDeterministic_forceSpikes(self, I, V0, spks):
-
         """
         Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
         V0 indicate the initial condition V(0)=V0.
@@ -350,62 +335,62 @@ class CalciumGIF(AugmentedGIF):
         """
 
         # Input parameters
-        p_T         = len(I)
-        p_dt        = self.dt
+        p_T = len(I)
+        p_dt = self.dt
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
 
-        p_m_Vhalf   = self.m_Vhalf
-        p_m_k       = self.m_k
-        p_m_A       = self.m_A
+        p_m_Vhalf = self.m_Vhalf
+        p_m_k = self.m_k
+        p_m_A = self.m_A
 
-        p_h_Vhalf   = self.h_Vhalf
-        p_h_k       = self.h_k
-        p_h_A       = self.h_A
+        p_h_Vhalf = self.h_Vhalf
+        p_h_k = self.h_k
+        p_h_A = self.h_A
 
-        p_E_Ca      = self.E_Ca
+        p_E_Ca = self.E_Ca
 
-        p_n_Vhalf   = self.n_Vhalf
-        p_n_k       = self.n_k
-        p_n_A       = self.n_A
-        p_n_tau     = self.n_tau
+        p_n_Vhalf = self.n_Vhalf
+        p_n_k = self.n_k
+        p_n_A = self.n_A
+        p_n_tau = self.n_tau
 
-        p_E_K       = self.E_K
+        p_E_K = self.E_K
 
-        p_gbar_K1   = self.gbar_K1
-        p_gbar_K2   = self.gbar_K2
+        p_gbar_K1 = self.gbar_K1
+        p_gbar_K2 = self.gbar_K2
 
-        p_Vr        = self.Vr
-        p_Tref      = self.Tref
-        p_Tref_i    = int(self.Tref/self.dt)
+        p_Vr = self.Vr
+        p_Tref = self.Tref
+        p_Tref_i = int(self.Tref/self.dt)
 
         # Model kernels
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
-        p_eta       = p_eta.astype('double')
-        p_eta_l     = len(p_eta)
+        p_eta = p_eta.astype('double')
+        p_eta_l = len(p_eta)
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
         spks = np.array(spks, dtype="double")
-        spks_i   = Tools.timeToIndex(spks, self.dt)
+        spks_i = Tools.timeToIndex(spks, self.dt)
 
-        m = np.zeros_like(V, dtype = "double")
-        h = np.zeros_like(V, dtype = "double")
-        n = np.zeros_like(V, dtype = "double")
+        m = np.zeros_like(V, dtype="double")
+        h = np.zeros_like(V, dtype="double")
+        n = np.zeros_like(V, dtype="double")
 
         # Compute adaptation current (sum of eta triggered at spike times in spks)
-        eta_sum  = np.array(
+        eta_sum = np.array(
                 np.zeros(p_T + int(1.1*p_eta_l) + p_Tref_i),
                 dtype="double")
 
-        for s in spks_i :
-            eta_sum[s + 1 + p_Tref_i  : s + 1 + p_Tref_i + p_eta_l] += p_eta
+        for s in spks_i:
+            eta_sum[s + 1 + p_Tref_i: s + 1 + p_Tref_i + p_eta_l] += p_eta
 
-        eta_sum  = eta_sum[:p_T]
+        eta_sum = eta_sum[:p_T]
 
         # Set initial condition
         V[0] = V0
@@ -414,8 +399,7 @@ class CalciumGIF(AugmentedGIF):
         h[0] = self.hInf(V0)
         n[0] = self.nInf(V0)
 
-
-        code =  """
+        code = """
                 #include <math.h>
 
                 int   T_ind      = int(p_T);
@@ -512,23 +496,24 @@ class CalciumGIF(AugmentedGIF):
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_A',
                 'p_n_Vhalf', 'p_n_k', 'p_n_tau', 'p_n_A',
                 'p_E_Ca', 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V','I','m','h','n',
-                'p_Vr','p_Tref',
-                'eta_sum','spks', 'spks_i']
+                'V', 'I', 'm', 'h', 'n',
+                'p_Vr', 'p_Tref',
+                'eta_sum', 'spks', 'spks_i']
 
         v = weave.inline(code, vars)
 
         time = np.arange(p_T)*self.dt
-        eta_sum   = eta_sum[:p_T]
+        eta_sum = eta_sum[:p_T]
 
         return (time, V, eta_sum)
 
 #%% SIMPLE TESTS
+
 
 if __name__ == '__main__':
 
@@ -541,15 +526,15 @@ if __name__ == '__main__':
     plt.figure()
     plt.subplot(121)
     plt.title('Equilibrium gating')
-    plt.plot(V_vec, test_CaGIF.mInf(V_vec), 'k-', label = 'm')
-    plt.plot(V_vec, test_CaGIF.hInf(V_vec), 'r-', label = 'h')
+    plt.plot(V_vec, test_CaGIF.mInf(V_vec), 'k-', label='m')
+    plt.plot(V_vec, test_CaGIF.hInf(V_vec), 'r-', label='h')
     plt.xlabel('V')
     plt.legend()
 
     plt.subplot(122)
     plt.title('Kinetics')
-    plt.plot(V_vec, test_CaGIF.m_tau(V_vec), 'k-', label = 'm')
-    plt.plot(V_vec, test_CaGIF.h_tau(V_vec), 'r-', label = 'h')
+    plt.plot(V_vec, test_CaGIF.m_tau(V_vec), 'k-', label='m')
+    plt.plot(V_vec, test_CaGIF.h_tau(V_vec), 'r-', label='h')
     plt.ylabel('tau (ms)')
     plt.xlabel('V (mV)')
     plt.legend()
@@ -561,9 +546,9 @@ if __name__ == '__main__':
     V_step = np.concatenate([-70 * np.ones(1000), -40 * np.ones(10000)])
     plt.figure()
     plt.subplot(111)
-    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.mInf(V_step), test_CaGIF.m_tau), 'k-', label = 'm')
-    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.hInf(V_step), test_CaGIF.h_tau), 'r-', label = 'h')
-    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.nInf(V_step), test_CaGIF.n_tau), label = 'n')
+    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.mInf(V_step), test_CaGIF.m_tau), 'k-', label='m')
+    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.hInf(V_step), test_CaGIF.h_tau), 'r-', label='h')
+    plt.plot(test_CaGIF.computeGating(V_step, test_CaGIF.nInf(V_step), test_CaGIF.n_tau), label='n')
     plt.legend()
     plt.show()
 

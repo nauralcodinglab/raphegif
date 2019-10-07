@@ -50,15 +50,14 @@ class GIFnet_Simulation(h5py.File):
     )
     """
 
-    def __init__(self, fname, name = None,
-                 T = None, dt = None, no_sweeps = None,
-                 no_ser_neurons = None,
-                 no_ser_examples = None,
-                 no_gaba_neurons = None,
-                 no_gaba_examples = None,
-                 propagation_delay = None,
+    def __init__(self, fname, name=None,
+                 T=None, dt=None, no_sweeps=None,
+                 no_ser_neurons=None,
+                 no_ser_examples=None,
+                 no_gaba_neurons=None,
+                 no_gaba_examples=None,
+                 propagation_delay=None,
                  **kwargs):
-
         """Create a new GIFnet_Simulation object.
 
         Inputs:
@@ -93,7 +92,7 @@ class GIFnet_Simulation(h5py.File):
             raise ValueError('\'mode\' must be \'r\' or \'a\'')
 
         super(GIFnet_Simulation, self).__init__(
-            name = fname, mode = kwargs.pop('mode', 'a'), **kwargs
+            name=fname, mode=kwargs.pop('mode', 'a'), **kwargs
         )
 
         if name is not None:
@@ -215,7 +214,7 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['connectivity_matrix']
 
-    def set_connectivity_matrix(self, arr, infer_pop_size = True):
+    def set_connectivity_matrix(self, arr, infer_pop_size=True):
         """Create connectivity matrix for feedforward connections
 
         Inputs:
@@ -236,8 +235,10 @@ class GIFnet_Simulation(h5py.File):
                 'Array must be 2D, not {}D.'.format(arr.ndim)
             )
 
-        if (hasattr(self.attrs, 'no_ser_neurons') and
-            self.attrs['no_ser_neurons'] != arr.shape[0]):
+        if (
+            hasattr(self.attrs, 'no_ser_neurons')
+            and self.attrs['no_ser_neurons'] != arr.shape[0]
+        ):
             warnings.warn(
                 'Apparent no_ser_neurons in arr ({}) differs '
                 'from instance no_ser_neurons ({}).'
@@ -247,8 +248,10 @@ class GIFnet_Simulation(h5py.File):
         else:
             ser_shape_flag = False
 
-        if (hasattr(self.attrs, 'no_gaba_neurons') and
-            self.attrs['no_gaba_neurons'] != arr.shape[0]):
+        if (
+            hasattr(self.attrs, 'no_gaba_neurons')
+            and self.attrs['no_gaba_neurons'] != arr.shape[0]
+        ):
             warnings.warn(
                 'Apparent no_gaba_neurons in arr ({}) differs '
                 'from instance no_gaba_neurons ({}).'
@@ -268,8 +271,8 @@ class GIFnet_Simulation(h5py.File):
 
         # Initialize connectivity_matrix.
         self.create_dataset(
-            'connectivity_matrix', data = arr,
-            dtype = np.float32, compression = 5
+            'connectivity_matrix', data=arr,
+            dtype=np.float32, compression=5
         )
 
         # Ensure that pop sizes are up to date.
@@ -287,7 +290,7 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['ser/spktrains']
 
-    def init_ser_spktrains(self, spktrains = None, spktimes = None):
+    def init_ser_spktrains(self, spktrains=None, spktimes=None):
         """Initialize ser spiketrains as an indicator tensor
 
         Save spiketrains as an indicator tensor, starting
@@ -321,10 +324,10 @@ class GIFnet_Simulation(h5py.File):
         sergroup = self.require_group('ser')
         sspks = sergroup.create_dataset(
             'spktrains',
-            shape = (self.get_no_sweeps(),
+            shape=(self.get_no_sweeps(),
                      self.get_no_ser_neurons(),
                      self.get_no_timesteps()),
-            dtype = np.int8, compression = 5
+            dtype=np.int8, compression=5
         )
 
         # Case that spktrains have been provided directly.
@@ -349,8 +352,8 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['ser/examples']
 
-    def init_ser_examples(self, I = None, V = None,
-                          feedforward_input = None,
+    def init_ser_examples(self, I=None, V=None,
+                          feedforward_input=None,
                           **kwargs):
         """Initialize ser example traces
 
@@ -388,21 +391,21 @@ class GIFnet_Simulation(h5py.File):
             # Initialize with data, if available.
             if val is not None:
                 serex.create_dataset(
-                    key, data = val,
-                    shape = (self.get_no_sweeps(),
+                    key, data=val,
+                    shape=(self.get_no_sweeps(),
                              self.get_no_ser_examples(),
                              self.get_no_timesteps()),
-                    dtype = np.float32, compression = 5
+                    dtype=np.float32, compression=5
                 )
 
             # Initialize empty if no data available.
             else:
                 serex.create_dataset(
-                    key, fillvalue = 0,
-                    shape = (self.get_no_sweeps(),
+                    key, fillvalue=0,
+                    shape=(self.get_no_sweeps(),
                              self.get_no_ser_examples(),
                              self.get_no_timesteps()),
-                    dtype = np.float32, compression = 5
+                    dtype=np.float32, compression=5
                 )
 
     @property
@@ -415,7 +418,7 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['gaba/examples']
 
-    def init_gaba_examples(self, I = None, V = None, **kwargs):
+    def init_gaba_examples(self, I=None, V=None, **kwargs):
         """Initialize gaba example traces
 
         Any inputs set to None will be initialized as empty
@@ -445,21 +448,21 @@ class GIFnet_Simulation(h5py.File):
             # Initialize with data, if available.
             if val is not None:
                 gabaex.create_dataset(
-                    key, data = val,
-                    shape = (self.get_no_sweeps(),
+                    key, data=val,
+                    shape=(self.get_no_sweeps(),
                              self.get_no_gaba_examples(),
                              self.get_no_timesteps()),
-                    dtype = np.float32, compression = 5
+                    dtype=np.float32, compression=5
                 )
 
             # Initialize empty if no data available.
             else:
                 gabaex.create_dataset(
-                    key, fillvalue = 0,
-                    shape = (self.get_no_sweeps(),
+                    key, fillvalue=0,
+                    shape=(self.get_no_sweeps(),
                              self.get_no_gaba_examples(),
                              self.get_no_timesteps()),
-                    dtype = np.float32, compression = 5
+                    dtype=np.float32, compression=5
                 )
 
     @property
@@ -472,7 +475,7 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['gaba/spktrains']
 
-    def init_gaba_spktrains(self, spktrains = None, spktimes = None):
+    def init_gaba_spktrains(self, spktrains=None, spktimes=None):
         """Initialize gaba spiketrains as an indicator tensor
 
         Save spiketrains as an indicator tensor, starting
@@ -506,10 +509,10 @@ class GIFnet_Simulation(h5py.File):
         gabagroup = self.require_group('gaba')
         gspks = gabagroup.create_dataset(
             'spktrains',
-            shape = (self.get_no_sweeps(),
+            shape=(self.get_no_sweeps(),
                      self.get_no_gaba_neurons(),
                      self.get_no_timesteps()),
-            dtype = np.int8, compression = 5
+            dtype=np.int8, compression=5
         )
 
         # Case that spktrains have been provided directly.
@@ -591,4 +594,3 @@ class GIFnet_Simulation(h5py.File):
             self.get_t_vec(),
             self.gaba_examples[self.gaba_examples.keys()[0]].shape
         )
-

@@ -16,7 +16,7 @@ from .Trace import Trace
 from .Tools import reprint
 
 
-class jitterGIF(GIF) :
+class jitterGIF(GIF):
 
     """
     Generalized Integrate and Fire model defined in Pozzorini et al. PLOS Comp. Biol. 2015
@@ -41,9 +41,9 @@ class jitterGIF(GIF) :
         self.dt = dt                    # dt used in simulations (eta and gamma are interpolated according to this value)
 
         # Define model parameters
-        self.gl      = 1.0/100.0        # nS, leak conductance
-        self.C       = 20.0*self.gl     # nF, capacitance
-        self.El      = -65.0            # mV, reversal potential
+        self.gl = 1.0/100.0        # nS, leak conductance
+        self.C = 20.0*self.gl     # nF, capacitance
+        self.El = -65.0            # mV, reversal potential
 
         # Define attributes to store goodness-of-fit
         self.var_explained_dV = 0
@@ -79,35 +79,28 @@ class jitterGIF(GIF) :
         self.gbar_K1 = 0
         self.gbar_K2 = 0
 
-
-
     ########################################################################################################
     # IMPLEMENT ABSTRACT METHODS OF Spiking model
     ########################################################################################################
 
-
     def simulateSpikingResponse(self, I, dt):
-
         """
         Subthreshold model does not spike.
         """
 
         raise RuntimeError('Subthreshold model does not spike.')
 
-
     ########################################################################################################
     # IMPLEMENT ABSTRACT METHODS OF Threshold Model
     ########################################################################################################
 
-
-    def simulateVoltageResponse(self, I, dt) :
+    def simulateVoltageResponse(self, I, dt):
 
         self.setDt(dt)
 
         (time, V, eta_sum, V_T, spks_times) = self.simulate(I, self.El)
 
         return (spks_times, V, V_T)
-
 
     ########################################################################################################
     # SYNAPTIC INPUT RELATED METHODS
@@ -135,16 +128,15 @@ class jitterGIF(GIF) :
 
         return signal
 
+    def initializeSynapses(self, no_synapses, ampli, tau_rise, tau_decay, duration, arrival_mean, arrival_SD, random_seed=None):
 
-    def initializeSynapses(self, no_synapses, ampli, tau_rise, tau_decay, duration, arrival_mean, arrival_SD, random_seed = None):
-
-        synaptic_input = np.zeros((int(duration/self.dt), no_synapses), dtype = np.float64)
+        synaptic_input = np.zeros((int(duration/self.dt), no_synapses), dtype=np.float64)
         synaptic_tvec = np.arange(0, int(synaptic_input.shape[0] * self.dt), self.dt)
 
         assert synaptic_input.shape[0] == len(synaptic_tvec)
 
         kernel_length = tau_decay*5
-        compensated_arrival_mean = arrival_mean + kernel_length / 2. # Needed because otherwise 'arrivals' occur in the middle of the synaptic waveform due to how convolution works.
+        compensated_arrival_mean = arrival_mean + kernel_length / 2.  # Needed because otherwise 'arrivals' occur in the middle of the synaptic waveform due to how convolution works.
 
         np.random.seed(random_seed)
         arrival_times = np.random.normal(compensated_arrival_mean, arrival_SD, no_synapses)
@@ -158,14 +150,11 @@ class jitterGIF(GIF) :
         # Assign output to jitterGIF attributes
         self.synaptic_input = synaptic_input
 
-
     def getSummatedSynapticInput(self):
 
-        return self.synaptic_input.sum(axis = 1)
+        return self.synaptic_input.sum(axis=1)
 
-
-    def getSynapticSupport(self, matrix_format = False):
-
+    def getSynapticSupport(self, matrix_format=False):
         """
         Return a time support vector (or support matrix) for synaptic inputs.
 
@@ -180,7 +169,6 @@ class jitterGIF(GIF) :
 
         return support
 
-
     def plotSynaptic(self):
 
         plt.figure()
@@ -189,17 +177,15 @@ class jitterGIF(GIF) :
 
         for i in range(self.synaptic_input.shape[1]):
             plt.subplot(self.synaptic_input.shape[1] + 1, 1, i + 1)
-            plt.plot(supp[:, i], self.synaptic_input[:, i], 'k-', linewidth = 0.5)
+            plt.plot(supp[:, i], self.synaptic_input[:, i], 'k-', linewidth=0.5)
 
         plt.subplot(self.synaptic_input.shape[1] + 1, 1, self.synaptic_input.shape[1] + 1)
         plt.plot(supp[:, 0], self.getSummatedSynapticInput(), 'r-')
 
-        plt.subplots_adjust(hspace = 0)
+        plt.subplots_adjust(hspace=0)
         plt.show()
 
-
-    def simulateSynaptic(self, V_rest, current_offset = None, spiking = False):
-
+    def simulateSynaptic(self, V_rest, current_offset=None, spiking=False):
         """
         Essentially a switch to select between jitterGIF.simulate (for subthreshold simulations) and jitterGIF._simulateHardThreshold (for spiking simulations).
         """
@@ -215,51 +201,48 @@ class jitterGIF(GIF) :
 
             return self._simulateHardThreshold(self.getSummatedSynapticInput() + current_offset, V_rest)
 
-
     def _simulateHardThreshold(self, I, V0):
-
         """
         Simulates spiking response using a hard threshold/hard reset model based on the subthreshold model.
         """
 
         # Input parameters
-        p_T         = len(I)
-        p_dt        = self.dt
-        p_Vthresh   = np.float64(self.Vthresh)
-        p_Vreset    = np.float64(self.Vreset)
+        p_T = len(I)
+        p_dt = self.dt
+        p_Vthresh = np.float64(self.Vthresh)
+        p_Vreset = np.float64(self.Vreset)
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
 
-        p_m_Vhalf   = self.m_Vhalf
-        p_m_k       = self.m_k
-        p_m_tau     = self.m_tau
+        p_m_Vhalf = self.m_Vhalf
+        p_m_k = self.m_k
+        p_m_tau = self.m_tau
 
-        p_h_Vhalf   = self.h_Vhalf
-        p_h_k       = self.h_k
-        p_h_tau     = self.h_tau
+        p_h_Vhalf = self.h_Vhalf
+        p_h_k = self.h_k
+        p_h_tau = self.h_tau
 
-        p_n_Vhalf   = self.n_Vhalf
-        p_n_k       = self.n_k
-        p_n_tau     = self.n_tau
+        p_n_Vhalf = self.n_Vhalf
+        p_n_k = self.n_k
+        p_n_tau = self.n_tau
 
-        p_E_K       = self.E_K
+        p_E_K = self.E_K
 
-        p_gbar_K1   = self.gbar_K1
-        p_gbar_K2   = self.gbar_K2
-
+        p_gbar_K1 = self.gbar_K1
+        p_gbar_K2 = self.gbar_K2
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
 
-        m = np.zeros_like(V, dtype = "double")
-        h = np.zeros_like(V, dtype = "double")
-        n = np.zeros_like(V, dtype = "double")
+        m = np.zeros_like(V, dtype="double")
+        h = np.zeros_like(V, dtype="double")
+        n = np.zeros_like(V, dtype="double")
 
-        spks = np.zeros_like(V, dtype = "double")
+        spks = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -268,7 +251,7 @@ class jitterGIF(GIF) :
         h[0] = self.hInf(V0)
         n[0] = self.nInf(V0)
 
-        code =  """
+        code = """
                 #include <math.h>
                 #include <stdio.h>
 
@@ -361,12 +344,12 @@ class jitterGIF(GIF) :
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_tau',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau',
                 'p_n_Vhalf', 'p_n_k', 'p_n_tau',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V','I','m','h','n',
+                'V', 'I', 'm', 'h', 'n',
                 'p_Vthresh', 'p_Vreset', 'spks']
 
         v = weave.inline(code, vars)
@@ -375,11 +358,9 @@ class jitterGIF(GIF) :
 
         return (time, V, m, h, n, spks)
 
-
-    def multiSim(self, jitters, gk2s, Els, no_reps = 50, duration = 800,
-                 arrival_time = 150, tau_rise = 1, tau_decay = 15,
-                 ampli = 0.010, no_syn = 10, verbose = False):
-
+    def multiSim(self, jitters, gk2s, Els, no_reps=50, duration=800,
+                 arrival_time=150, tau_rise=1, tau_decay=15,
+                 ampli=0.010, no_syn=10, verbose=False):
         """
         sample_syn[t, syn, rep, jitter]
         Vsub[t, rep, jitter, gk2, El]
@@ -390,9 +371,9 @@ class jitterGIF(GIF) :
         'jitters': jitters,
         'gk2s': gk2s,
         'Els': Els,
-        'sample_syn': np.empty((int(duration/ self.dt), no_syn, no_reps, len(jitters)), dtype = np.float64),
-        'Vsub': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype = np.float64),
-        'n': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype = np.float64)
+        'sample_syn': np.empty((int(duration / self.dt), no_syn, no_reps, len(jitters)), dtype=np.float64),
+        'Vsub': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype=np.float64),
+        'n': np.empty((int(duration / self.dt), no_reps, len(jitters), len(gk2s), len(Els)), dtype=np.float64)
         #'pspk': np.zeros((int(duration / self.dt), len(jitters), len(gk2s)), dtype = np.float64),
         #'no_spks': np.empty((no_reps, len(jitters), len(gk2s)), dtype = np.int32)
         }
@@ -424,14 +405,11 @@ class jitterGIF(GIF) :
                         #sim_output['pspk'][:, j_, g_] += spks_tmp / no_reps
 
                         sim_output['Vsub'][:, r_, j_, g_, e_] = Vsub_tmp
-                        sim_output['n'][: , r_, j_, g_, e_] = n_tmp
-
+                        sim_output['n'][:, r_, j_, g_, e_] = n_tmp
 
         return sim_output
 
-
     def I_to_inject(self, V):
-
         """
         Compute the amount of constant current to inject to obtain a steady-state voltage of V
         """
@@ -440,37 +418,29 @@ class jitterGIF(GIF) :
 
         return float(I)
 
-
     ########################################################################################################
     # METHODS FOR K_CONDUCTANCE GATES
     ########################################################################################################
 
     def mInf(self, V):
-
         """Compute the equilibrium activation gate state of the potassium conductance.
         """
 
         return 1/(1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
 
-
     def hInf(self, V):
-
         """Compute the equilibrium state of the inactivation gate of the potassium conductance.
         """
 
         return 1/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
 
-
     def nInf(self, V):
-
         """Compute the equilibrium state of the non-inactivating conductance.
         """
 
         return 1/(1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
 
-
     def computeGating(self, V, inf_vec, tau):
-
         """
         Compute the state of a gate over time.
 
@@ -479,16 +449,14 @@ class jitterGIF(GIF) :
 
         return self._computeGatingInternal(V, inf_vec, tau, self.dt)
 
-
     @staticmethod
     @nb.jit(nb.float64[:](nb.float64[:], nb.float64[:], nb.float64, nb.float64))
     def _computeGatingInternal(V, inf_vec, tau, dt):
-
         """
         Internal method called by computeGating.
         """
 
-        output = np.empty_like(V, dtype = np.float64)
+        output = np.empty_like(V, dtype=np.float64)
         output[0] = inf_vec[0]
 
         for i in range(1, len(V)):
@@ -497,22 +465,18 @@ class jitterGIF(GIF) :
 
         return output
 
-
     def getDF_K(self, V):
-
         """
         Compute driving force on K based on SubthreshGIF_K.E_K and V.
         """
 
         return V - self.E_K
 
-
     ########################################################################################################
     # METHODS FOR NUMERICAL SIMULATIONS
     ########################################################################################################
 
     def simulate(self, I, V0):
-
         """
         Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
         V0 indicate the initial condition V(0)=V0.
@@ -522,39 +486,38 @@ class jitterGIF(GIF) :
         """
 
         # Input parameters
-        p_T         = len(I)
-        p_dt        = self.dt
+        p_T = len(I)
+        p_dt = self.dt
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
 
-        p_m_Vhalf   = self.m_Vhalf
-        p_m_k       = self.m_k
-        p_m_tau     = self.m_tau
+        p_m_Vhalf = self.m_Vhalf
+        p_m_k = self.m_k
+        p_m_tau = self.m_tau
 
-        p_h_Vhalf   = self.h_Vhalf
-        p_h_k       = self.h_k
-        p_h_tau     = self.h_tau
+        p_h_Vhalf = self.h_Vhalf
+        p_h_k = self.h_k
+        p_h_tau = self.h_tau
 
-        p_n_Vhalf   = self.n_Vhalf
-        p_n_k       = self.n_k
-        p_n_tau     = self.n_tau
+        p_n_Vhalf = self.n_Vhalf
+        p_n_k = self.n_k
+        p_n_tau = self.n_tau
 
-        p_E_K       = self.E_K
+        p_E_K = self.E_K
 
-        p_gbar_K1   = self.gbar_K1
-        p_gbar_K2   = self.gbar_K2
-
+        p_gbar_K1 = self.gbar_K1
+        p_gbar_K2 = self.gbar_K2
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         I = np.array(I, dtype="double")
 
-        m = np.zeros_like(V, dtype = "double")
-        h = np.zeros_like(V, dtype = "double")
-        n = np.zeros_like(V, dtype = "double")
+        m = np.zeros_like(V, dtype="double")
+        h = np.zeros_like(V, dtype="double")
+        n = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -563,7 +526,7 @@ class jitterGIF(GIF) :
         h[0] = self.hInf(V0)
         n[0] = self.nInf(V0)
 
-        code =  """
+        code = """
                 #include <math.h>
                 #include <stdio.h>
 
@@ -632,12 +595,12 @@ class jitterGIF(GIF) :
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El',
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_tau',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau',
                 'p_n_Vhalf', 'p_n_k', 'p_n_tau',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V','I','m','h','n' ]
+                'V', 'I', 'm', 'h', 'n']
 
         v = weave.inline(code, vars)
 
@@ -645,18 +608,14 @@ class jitterGIF(GIF) :
 
         return (time, V, m, h, n)
 
-
     def simulateDeterministic_forceSpikes(self, *args):
-
         """
         Subthreshold model does not spike.
         """
 
         raise RuntimeError('Subthreshold model does not spike.')
 
-
-    def simulateVClamp(self, duration, V_const, V_pre, incl_gl = True, do_plot = False):
-
+    def simulateVClamp(self, duration, V_const, V_pre, incl_gl=True, do_plot=False):
         """
         Compute the holding current elicited by a voltage step from V_pre to V_const
         """
@@ -664,7 +623,7 @@ class jitterGIF(GIF) :
         if V_pre is None:
             V_pre = V_const
 
-        V_vec = np.ones(int(duration / self.dt), dtype = np.float64)
+        V_vec = np.ones(int(duration / self.dt), dtype=np.float64)
         V_vec *= V_const
 
         # Initialize vectors with equilibrium gating states.
@@ -702,14 +661,11 @@ class jitterGIF(GIF) :
 
         return (V_vec, I_vec)
 
-
     ########################################################################################################
     # METHODS FOR MODEL FITTING
     ########################################################################################################
 
-
     def fit(self, experiment):
-
         """
         Fit the GIF model on experimental data.
         The experimental data are stored in the object experiment provided as an input.
@@ -723,34 +679,24 @@ class jitterGIF(GIF) :
         print "# Fit GIF"
         print "################################\n"
 
-
         self.fitSubthresholdDynamics(experiment)
-
-
 
     ########################################################################################################
     # FIT VOLTAGE RESET GIVEN ABSOLUTE REFRACOTORY PERIOD (step 1)
     ########################################################################################################
 
-
     def fitVoltageReset(self, experiment, Tref, do_plot=False):
-
         """
         Subthreshold model does not spike.
         """
 
         raise RuntimeError('Subthreshold model does not spike.')
 
-
-
-
     ########################################################################################################
     # FUNCTIONS RELATED TO FIT OF SUBTHRESHOLD DYNAMICS (step 2)
     ########################################################################################################
 
-
     def fitSubthresholdDynamics(self, experiment):
-
         """
         Implement Step 2 of the fitting procedure introduced in Pozzorini et al. PLOS Comb. Biol. 2015
         The voltage reset is estimated by computing the spike-triggered average of the voltage.
@@ -763,7 +709,6 @@ class jitterGIF(GIF) :
         # Expand eta in basis functions
         self.dt = experiment.dt
 
-
         # Build X matrix and Y vector to perform linear regression (use all traces in training set)
         # For each training set an X matrix and a Y vector is built.
         ####################################################################################################
@@ -772,19 +717,18 @@ class jitterGIF(GIF) :
 
         cnt = 0
 
-        for tr in experiment.trainingset_traces :
+        for tr in experiment.trainingset_traces:
 
-            if tr.useTrace :
+            if tr.useTrace:
 
                 cnt += 1
-                reprint( "Compute X matrix for repetition %d" % (cnt) )
+                reprint("Compute X matrix for repetition %d" % (cnt))
 
                 # Compute the the X matrix and Y=\dot_V_data vector used to perform the multilinear linear regression (see Eq. 17.18 in Pozzorini et al. PLOS Comp. Biol. 2015)
                 (X_tmp, Y_tmp) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr)
 
                 X.append(X_tmp)
                 Y.append(Y_tmp)
-
 
         # Concatenate matrixes associated with different traces to perform a single multilinear regression
         ####################################################################################################
@@ -796,25 +740,23 @@ class jitterGIF(GIF) :
             X = np.concatenate(X, axis=0)
             Y = np.concatenate(Y, axis=0)
 
-        else :
+        else:
             print "\nError, at least one training set trace should be selected to perform fit."
-
 
         # Perform linear Regression defined in Eq. 17 of Pozzorini et al. PLOS Comp. Biol. 2015
         ####################################################################################################
 
         print "\nPerform linear regression..."
-        XTX     = np.dot(np.transpose(X), X)
+        XTX = np.dot(np.transpose(X), X)
         XTX_inv = inv(XTX)
-        XTY     = np.dot(np.transpose(X), Y)
-        b       = np.dot(XTX_inv, XTY)
-        b       = b.flatten()
-
+        XTY = np.dot(np.transpose(X), Y)
+        b = np.dot(XTX_inv, XTY)
+        b = b.flatten()
 
         # Extract explicit model parameters from regression result b
         ####################################################################################################
 
-        self.C  = 1./b[1]
+        self.C = 1./b[1]
         self.gl = -b[0]*self.C
         self.El = b[2]*self.C/self.gl
 
@@ -823,18 +765,16 @@ class jitterGIF(GIF) :
 
         self.printParameters()
 
-
         # Compute percentage of variance explained on dV/dt
         ####################################################################################################
 
         self.dV_data = Y.flatten()
         self.dV_fitted = np.dot(X, b).flatten()
 
-        var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
+        var_explained_dV = 1.0 - np.mean((Y - np.dot(X, b))**2)/np.var(Y)
 
         self.var_explained_dV = var_explained_dV
         print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
-
 
         # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
         ####################################################################################################
@@ -849,9 +789,9 @@ class jitterGIF(GIF) :
         self.h_sim = []
         self.n_sim = []
 
-        for tr in experiment.trainingset_traces :
+        for tr in experiment.trainingset_traces:
 
-            if tr.useTrace :
+            if tr.useTrace:
 
                 # Simulate subthreshold dynamics
                 (time, V_est, m_est, h_est, n_est) = self.simulate(tr.I, tr.V[0])
@@ -875,9 +815,7 @@ class jitterGIF(GIF) :
         self.var_explained_V = var_explained_V
         print "Percentage of variance explained (on V): %0.2f" % (var_explained_V*100.0)
 
-
     def fitSubthresholdDynamics_Build_Xmatrix_Yvector(self, trace):
-
         """
         Compute the X matrix and the Y vector (i.e. \dot_V_data) used to perfomr the linear regression
         defined in Eq. 17-18 of Pozzorini et al. 2015 for an individual experimental trace provided as parameter.
@@ -889,10 +827,9 @@ class jitterGIF(GIF) :
         selection = trace.getROI()
         selection_l = len(selection)
 
-
         # Build X matrix for linear regression (see Eq. 18 in Pozzorini et al. PLOS Comp. Biol. 2015)
         ####################################################################################################
-        X = np.zeros( (selection_l, 5) )
+        X = np.zeros((selection_l, 5))
 
         # Compute equilibrium state of each gate
         m_inf_vec = self.mInf(trace.V)
@@ -912,89 +849,72 @@ class jitterGIF(GIF) :
         DF_K = self.getDF_K(trace.V)
 
         # Fill first three columns of X matrix
-        X[:,0] = trace.V[selection]
-        X[:,1] = trace.I[selection]
-        X[:,2] = np.ones(selection_l)
+        X[:, 0] = trace.V[selection]
+        X[:, 1] = trace.I[selection]
+        X[:, 2] = np.ones(selection_l)
 
         # Fill K-conductance columns
-        X[:,3] = -(gating_vec_1 * DF_K)[selection]
-        X[:,4] = -(gating_vec_2 * DF_K)[selection]
-
+        X[:, 3] = -(gating_vec_1 * DF_K)[selection]
+        X[:, 4] = -(gating_vec_2 * DF_K)[selection]
 
         # Build Y vector (voltage derivative \dot_V_data)
         ####################################################################################################
-        Y = ( np.gradient(trace.V) / trace.dt )[selection]
+        Y = (np.gradient(trace.V) / trace.dt)[selection]
         #Y = np.array( np.concatenate( (np.diff(trace.V)/trace.dt, [0]) ) )[selection]
 
         return (X, Y)
-
-
 
     ########################################################################################################
     # FUNCTIONS RELATED TO FIT FIRING THRESHOLD PARAMETERS (step 3)
     ########################################################################################################
 
-
     def fitStaticThreshold(self, *args):
-
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
-
 
     def fitThresholdDynamics(self, *args):
-
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
 
-
-    def maximizeLikelihood(self, *args) :
-
+    def maximizeLikelihood(self, *args):
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
 
-
-    def computeLikelihoodGradientHessian(self, *args) :
-
+    def computeLikelihoodGradientHessian(self, *args):
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
 
-
-    def buildXmatrix_staticThreshold(self, *args) :
-
+    def buildXmatrix_staticThreshold(self, *args):
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
 
-
-    def buildXmatrix_dynamicThreshold(self, *args) :
-
+    def buildXmatrix_dynamicThreshold(self, *args):
         """
         Subthreshold models do not spike.
         """
 
         raise RuntimeError('Subthreshold models do not spike.')
-
 
     ########################################################################################################
     # METHODS FOR ASSESSING RESIDUALS
     ########################################################################################################
 
-    def getResiduals_V(self, bins = None):
-
+    def getResiduals_V(self, bins=None):
         """
         Bins can be None, an intger number of bins, or a vector with specifc points to use for binning.
 
@@ -1006,8 +926,6 @@ class jitterGIF(GIF) :
 
             residuals_V_tmp.append(self.V_sim[i] - self.V_data[i])
 
-
-
         # Bin.
         if bins is None:
             values_V = [sw for sw in self.V_data]
@@ -1018,33 +936,29 @@ class jitterGIF(GIF) :
             for i in range(len(self.V_data)):
                 residuals_i, bin_edges, bin_no = binned_statistic(self.V_data[i],
                                                                 residuals_V_tmp[i],
-                                                                statistic = 'mean',
-                                                                bins = bins)
+                                                                statistic='mean',
+                                                                bins=bins)
 
                 residuals_V.append(residuals_i)
 
                 bin_centres = (bin_edges[1:] + bin_edges[:-1])/2.
                 values_V.append(bin_centres)
 
-        residuals_V = np.concatenate(residuals_V, axis = -1)
-        values_V = np.concatenate(values_V, axis = -1)
+        residuals_V = np.concatenate(residuals_V, axis=-1)
+        values_V = np.concatenate(values_V, axis=-1)
 
         return values_V, residuals_V
-
-
 
     ########################################################################################################
     # PLOT AND PRINT FUNCTIONS
     ########################################################################################################
 
-
-    def plotFit(self, title = None):
-
+    def plotFit(self, title=None):
         """
         Compare the real and simulated training sets.
         """
 
-        plt.figure(figsize = (10, 5))
+        plt.figure(figsize=(10, 5))
 
         V_p = plt.subplot(211)
         plt.title('Voltage traces')
@@ -1066,16 +980,15 @@ class jitterGIF(GIF) :
 
             # Only label the first line.
             if i == 0:
-                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5, label = 'Real')
-                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5, alpha = 0.7, label = 'Simulated')
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth=0.5, label='Real')
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth=0.5, alpha=0.7, label='Simulated')
 
             else:
-                V_p.plot(t_V, self.V_data[i], 'k-', linewidth = 0.5)
-                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth = 0.5)
+                V_p.plot(t_V, self.V_data[i], 'k-', linewidth=0.5)
+                V_p.plot(t_V, self.V_sim[i], 'r-', linewidth=0.5)
 
-
-        dV_p.plot(t_dV, self.dV_data, 'k-', label = 'Real')
-        dV_p.plot(t_dV, self.dV_fitted, 'r-', alpha = 0.7, label = 'Fitted')
+        dV_p.plot(t_dV, self.dV_data, 'k-', label='Real')
+        dV_p.plot(t_dV, self.dV_fitted, 'r-', alpha=0.7, label='Fitted')
 
         V_p.legend()
         dV_p.legend()
@@ -1084,13 +997,11 @@ class jitterGIF(GIF) :
 
         if title is not None:
             plt.suptitle(title)
-            plt.subplots_adjust(top = 0.85)
+            plt.subplots_adjust(top=0.85)
 
         plt.show()
 
-
-    def plotPowerSpectrumDensity(self, title = None):
-
+    def plotPowerSpectrumDensity(self, title=None):
         """
         Compare power spectrum densities of model and real neuron in training data.
 
@@ -1112,24 +1023,24 @@ class jitterGIF(GIF) :
                                len(self.V_sim[0])*self.dt,
                                self.dt).extractPowerSpectrumDensity()
 
-        plt.figure(figsize = (10, 4))
+        plt.figure(figsize=(10, 4))
 
         ax = plt.subplot(211)
         ax.set_xscale('log')
 
-        ax.plot(Data_f, Data_PSD, 'k-', linewidth = 0.5, label = 'Real')
-        ax.plot(GIF_f, GIF_PSD, 'r-', linewidth = 0.5, label = 'Simulated')
-        ax.plot(f_I, PSD_I, 'b-', linewidth = 0.5, label = 'Input')
+        ax.plot(Data_f, Data_PSD, 'k-', linewidth=0.5, label='Real')
+        ax.plot(GIF_f, GIF_PSD, 'r-', linewidth=0.5, label='Simulated')
+        ax.plot(f_I, PSD_I, 'b-', linewidth=0.5, label='Input')
 
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('PSD')
         ax.legend()
 
-        ax2 = plt.subplot(212, sharex = ax)
+        ax2 = plt.subplot(212, sharex=ax)
         ax2.set_xscale('log')
 
-        ax2.plot(Data_f, Data_PSD / PSD_I, 'k-', linewidth = 0.5, label = 'Real (norm.)')
-        ax2.plot(GIF_f, GIF_PSD / PSD_I, 'r-', linewidth = 0.5, label = 'Simulated (norm.)')
+        ax2.plot(Data_f, Data_PSD / PSD_I, 'k-', linewidth=0.5, label='Real (norm.)')
+        ax2.plot(GIF_f, GIF_PSD / PSD_I, 'r-', linewidth=0.5, label='Simulated (norm.)')
 
         ax2.set_xlabel('Frequency (Hz)')
         ax2.set_ylabel('PSD (norm.)')
@@ -1139,10 +1050,9 @@ class jitterGIF(GIF) :
 
         if title is not None:
             plt.suptitle(title)
-            plt.subplots_adjust(top = 0.85)
+            plt.subplots_adjust(top=0.85)
 
         plt.show()
-
 
     def plotGating(self):
 
@@ -1161,9 +1071,9 @@ class jitterGIF(GIF) :
             # Only label the first line.
             if i == 0:
 
-                g_p.plot(t, self.m_sim[i], label = 'm')
-                g_p.plot(t, self.h_sim[i], label = 'h')
-                g_p.plot(t, self.n_sim[i], label = 'n')
+                g_p.plot(t, self.m_sim[i], label='m')
+                g_p.plot(t, self.h_sim[i], label='h')
+                g_p.plot(t, self.n_sim[i], label='n')
 
             else:
 
@@ -1176,24 +1086,21 @@ class jitterGIF(GIF) :
         plt.tight_layout()
         plt.show()
 
-
-
-    def plotParameters(self) :
-
+    def plotParameters(self):
         """
         Generate figure with model filters.
         """
 
-        plt.figure(facecolor='white', figsize=(5,4))
+        plt.figure(facecolor='white', figsize=(5, 4))
 
         # Plot kappa
-        plt.subplot(1,1,1)
+        plt.subplot(1, 1, 1)
 
-        K_support = np.linspace(0,150.0, 300)
+        K_support = np.linspace(0, 150.0, 300)
         K = 1./self.C*np.exp(-K_support/(self.C/self.gl))
 
         plt.plot(K_support, K, color='red', lw=2)
-        plt.plot([K_support[0], K_support[-1]], [0,0], ls=':', color='black', lw=2)
+        plt.plot([K_support[0], K_support[-1]], [0, 0], ls=':', color='black', lw=2)
 
         plt.xlim([K_support[0], K_support[-1]])
         plt.xlabel("Time (ms)")
@@ -1203,9 +1110,7 @@ class jitterGIF(GIF) :
 
         plt.show()
 
-
     def printParameters(self):
-
         """
         Print model parameters on terminal.
         """
@@ -1213,19 +1118,17 @@ class jitterGIF(GIF) :
         print "\n-------------------------"
         print "GIF model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t%0.3f"  % (self.C/self.gl)
-        print "R (MOhm):\t%0.3f"    % (1.0/self.gl)
-        print "C (nF):\t\t%0.3f"    % (self.C)
-        print "gl (nS):\t%0.6f"     % (self.gl)
-        print "El (mV):\t%0.3f"     % (self.El)
-        print "gbar_K1:\t%0.6f"     % (self.gbar_K1)
-        print "gbar_K2:\t%0.6f"     % (self.gbar_K2)
+        print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
+        print "R (MOhm):\t%0.3f" % (1.0/self.gl)
+        print "C (nF):\t\t%0.3f" % (self.C)
+        print "gl (nS):\t%0.6f" % (self.gl)
+        print "El (mV):\t%0.3f" % (self.El)
+        print "gbar_K1:\t%0.6f" % (self.gbar_K1)
+        print "gbar_K2:\t%0.6f" % (self.gbar_K2)
         print "-------------------------\n"
-
 
     @classmethod
     def compareModels(cls, GIFs, labels=None):
-
         """
         Given a list of GIF models, GIFs, the function produce a plot in which the model parameters are compared.
         """
@@ -1237,45 +1140,42 @@ class jitterGIF(GIF) :
         print "#####################################\n"
 
         cnt = 0
-        for GIF in GIFs :
+        for GIF in GIFs:
 
             #print "Model: " + labels[cnt]
             GIF.printParameters()
-            cnt+=1
+            cnt += 1
 
         print "#####################################\n"
 
         # PLOT PARAMETERS
-        plt.figure(facecolor='white', figsize=(9,8))
+        plt.figure(facecolor='white', figsize=(9, 8))
 
-        colors = plt.cm.jet( np.linspace(0.7, 1.0, len(GIFs) ) )
+        colors = plt.cm.jet(np.linspace(0.7, 1.0, len(GIFs)))
 
         # Membrane filter
         plt.subplot(111)
 
         cnt = 0
-        for GIF in GIFs :
+        for GIF in GIFs:
 
-            K_support = np.linspace(0,150.0, 1500)
+            K_support = np.linspace(0, 150.0, 1500)
             K = 1./GIF.C*np.exp(-K_support/(GIF.C/GIF.gl))
             plt.plot(K_support, K, color=colors[cnt], lw=2)
             cnt += 1
 
-        plt.plot([K_support[0], K_support[-1]], [0,0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot([K_support[0], K_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
 
         plt.xlim([K_support[0], K_support[-1]])
         plt.xlabel('Time (ms)')
         plt.ylabel('Membrane filter (MOhm/ms)')
 
-
         plt.subplots_adjust(left=0.08, bottom=0.10, right=0.95, top=0.93, wspace=0.25, hspace=0.25)
 
         plt.show()
 
-
     @classmethod
     def plotAverageModel(cls, GIFs):
-
         """
         Average model parameters and plot summary data.
         """
@@ -1284,48 +1184,45 @@ class jitterGIF(GIF) :
         # PLOT PARAMETERS
         #######################################################################################################
 
-        fig = plt.figure(facecolor='white', figsize=(16,7))
+        fig = plt.figure(facecolor='white', figsize=(16, 7))
         fig.subplots_adjust(left=0.07, bottom=0.08, right=0.95, top=0.90, wspace=0.35, hspace=0.5)
         rcParams['xtick.direction'] = 'out'
         rcParams['ytick.direction'] = 'out'
 
-
         # MEMBRANE FILTER
         #######################################################################################################
 
-        plt.subplot(2,4,1)
+        plt.subplot(2, 4, 1)
 
         K_all = []
 
-        for GIF in GIFs :
+        for GIF in GIFs:
 
-            K_support = np.linspace(0,150.0, 300)
+            K_support = np.linspace(0, 150.0, 300)
             K = 1./GIF.C*np.exp(-K_support/(GIF.C/GIF.gl))
             plt.plot(K_support, K, color='0.3', lw=1, zorder=5)
 
             K_all.append(K)
 
         K_mean = np.mean(K_all, axis=0)
-        K_std  = np.std(K_all, axis=0)
+        K_std = np.std(K_all, axis=0)
 
-        plt.fill_between(K_support, K_mean+K_std,y2=K_mean-K_std, color='gray', zorder=0)
+        plt.fill_between(K_support, K_mean+K_std, y2=K_mean-K_std, color='gray', zorder=0)
         plt.plot(K_support, np.mean(K_all, axis=0), color='red', lw=2, zorder=10)
-        plt.plot([K_support[0], K_support[-1]], [0,0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot([K_support[0], K_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
 
         Tools.removeAxis(plt.gca(), ['top', 'right'])
         plt.xlim([K_support[0], K_support[-1]])
         plt.xlabel('Time (ms)')
         plt.ylabel('Membrane filter (MOhm/ms)')
 
-
-
         # R
         #######################################################################################################
 
-        plt.subplot(4,6,12+1)
+        plt.subplot(4, 6, 12+1)
 
         p_all = []
-        for GIF in GIFs :
+        for GIF in GIFs:
 
             p = 1./GIF.gl
             p_all.append(p)
@@ -1335,14 +1232,13 @@ class jitterGIF(GIF) :
         Tools.removeAxis(plt.gca(), ['top', 'left', 'right'])
         plt.yticks([])
 
-
         # tau_m
         #######################################################################################################
 
-        plt.subplot(4,6,18+1)
+        plt.subplot(4, 6, 18+1)
 
         p_all = []
-        for GIF in GIFs :
+        for GIF in GIFs:
 
             p = GIF.C/GIF.gl
             p_all.append(p)
@@ -1352,14 +1248,13 @@ class jitterGIF(GIF) :
         Tools.removeAxis(plt.gca(), ['top', 'left', 'right'])
         plt.yticks([])
 
-
         # El
         #######################################################################################################
 
-        plt.subplot(4,6,12+2)
+        plt.subplot(4, 6, 12+2)
 
         p_all = []
-        for GIF in GIFs :
+        for GIF in GIFs:
 
             p = GIF.El
             p_all.append(p)

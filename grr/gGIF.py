@@ -9,7 +9,7 @@ from .Tools import reprint
 from . import Tools
 
 
-class gGIF(GIF) :
+class gGIF(GIF):
 
     """
     Generalized Integrate and Fire model defined in Pozzorini et al. PLOS Comp. Biol. 2015,
@@ -36,19 +36,15 @@ class gGIF(GIF) :
 
         GIF.__init__(self, dt=dt)
 
-        self.Ek      = -80.0                  # mV, reversal potential associated with the spike-depedent adaptation.
-
+        self.Ek = -80.0                  # mV, reversal potential associated with the spike-depedent adaptation.
 
         # Internal variables
 
-        self.Ek_all                  = 0      # all parameters Ek systematically tested during parameters extraction
+        self.Ek_all = 0      # all parameters Ek systematically tested during parameters extraction
 
-        self.variance_explained_all  = 0      # variance explained (on dV/dt) for different values Ek_all
-
-
+        self.variance_explained_all = 0      # variance explained (on dV/dt) for different values Ek_all
 
     def simulate(self, I, V0):
-
         """
         Simulate the spiking response of the gGIF model to an input current I (nA) with time step dt.
 
@@ -68,28 +64,28 @@ class gGIF(GIF) :
         """
 
         # Input parameters
-        p_T         = len(I)
-        p_dt        = self.dt
+        p_T = len(I)
+        p_dt = self.dt
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
-        p_Ek        = self.Ek
-        p_Vr        = self.Vr
-        p_Tref      = self.Tref
-        p_Vt_star   = self.Vt_star
-        p_DV        = self.DV
-        p_lambda0   = self.lambda0
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
+        p_Ek = self.Ek
+        p_Vr = self.Vr
+        p_Tref = self.Tref
+        p_Vt_star = self.Vt_star
+        p_DV = self.DV
+        p_lambda0 = self.lambda0
 
         # Model kernels
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
-        p_eta       = p_eta.astype('double')
-        p_eta_l     = len(p_eta)
+        p_eta = p_eta.astype('double')
+        p_eta_l = len(p_eta)
 
         (p_gamma_support, p_gamma) = self.gamma.getInterpolatedFilter(self.dt)
-        p_gamma     = p_gamma.astype('double')
-        p_gamma_l   = len(p_gamma)
+        p_gamma = p_gamma.astype('double')
+        p_gamma_l = len(p_gamma)
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
@@ -101,7 +97,7 @@ class gGIF(GIF) :
         # Set initial condition
         V[0] = V0
 
-        code =  """
+        code = """
                 #include <math.h>
 
                 int   T_ind      = int(p_T);
@@ -165,23 +161,20 @@ class gGIF(GIF) :
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_Ek','p_El','p_Vr','p_Tref','p_Vt_star','p_DV','p_lambda0','V','I','p_eta','p_eta_l','eta_sum','p_gamma','gamma_sum','p_gamma_l','spks' ]
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_Ek', 'p_El', 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'I', 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
 
         time = np.arange(p_T)*self.dt
 
-        eta_sum   = eta_sum[:p_T]
+        eta_sum = eta_sum[:p_T]
         V_T = gamma_sum[:p_T] + p_Vt_star
 
-        spks = (np.where(spks==1)[0])*self.dt
+        spks = (np.where(spks == 1)[0])*self.dt
 
         return (time, V, eta_sum, V_T, spks)
 
-
-
     def simulateDeterministic_forceSpikes(self, I, V0, spks):
-
         """
         Simulate the subthresohld response of the GIF model to an input current I (nA) with time step dt.
         Adaptation currents are enforced at times specified in the list spks (in ms) given as an argument to the function.
@@ -195,47 +188,41 @@ class gGIF(GIF) :
         print "simulate deterministic gGIF"
 
         # Input parameters
-        p_T          = len(I)
-        p_dt         = self.dt
-
+        p_T = len(I)
+        p_dt = self.dt
 
         # Model parameters
-        p_gl        = self.gl
-        p_C         = self.C
-        p_El        = self.El
-        p_Ek        = self.Ek
-        p_Vr        = self.Vr
-        p_Tref      = self.Tref
-        p_Tref_i    = int(self.Tref/self.dt)
-
+        p_gl = self.gl
+        p_C = self.C
+        p_El = self.El
+        p_Ek = self.Ek
+        p_Vr = self.Vr
+        p_Tref = self.Tref
+        p_Tref_i = int(self.Tref/self.dt)
 
         # Model kernel
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
-        p_eta       = p_eta.astype('double')
-        p_eta_l     = len(p_eta)
-
+        p_eta = p_eta.astype('double')
+        p_eta_l = len(p_eta)
 
         # Define arrays
-        V        = np.array(np.zeros(p_T), dtype="double")
-        I        = np.array(I, dtype="double")
-        spks     = np.array(spks, dtype="double")
-        spks_i   = Tools.timeToIndex(spks, self.dt)
-
+        V = np.array(np.zeros(p_T), dtype="double")
+        I = np.array(I, dtype="double")
+        spks = np.array(spks, dtype="double")
+        spks_i = Tools.timeToIndex(spks, self.dt)
 
         # Compute adaptation current (sum of eta triggered at spike times in spks)
-        eta_sum  = np.array(
+        eta_sum = np.array(
                 np.zeros(p_T + int(1.1*p_eta_l) + p_Tref_i),
                 dtype="double")
 
-        for s in spks_i :
-            eta_sum[s  + p_Tref_i  : s  + p_Tref_i + p_eta_l] += p_eta
+        for s in spks_i:
+            eta_sum[s + p_Tref_i: s + p_Tref_i + p_eta_l] += p_eta
 
-        eta_sum  = eta_sum[:p_T]
-
+        eta_sum = eta_sum[:p_T]
 
         # Set initial condition
         V[0] = V0
-
 
         code = """
                 #include <math.h>
@@ -274,7 +261,7 @@ class gGIF(GIF) :
 
                 """
 
-        vars = [ 'p_T','p_dt','p_gl','p_C','p_El','p_Ek','p_Vr','p_Tref','V','I','eta_sum','spks_i' ]
+        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Ek', 'p_Vr', 'p_Tref', 'V', 'I', 'eta_sum', 'spks_i']
 
         v = weave.inline(code, vars)
 
@@ -283,10 +270,7 @@ class gGIF(GIF) :
 
         return (time, V, eta_sum)
 
-
-
-    def fit(self, experiment, Ek_all, DT_beforeSpike = 5.0, do_plot=False):
-
+    def fit(self, experiment, Ek_all, DT_beforeSpike=5.0, do_plot=False):
         """
         Fit the gGIF model on experimental data.
 
@@ -320,7 +304,6 @@ class gGIF(GIF) :
 
         self.fitThresholdDynamics(experiment)
 
-
     ########################################################################################################
     # FUNCTIONS RELATED TO FIT OF SUBTHRESHOLD DYNAMICS (step 2)
     ########################################################################################################
@@ -332,8 +315,7 @@ class gGIF(GIF) :
         var_explained_dV_all = []
         b_all = []
 
-
-        for Ek in Ek_all :
+        for Ek in Ek_all:
 
             print "\nTest Ek = %0.2f mV..." % (Ek)
 
@@ -347,18 +329,17 @@ class gGIF(GIF) :
 
             cnt = 0
 
-            for tr in experiment.trainingset_traces :
+            for tr in experiment.trainingset_traces:
 
-                if tr.useTrace :
+                if tr.useTrace:
 
                     cnt += 1
-                    reprint( "Compute X matrix for repetition %d" % (cnt) )
+                    reprint("Compute X matrix for repetition %d" % (cnt))
 
                     (X_tmp, Y_tmp) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, Ek, DT_beforeSpike=DT_beforeSpike)
 
                     X.append(X_tmp)
                     Y.append(Y_tmp)
-
 
             # Concatenate matrixes associated with different traces to perform a single multilinear regression
             if cnt == 1:
@@ -369,40 +350,36 @@ class gGIF(GIF) :
                 X = np.concatenate(X, axis=0)
                 Y = np.concatenate(Y, axis=0)
 
-            else :
+            else:
                 print "\nError, at least one training set trace should be selected to perform fit."
-
 
             # Linear Regression
             print "\nPerform linear regression..."
-            XTX     = np.dot(np.transpose(X), X)
+            XTX = np.dot(np.transpose(X), X)
             XTX_inv = inv(XTX)
-            XTY     = np.dot(np.transpose(X), Y)
-            b       = np.dot(XTX_inv, XTY)
-            b       = b.flatten()
-
+            XTY = np.dot(np.transpose(X), Y)
+            b = np.dot(XTX_inv, XTY)
+            b = b.flatten()
 
             # Compute percentage of variance explained on dV/dt
-            var_explained_dV = 1.0 - np.mean((Y - np.dot(X,b))**2)/np.var(Y)
+            var_explained_dV = 1.0 - np.mean((Y - np.dot(X, b))**2)/np.var(Y)
             print "Done! Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
 
             # Save results
             var_explained_dV_all.append(var_explained_dV)
             b_all.append(b)
 
-
         # Select best Ek
         self.Ek_all = Ek_all
         self.variance_explained_all = var_explained_dV_all
 
-        ind_opt          = np.argmax(var_explained_dV_all)
-        b                = b_all[ind_opt]
-        Ek_opt           = Ek_all[ind_opt]
+        ind_opt = np.argmax(var_explained_dV_all)
+        b = b_all[ind_opt]
+        Ek_opt = Ek_all[ind_opt]
         var_explained_dV = var_explained_dV_all[ind_opt]
 
-
         # Update and print model parameters
-        self.C  = 1./b[1]
+        self.C = 1./b[1]
         self.gl = -b[0]*self.C
         self.El = b[2]*self.C/self.gl
         self.Ek = Ek_opt
@@ -410,15 +387,14 @@ class gGIF(GIF) :
 
         self.printParameters()
 
-
         # Compute percentage of variance explained on V
 
         SSE = 0     # sum of squared errors
         VAR = 0     # variance of data
 
-        for tr in experiment.trainingset_traces :
+        for tr in experiment.trainingset_traces:
 
-            if tr.useTrace :
+            if tr.useTrace:
 
                 # Simulate subthreshold dynamics
                 (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
@@ -433,19 +409,15 @@ class gGIF(GIF) :
         print "Percentage of variance explained (on V): %0.2f" % (var_explained_V*100.0)
         print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
 
+        if do_plot:
 
-        if do_plot :
-
-            plt.figure(figsize=(8,8), facecolor='white')
+            plt.figure(figsize=(8, 8), facecolor='white')
 
             plt.plot(self.Ek_all, self.variance_explained_all, '.-', color='black')
-            plt.plot([Ek_opt],[var_explained_dV], '.', color='red')
+            plt.plot([Ek_opt], [var_explained_dV], '.', color='red')
 
             plt.xlabel('Ek (mV)')
             plt.ylabel('Pct. Variance explained on dV/dt (-)')
-
-
-
 
     def fitSubthresholdDynamics_Build_Xmatrix_Yvector(self, trace, Ek, DT_beforeSpike=5.0):
 
@@ -457,29 +429,26 @@ class gGIF(GIF) :
         selection_l = len(selection)
 
         # Build X matrix for linear regression
-        X = np.zeros( (selection_l, 3) )
+        X = np.zeros((selection_l, 3))
 
         # Fill first two columns of X matrix
-        X[:,0] = trace.V[selection]
-        X[:,1] = trace.I[selection]
-        X[:,2] = np.ones(selection_l)
-
+        X[:, 0] = trace.V[selection]
+        X[:, 1] = trace.I[selection]
+        X[:, 2] = np.ones(selection_l)
 
         # Compute and fill the remaining columns associated with the spike-triggered current eta
         X_eta = self.eta.convolution_Spiketrain_basisfunctions(trace.getSpikeTimes() + self.Tref, trace.T, trace.dt)
 
-        for i in np.arange( np.shape(X_eta)[1] ) :
-            X_eta[:,i] = X_eta[:,i]*(trace.V-Ek)
+        for i in np.arange(np.shape(X_eta)[1]):
+            X_eta[:, i] = X_eta[:, i]*(trace.V-Ek)
 
-        X = np.concatenate( (X, X_eta[selection,:]), axis=1 )
-
+        X = np.concatenate((X, X_eta[selection, :]), axis=1)
 
         # Build Y vector (voltage derivative)
 
-        Y = np.array( np.concatenate( (np.diff(trace.V)/trace.dt, [0]) ) )[selection]
+        Y = np.array(np.concatenate((np.diff(trace.V)/trace.dt, [0])))[selection]
 
         return (X, Y)
-
 
     ##############################################################################################################
     # PRINT PARAMETRES
@@ -490,14 +459,14 @@ class gGIF(GIF) :
         print "\n-------------------------"
         print "gGIF model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t%0.3f"  % (self.C/self.gl)
-        print "R (MOhm):\t%0.9f"    % (1.0/self.gl)
-        print "C (nF):\t\t%0.3f"    % (self.C)
-        print "gl (nS):\t%0.3f"     % (self.gl)
-        print "El (mV):\t%0.3f"     % (self.El)
-        print "Ek (mV):\t%0.3f"     % (self.Ek)
-        print "Tref (ms):\t%0.3f"   % (self.Tref)
-        print "Vr (mV):\t%0.3f"     % (self.Vr)
-        print "Vt* (mV):\t%0.3f"    % (self.Vt_star)
-        print "DV (mV):\t%0.3f"     % (self.DV)
+        print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
+        print "R (MOhm):\t%0.9f" % (1.0/self.gl)
+        print "C (nF):\t\t%0.3f" % (self.C)
+        print "gl (nS):\t%0.3f" % (self.gl)
+        print "El (mV):\t%0.3f" % (self.El)
+        print "Ek (mV):\t%0.3f" % (self.Ek)
+        print "Tref (ms):\t%0.3f" % (self.Tref)
+        print "Vr (mV):\t%0.3f" % (self.Vr)
+        print "Vt* (mV):\t%0.3f" % (self.Vt_star)
+        print "DV (mV):\t%0.3f" % (self.DV)
         print "-------------------------\n"

@@ -6,11 +6,12 @@ import numpy as np
 #%% DEFINE HANDY TOOLS
 
 # Function to make a set of scalebars for a mpl plot
-def add_scalebar(x_units = None, y_units = None, anchor = (0.98, 0.02),
-x_size = None, y_size = None, y_label_space = 0.02, x_label_space = -0.02,
-bar_space = 0.06, x_on_left = True, linewidth = 3, remove_frame = True,
-omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
 
+
+def add_scalebar(x_units=None, y_units=None, anchor=(0.98, 0.02),
+x_size=None, y_size=None, y_label_space=0.02, x_label_space=-0.02,
+bar_space=0.06, x_on_left=True, linewidth=3, remove_frame=True,
+omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
     """
     Automagically add a set of x and y scalebars to a matplotlib plot
 
@@ -91,16 +92,16 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
         ax.text(
         anchor[0] - y_label_space, anchor[1] + y_length_ax / 2 + bar_space,
         y_label_text,
-        verticalalignment = 'center', horizontalalignment = horizontalalignment,
-        size = 'small', transform = ax.transAxes
+        verticalalignment='center', horizontalalignment=horizontalalignment,
+        size='small', transform=ax.transAxes
         )
 
         # y scalebar
         ax.plot(
         [anchor[0], anchor[0]],
         [anchor[1] + bar_space, anchor[1] + y_length_ax + bar_space],
-        'k-', linewidth = linewidth,
-        clip_on = False, transform = ax.transAxes
+        'k-', linewidth=linewidth,
+        clip_on=False, transform=ax.transAxes
         )
 
     # Do x scalebar.
@@ -139,24 +140,23 @@ omit_x = False, omit_y = False, round = True, usetex = True, ax = None):
         ax.text(
         Xx_text_coord, anchor[1] + x_label_space,
         x_label_text,
-        verticalalignment = verticalalignment, horizontalalignment = 'center',
-        size = 'small', transform = ax.transAxes
+        verticalalignment=verticalalignment, horizontalalignment='center',
+        size='small', transform=ax.transAxes
         )
 
         # x scalebar
         ax.plot(
         Xx_bar_coords,
         [anchor[1], anchor[1]],
-        'k-', linewidth = linewidth,
-        clip_on = False, transform = ax.transAxes
+        'k-', linewidth=linewidth,
+        clip_on=False, transform=ax.transAxes
         )
 
     if remove_frame:
         ax.axis('off')
 
 
-def hide_ticks(ax = None):
-
+def hide_ticks(ax=None):
     """
     Delete the x and y ticks of the specified axes. If no axes object is provided, defaults to the current axes.
     """
@@ -168,8 +168,7 @@ def hide_ticks(ax = None):
     ax.set_yticks([])
 
 
-def hide_border(sides = 'a', ax = None):
-
+def hide_border(sides='a', ax=None):
     """
     Sides should be set to `a` for all, or a string containing `r/l/t/b` as needed.
     """
@@ -200,7 +199,6 @@ def hide_border(sides = 'a', ax = None):
 
 
 def p_to_string(p):
-
     """
     Takes a p-value and converts it to a pretty LaTeX string.
 
@@ -221,8 +219,7 @@ def p_to_string(p):
     return p_str
 
 
-def subplots_in_grid(shape, loc, ratio = 2, colspan = 1, top_bigger = True, fig = None):
-
+def subplots_in_grid(shape, loc, ratio=2, colspan=1, top_bigger=True, fig=None):
     """
     Generates a set of two vertically-stacked subplots with a given size ratio.
 
@@ -271,17 +268,16 @@ def subplots_in_grid(shape, loc, ratio = 2, colspan = 1, top_bigger = True, fig 
     new_loc = (loc[0] * (ratio + 1), loc[1])
 
     if top_bigger:
-        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan = ratio, colspan = colspan, fig = fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), colspan = colspan, fig = fig)
+        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan=ratio, colspan=colspan, fig=fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), colspan=colspan, fig=fig)
     else:
-        top_ax = plt.subplot2grid(new_shape, new_loc, colspan = colspan, fig = fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan = ratio, colspan = colspan, fig = fig)
+        top_ax = plt.subplot2grid(new_shape, new_loc, colspan=colspan, fig=fig)
+        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan=ratio, colspan=colspan, fig=fig)
 
     return top_ax, bottom_ax
 
 
 def join_plots(top_ax, bottom_ax):
-
     """
     Expand the top axis object so that its lower edge touches the top edge of bottom_ax.
     """

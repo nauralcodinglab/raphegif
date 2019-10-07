@@ -8,6 +8,7 @@ from .AugmentedGIF import AugmentedGIF
 
 #%%
 
+
 class SplineGIF(AugmentedGIF):
 
     def __init__(self, dt=0.1):
@@ -16,21 +17,19 @@ class SplineGIF(AugmentedGIF):
 
         # Define model parameters
 
-        self.gl      = 0.001        # nS, leak conductance
-        self.C       = 0.1     # nF, capacitance
-        self.El      = -65.0            # mV, reversal potential
+        self.gl = 0.001        # nS, leak conductance
+        self.C = 0.1     # nF, capacitance
+        self.El = -65.0            # mV, reversal potential
 
-        self.Vr      = -50.0            # mV, voltage reset
-        self.Tref    = 4.0              # ms, absolute refractory period
+        self.Vr = -50.0            # mV, voltage reset
+        self.Tref = 4.0              # ms, absolute refractory period
 
         self.Vt_star = -48.0            # mV, steady state voltage threshold VT*
-        self.DV      = 0.5              # mV, threshold sharpness
+        self.DV = 0.5              # mV, threshold sharpness
         self.lambda0 = 1.0              # by default this parameter is always set to 1.0 Hz
 
-
-        self.eta     = Filter_Rect_LogSpaced()    # nA, spike-triggered current (must be instance of class Filter)
-        self.gamma   = Filter_Rect_LogSpaced()    # mV, spike-triggered movement of the firing threshold (must be instance of class Filter)
-
+        self.eta = Filter_Rect_LogSpaced()    # nA, spike-triggered current (must be instance of class Filter)
+        self.gamma = Filter_Rect_LogSpaced()    # mV, spike-triggered movement of the firing threshold (must be instance of class Filter)
 
         # Initialize the spike-triggered current eta with an exponential function
 
@@ -39,14 +38,12 @@ class SplineGIF(AugmentedGIF):
 
         self.eta.setFilter_Function(expfunction_eta)
 
-
         # Initialize the spike-triggered current gamma with an exponential function
 
         def expfunction_gamma(x):
             return 0.01*np.exp(-x/100.0)
 
         self.gamma.setFilter_Function(expfunction_gamma)
-
 
         # Variables related to fitting procedure
 
@@ -72,7 +69,7 @@ class SplineGIF(AugmentedGIF):
         self.gbar_K2 = 0.001
 
     @staticmethod
-    def _expand_basis(X, nodes, order = [2, 3], flip_X = False):
+    def _expand_basis(X, nodes, order=[2, 3], flip_X=False):
 
         if not flip_X:
             softplus_col = np.log(1 + 1.1**(X - 50))
@@ -91,33 +88,28 @@ class SplineGIF(AugmentedGIF):
         return np.array(X_expanded).T
 
     def mInf(self, V):
-
         """Compute the equilibrium activation gate state of the potassium conductance.
         """
 
-        minf_raw = np.dot(self._expand_basis(V, self.m_nodes, flip_X = False), self.m_coeffs)
+        minf_raw = np.dot(self._expand_basis(V, self.m_nodes, flip_X=False), self.m_coeffs)
         minf_bounded = np.clip(minf_raw, None, 1)
 
         return minf_bounded
 
-
     def hInf(self, V):
-
         """Compute the equilibrium state of the inactivation gate of the potassium conductance.
         """
 
-        hinf_raw = np.dot(self._expand_basis(V, self.h_nodes, flip_X = True), self.h_coeffs)
+        hinf_raw = np.dot(self._expand_basis(V, self.h_nodes, flip_X=True), self.h_coeffs)
         hinf_bounded = np.clip(hinf_raw, None, 1)
 
         return hinf_bounded
 
-
     def nInf(self, V):
-
         """Compute the equilibrium state of the non-inactivating conductance.
         """
 
-        ninf_raw = np.dot(self._expand_basis(V, self.n_nodes, flip_X = False), self.n_coeffs)
+        ninf_raw = np.dot(self._expand_basis(V, self.n_nodes, flip_X=False), self.n_coeffs)
         ninf_bounded = np.clip(ninf_raw, None, 1)
 
         return ninf_bounded
@@ -140,19 +132,19 @@ if __name__ == '__main__':
 
     test = SplineGIF()
     V_tmp = np.arange(-100, -10, 0.1)
-    plt.figure(figsize = (6, 4))
+    plt.figure(figsize=(6, 4))
     plt.subplot(111)
     plt.title('Gating functions implemented in SplineGIF')
-    plt.axvspan(-80, -20, facecolor = 'gray', alpha = 0.25, edgecolor = 'None')
-    plt.axhline(0, color = 'k', lw = 0.5)
-    plt.plot(V_tmp, test.mInf(V_tmp), 'b-', label = 'IA activation')
-    plt.plot(V_tmp, test.hInf(V_tmp), 'g-', label = 'IA inactivation')
-    plt.plot(V_tmp, test.nInf(V_tmp), 'r-', label = 'Kslow activation')
+    plt.axvspan(-80, -20, facecolor='gray', alpha=0.25, edgecolor='None')
+    plt.axhline(0, color='k', lw=0.5)
+    plt.plot(V_tmp, test.mInf(V_tmp), 'b-', label='IA activation')
+    plt.plot(V_tmp, test.hInf(V_tmp), 'g-', label='IA inactivation')
+    plt.plot(V_tmp, test.nInf(V_tmp), 'r-', label='Kslow activation')
     plt.ylabel(r'$\frac{g}{g_{ref}}$')
     plt.xlabel('$V$ (mV)')
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig('./figs/ims/gating/' + 'SplineGIF_gating.png', dpi = 300)
+    plt.savefig('./figs/ims/gating/' + 'SplineGIF_gating.png', dpi=300)
 
     plt.show()

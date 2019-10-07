@@ -12,10 +12,10 @@ from .Simulation import GIFnet_Simulation
 
 class GIFnet(object):
 
-    def __init__(self, name = None, dt = 0.1,
-                 ser_mod = None, gaba_mod = None,
-                 propagation_delay = 0., connectivity_matrix = None,
-                 gaba_kernel = None):
+    def __init__(self, name=None, dt=0.1,
+                 ser_mod=None, gaba_mod=None,
+                 propagation_delay=0., connectivity_matrix=None,
+                 gaba_kernel=None):
         """
         Feed-forward network model with GIF units.
 
@@ -93,7 +93,7 @@ class GIFnet(object):
                 self.gaba_mod[i].eta.clearInterpolatedFilter()
                 self.gaba_mod[i].gamma.clearInterpolatedFilter()
 
-    def _simulate_gaba(self, out, gaba_input, verbose = False):
+    def _simulate_gaba(self, out, gaba_input, verbose=False):
         """Simulate response of GABA neurons to gaba_input.
 
         Input:
@@ -151,7 +151,6 @@ class GIFnet(object):
                         'v_T': v_T, 'I': gaba_input[sweep_no, gaba_no, :]
                     }
 
-
                     # Only save pre-initialized channels.
                     for key in out.gaba_examples.keys():
                         out.gaba_examples[key][sweep_no, gaba_no, :] = tmp_results[key]
@@ -203,7 +202,7 @@ class GIFnet(object):
             (len(gaba_spktimes),
              self.no_gaba_neurons,
              int(out.get_T() / self.dt + 0.5)),
-            dtype = np.float32
+            dtype=np.float32
         )
         for sweep_no in range(len(gaba_spktimes)):
             for gaba_no in range(self.no_gaba_neurons):
@@ -217,7 +216,7 @@ class GIFnet(object):
         # Add propagation delay to GABA input.
         gaba_conv_spks = np.roll(
             gaba_conv_spks, int(self.propagation_delay / self.dt),
-            axis = 2
+            axis=2
         )
         gaba_conv_spks[:, :, :int(self.propagation_delay / self.dt)] = 0
 
@@ -226,7 +225,7 @@ class GIFnet(object):
             np.tensordot(
                 self.connectivity_matrix,
                 np.moveaxis(gaba_conv_spks, 0, -1),
-                axes = 1
+                axes=1
             ),
             -1, 0
         )
@@ -238,7 +237,7 @@ class GIFnet(object):
 
         return feedforward_input
 
-    def _simulate_ser(self, out, ser_input, feedforward_input = None, verbose = False):
+    def _simulate_ser(self, out, ser_input, feedforward_input=None, verbose=False):
         """Simulate response of 5HT neurons to ser_input.
 
         Input:
@@ -320,7 +319,7 @@ class GIFnet(object):
 
         return ser_spktimes
 
-    def simulate(self, out, ser_input = None, gaba_input = None, do_feedforward = True, verbose = True):
+    def simulate(self, out, ser_input=None, gaba_input=None, do_feedforward=True, verbose=True):
         """
         Perform GIF network simulation.
 
@@ -436,19 +435,19 @@ if __name__ == '__main__':
     T = 100
     dt = 0.1
 
-    connectivity_matrix = np.random.uniform(size = (no_ser_neurons, no_gaba_neurons))
+    connectivity_matrix = np.random.uniform(size=(no_ser_neurons, no_gaba_neurons))
 
-    ser_input = 0.1 * np.ones((no_sweeps, no_ser_neurons, int(T / dt)), dtype = np.float32)
-    gaba_input = 0.1 * np.ones((no_sweeps, no_gaba_neurons, int(T / dt)), dtype = np.float32)
+    ser_input = 0.1 * np.ones((no_sweeps, no_ser_neurons, int(T / dt)), dtype=np.float32)
+    gaba_input = 0.1 * np.ones((no_sweeps, no_gaba_neurons, int(T / dt)), dtype=np.float32)
 
     # Try initializing GIFnet.
     test_gifnet = GIFnet(
-        ser_mod = [GIF(dt)] * no_ser_neurons,
-        gaba_mod = [GIF(dt)] * no_gaba_neurons,
-        gaba_kernel = [1, 1, 1, 0.5],
-        propagation_delay = 1.,
-        connectivity_matrix = connectivity_matrix,
-        dt = dt
+        ser_mod=[GIF(dt)] * no_ser_neurons,
+        gaba_mod=[GIF(dt)] * no_gaba_neurons,
+        gaba_kernel=[1, 1, 1, 0.5],
+        propagation_delay=1.,
+        connectivity_matrix=connectivity_matrix,
+        dt=dt
     )
 
     testfname = 'testgifnetsimfile.hdf5.test'
@@ -462,12 +461,12 @@ if __name__ == '__main__':
     with GIFnet_Simulation(testfname, **meta_args) as outfile:
         # Set channels to save in examples.
         outfile.init_gaba_examples()
-        outfile.init_ser_examples(v_T = None)
+        outfile.init_ser_examples(v_T=None)
 
         # Try running a simple simulation.
         test_gifnetsim = test_gifnet.simulate(
             outfile,
-            ser_input = ser_input, gaba_input = gaba_input
+            ser_input=ser_input, gaba_input=gaba_input
         )
 
     # Try saving output.

@@ -1,9 +1,7 @@
 import sys
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.optimize import leastsq
 import weave
 
@@ -16,7 +14,7 @@ def removeAxis(ax, which_ax=['top', 'right']):
 
     for loc, spine in ax.spines.iteritems():
         if loc in which_ax:
-            spine.set_color('none') # don't draw spine
+            spine.set_color('none')  # don't draw spine
 
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
@@ -54,7 +52,6 @@ class gagProcess(object):
 ###########################################################
 
 def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed=42):
-
     """
     Generate an Ornstein-Uhlenbeck (stationnary) process with:
     - mean mu
@@ -75,9 +72,7 @@ def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed
     OU_process[0] = mu
     OU_process = OU_process.astype("double")
 
-
-
-    code =  """
+    code = """
 
             #include <math.h>
 
@@ -96,14 +91,13 @@ def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed
 
             """
 
-    vars = ['T_ind', 'dt', 'tau', 'sigma','mu', 'OU_process', 'white_noise']
-    v = weave.inline(code,vars)
+    vars = ['T_ind', 'dt', 'tau', 'sigma', 'mu', 'OU_process', 'white_noise']
+    v = weave.inline(code, vars)
 
     return OU_process
 
 
 def generateOUprocess_sinSigma(f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, delta_sigma=0.5, dt=0.1):
-
     """
     Generate an Ornstein-Uhlenbeck process with time dependent standard deviation:
     - mean mu
@@ -114,7 +108,7 @@ def generateOUprocess_sinSigma(f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, del
     """
 
     OU_process = generateOUprocess(T=T, tau=tau, mu=0.0, sigma=1.0, dt=dt)
-    t          = np.arange(len(OU_process))*dt
+    t = np.arange(len(OU_process))*dt
 
     sin_sigma = sigma*(1+delta_sigma*np.sin(2*np.pi*f*t*10**-3))
 
@@ -124,7 +118,6 @@ def generateOUprocess_sinSigma(f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, del
 
 
 def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, sigma=1.0, dt=0.1):
-
     """
     Generate an Ornstein-Uhlenbeck process with time dependent mean:
     - sigma
@@ -135,7 +128,7 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
     """
 
     OU_process = generateOUprocess(T=T, tau=tau, mu=0.0, sigma=sigma, dt=dt)
-    t          = np.arange(len(OU_process))*dt
+    t = np.arange(len(OU_process))*dt
 
     sin_mu = mu*(1+delta_mu*np.sin(2*np.pi*f*t*10**-3))
 
@@ -150,10 +143,11 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
 def timeToIndex(x_t, dt):
 
     x_t = np.array(x_t)
-    x_i = np.array( [ int(np.round(s/dt)) for s in x_t ] )
+    x_i = np.array([int(np.round(s/dt)) for s in x_t])
     x_i = x_i.astype('int')
 
     return x_i
+
 
 def timeToIntVec(x_t, T, dt):
     """Convert vector of timestamps to a vector of zeros and ones.
@@ -165,11 +159,10 @@ def timeToIntVec(x_t, T, dt):
     """
 
     x_i = timeToIndex(x_t, dt)
-    intvec = np.zeros(int(T / dt), dtype = np.int8)
+    intvec = np.zeros(int(T / dt), dtype=np.int8)
     intvec[x_i] = 1
 
     return intvec
-
 
 
 ###########################################################
@@ -181,8 +174,8 @@ def multiExpEval(x, bs, taus):
     result = np.zeros(len(x))
     L = len(bs)
 
-    for i in range(L) :
-        result = result + bs[i] *np.exp(-x/taus[i])
+    for i in range(L):
+        result = result + bs[i] * np.exp(-x/taus[i])
 
     return result
 
@@ -194,13 +187,12 @@ def multiExpResiduals(p, x, y, d):
     return (y - multiExpEval(x, bs, taus))
 
 
-
-def fitMultiExpResiduals(bs, taus, x, y) :
+def fitMultiExpResiduals(bs, taus, x, y):
     x = np.array(x)
     y = np.array(y)
     d = len(bs)
-    p0 = np.concatenate((bs,taus))
-    plsq = leastsq(multiExpResiduals, p0, args=(x,y,d), maxfev=100000,ftol=0.00000001)
+    p0 = np.concatenate((bs, taus))
+    plsq = leastsq(multiExpResiduals, p0, args=(x, y, d), maxfev=100000, ftol=0.00000001)
     p_opt = plsq[0]
     bs_opt = p_opt[0:d]
     taus_opt = p_opt[d:2*d]
@@ -219,7 +211,7 @@ def fitMultiExpResiduals(bs, taus, x, y) :
 # Get indices far from spikes
 ###########################################################
 
-def getIndicesFarFromSpikes(T, spikes_i, dt_before, dt_after, initial_cutoff, dt) :
+def getIndicesFarFromSpikes(T, spikes_i, dt_before, dt_after, initial_cutoff, dt):
 
     T_i = int(T/dt)
     flag = np.zeros(T_i)
@@ -229,15 +221,15 @@ def getIndicesFarFromSpikes(T, spikes_i, dt_before, dt_after, initial_cutoff, dt
     dt_before_i = int(dt_before/dt)
     dt_after_i = int(dt_after/dt)
 
-    for s in spikes_i :
-        flag[ max(s-dt_before_i,0) : min(s+dt_after_i, T_i) ] = 1
+    for s in spikes_i:
+        flag[max(s-dt_before_i, 0): min(s+dt_after_i, T_i)] = 1
 
-    selection = np.where(flag==0)[0]
+    selection = np.where(flag == 0)[0]
 
     return selection
 
 
-def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt) :
+def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt):
 
     T_i = int(T/dt)
     flag = np.zeros(T_i)
@@ -246,14 +238,15 @@ def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt) :
 
     dt_after_i = int(dt_after/dt)
 
-    for s in spikes_i :
-        flag[ max(s,0) : min(s+dt_after_i, T_i) ] = 1
+    for s in spikes_i:
+        flag[max(s, 0): min(s+dt_after_i, T_i)] = 1
 
-    selection = np.where(flag>0.1)[0]
+    selection = np.where(flag > 0.1)[0]
 
     return selection
 
-def PSTH(spktrain, window_width, no_neurons, dt = 0.1):
+
+def PSTH(spktrain, window_width, no_neurons, dt=0.1):
     """
     Obtain the population firing rate with a resolution of `window_width`.
     """
