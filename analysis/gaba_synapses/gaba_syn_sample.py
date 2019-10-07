@@ -25,7 +25,7 @@ IV_fnames = ['18o25002.abf',
              '18o25006.abf',
              '18o25024.abf']
 
-DATA_PATH = './data/GABA_synapses/'
+DATA_PATH = './data/raw/5HT/GABA_synapses/'
 
 train_recs = Cell().read_ABF([DATA_PATH + fname for fname in train_fnames])
 IV_recs = Cell().read_ABF([DATA_PATH + fname for fname in IV_fnames])
@@ -265,7 +265,7 @@ for i in range(len(averaged_traces['traces'])):
 
 #%% DUMP DATA
 
-SAMPLE_TR_PATH = './data/GABA_synapses/sample_traces/'
+SAMPLE_TR_PATH = './data/raw/5HT/GABA_synapses/sample_traces/'
 
 with open(SAMPLE_TR_PATH + 'averaged_traces.pyc', 'wb') as f:
     pickle.dump(averaged_traces, f)

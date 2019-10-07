@@ -17,7 +17,7 @@ mIPSC_fnames = ['18o23003.abf',
                 '18o23004.abf',
                 '18o23005.abf']
 
-DATA_PATH = './data/GABA_synapses/'
+DATA_PATH = './data/raw/5HT/GABA_synapses/'
 
 mini_recs = Cell().read_ABF([DATA_PATH + fname for fname in mIPSC_fnames])
 
@@ -47,7 +47,7 @@ for i, rec in enumerate(mini_recs):
 
 #%% DUMP DATA
 
-MINI_SAVE_PATH = './data/GABA_synapses/detected_minis/'
+MINI_SAVE_PATH = './data/raw/5HT/GABA_synapses/detected_minis/'
 
 for MinDet in mini_detectors:
 

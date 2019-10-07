@@ -22,7 +22,7 @@ import src.pltools as pltools
 
 #%% LOAD DATA
 
-MINI_SAVE_PATH = './data/GABA_synapses/detected_minis/'
+MINI_SAVE_PATH = './data/raw/5HT/GABA_synapses/detected_minis/'
 
 mini_detectors = []
 
@@ -31,7 +31,7 @@ for fname in os.listdir(MINI_SAVE_PATH):
         mini_detectors.append(pickle.load(f))
 
 
-SAMPLE_TR_PATH = './data/GABA_synapses/sample_traces/'
+SAMPLE_TR_PATH = './data/raw/5HT/GABA_synapses/sample_traces/'
 
 with open(SAMPLE_TR_PATH + 'averaged_traces.pyc', 'rb') as f:
     averaged_traces = pickle.load(f)
