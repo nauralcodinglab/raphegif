@@ -25,7 +25,7 @@ from grr.Tools import gagProcess
 
 #%% READ IN DATA
 
-DATA_PATH = './data/fast_noise_5HT/'
+DATA_PATH = './data/raw/5HT/fast_noise/'
 
 file_index = pd.read_csv(DATA_PATH + 'index.csv')
 
@@ -210,7 +210,7 @@ output_dict = {
     'experiments': experiments
 }
 
-with open('./data/fast_noise_5HT/5HT_good_aug_fast.pyc', 'wb') as f:
+with open('./data/raw/5HT/fast_noise/5HT_good_aug_fast.pyc', 'wb') as f:
     pickle.dump(output_dict, f)
 
 #%% EVALUATE PERFORMANCE

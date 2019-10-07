@@ -45,7 +45,7 @@ $(MODEL_PATH) :
 	mkdir -p $(MODEL_PATH)
 
 # Preprocess data.
-$(DATA_PATH)/5HT_goodcells.ldat : data/fast_noise_5HT/index.csv $(SCRIPT_PATH)/preprocess_fast_noise.py | $(DATA_PATH)
+$(DATA_PATH)/5HT_goodcells.ldat : data/raw/5HT/fast_noise/index.csv $(SCRIPT_PATH)/preprocess_fast_noise.py | $(DATA_PATH)
 	PYTHONPATH="$(PROJECT_ROOT)" python $(SCRIPT_PATH)/preprocess_fast_noise.py
 
 $(DATA_PATH) :

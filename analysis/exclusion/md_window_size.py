@@ -21,13 +21,13 @@ from grr.Tools import gagProcess
 #%% LOAD DATA
 
 data_paths = {
-    '5HT': './data/fast_noise_5HT/',
+    '5HT': './data/raw/5HT/fast_noise/',
     'GABA': './data/GABA_cells/',
     'mPFC': './data/raw/mPFC/mPFC_spiking/'
 }
 
 fname_paths = {
-    '5HT': './data/fast_noise_5HT/index.csv',
+    '5HT': './data/raw/5HT/fast_noise/index.csv',
     'GABA': './data/GABA_cells/index.csv',
     'mPFC': './data/raw/mPFC/fnames.csv'
 }

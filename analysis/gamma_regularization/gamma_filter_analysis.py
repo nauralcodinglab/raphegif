@@ -24,7 +24,7 @@ from grr.Tools import gagProcess
 
 #%% LOAD DATA
 
-DATA_PATH = './data/fast_noise_5HT/'
+DATA_PATH = './data/raw/5HT/fast_noise/'
 
 with open(DATA_PATH + './gamma_filter_tests_output.pyc', 'rb') as f:
     test_out = pickle.load(f)

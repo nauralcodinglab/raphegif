@@ -17,7 +17,7 @@ from grr.Tools import gagProcess
 
 #%% READ IN DATA
 
-DATA_PATH = os.path.join('data', 'fast_noise_5HT')
+DATA_PATH = os.path.join('data', 'raw', '5HT', 'fast_noise')
 
 file_index = pd.read_csv(os.path.join(DATA_PATH, 'index.csv'))
 
@@ -151,7 +151,7 @@ print 'Excluded {} cells due to low reliability.'.format(len(unreliable_cells))
 #%% REMOVE EXCLUDED CELLS FROM DATASET AND PICKLE RESULT
 
 bad_cell_inds = [7] # Manually exclude 7, which has hf noise.
-[bad_cell_inds.extend(x) for x in [drifting_cells, unreliable_cells]] 
+[bad_cell_inds.extend(x) for x in [drifting_cells, unreliable_cells]]
 bad_cell_inds = np.unique(bad_cell_inds)
 
 bad_cells = []
@@ -173,4 +173,3 @@ with open(os.path.join(PROCESSED_PATH, '5HT_badcells.ldat'), 'wb') as f:
     f.close()
 
 print 'Done!'
-

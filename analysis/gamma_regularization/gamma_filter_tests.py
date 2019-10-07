@@ -26,7 +26,7 @@ from grr.Tools import gagProcess
 
 if __name__ == '__main__':
 
-    DATA_PATH = './data/fast_noise_5HT/'
+    DATA_PATH = './data/raw/5HT/fast_noise/'
 
     file_index = pd.read_csv(DATA_PATH + 'index.csv')
 
@@ -162,7 +162,7 @@ def fit_GIF_exp_gamma(args):
 
 if __name__ == '__main__':
 
-    DATA_PATH = './data/fast_noise_5HT/'
+    DATA_PATH = './data/raw/5HT/fast_noise/'
 
     timescales_list = [[10], [30], [50], [100], [300], [500], [1000],
                        [10, 100], [30, 300], [50, 500], [100, 1000], [300, 3000],

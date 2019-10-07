@@ -25,7 +25,7 @@ from grr.Tools import gagProcess
 
 #%% READ IN DATA
 
-DATA_PATH = './data/fast_noise_5HT/'
+DATA_PATH = './data/raw/5HT/fast_noise/'
 
 file_index = pd.read_csv(DATA_PATH + 'index.csv')
 
