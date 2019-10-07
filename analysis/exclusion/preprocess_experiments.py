@@ -31,13 +31,13 @@ args = parser.parse_args()
 
 data_paths = {
     '5HT': './data/raw/5HT/fast_noise/',
-    'GABA': './data/GABA_cells/',
+    'GABA': './data/raw/GABA/OU_noise/',
     'mPFC': './data/raw/mPFC/mPFC_spiking/'
 }
 
 fname_paths = {
     '5HT': './data/raw/5HT/fast_noise/index.csv',
-    'GABA': './data/GABA_cells/index.csv',
+    'GABA': './data/raw/GABA/OU_noise/index.csv',
     'mPFC': './data/raw/mPFC/fnames.csv'
 }
 
@@ -124,4 +124,3 @@ with open(args.output, 'wb') as f:
     f.close()
 if args.verbose:
     print 'Done!'
-
