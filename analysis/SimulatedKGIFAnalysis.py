@@ -13,8 +13,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import scipy as sp
 
-from src.SubthreshGIF_K import SubthreshGIF_K
-from src import Tools
+from grr.SubthreshGIF import SubthreshGIF_K
+from grr import Tools
 
 
 #%% DEFINE MEMBRANE FILTER COMPARATOR CLASS

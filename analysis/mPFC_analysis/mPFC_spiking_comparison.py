@@ -6,11 +6,11 @@ sys.path.append('./src')
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from Experiment import *
-from AEC_Badel import *
-from GIF import *
-from Filter_Rect_LogSpaced import *
-from Filter_Rect_LinSpaced import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
+from grr.Filter_Rect import Filter_Rect_LogSpaced
+from grr.Filter_Rect import Filter_Rect_LinSpaced
 
 
 #%% IMPORT FILES

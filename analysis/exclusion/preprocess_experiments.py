@@ -9,9 +9,9 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from src.Experiment import *
+from grr.Experiment import Experiment
 
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% PARSE COMMANDLINE ARGUMENTS

@@ -7,7 +7,7 @@ DATA_PATH = data/processed/5HT_fastnoise
 BENCHMARK_PATH = data/processed/benchmarks
 MODEL_PATH = data/models/5HT
 SCRIPT_PATH = analysis/regression_tinkering
-SRC_PATH = src
+SRC_PATH = grr
 
 # Final targets.
 .PHONY : all
@@ -55,4 +55,3 @@ $(DATA_PATH) :
 .PHONY : clean
 clean :
 	rm $(DATA_PATH)/5HT_goodcells.ldat $(MODEL_PATH)/serkgifs.lmod $(MODEL_PATH)/sergifs.lmod $(BENCHMARK_PATH)/serkgifs_benchmark.dat $(BENCHMARK_PATH)/sergifs_benchmark.dat
-

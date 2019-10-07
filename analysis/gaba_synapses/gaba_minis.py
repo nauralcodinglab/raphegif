@@ -4,7 +4,7 @@ from __future__ import division
 
 import pickle
 
-from src.cell_class import Cell
+from grr.cell_class import Cell
 
 import sys
 sys.path.append('./analysis/gaba_synapses')

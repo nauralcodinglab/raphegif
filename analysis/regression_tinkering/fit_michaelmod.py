@@ -12,10 +12,10 @@ import os
 
 import numpy as np
 
-from src.GIF import GIF
-from src.Filter_Exps import Filter_Exps
+from grr.GIF import GIF
+from grr.Filter_Exps import Filter_Exps
 
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% LOAD DATA

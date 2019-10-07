@@ -11,16 +11,16 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats
 
-from src.Experiment import *
-from src.AEC_Badel import *
-from src.GIF import *
-from src.AugmentedGIF import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
+from grr.AugmentedGIF import AugmentedGIF
 from src.Filter_Rect_LogSpaced import *
-from src.Filter_Exps import Filter_Exps
-from src.SpikeTrainComparator import intrinsic_reliability
+from grr.Filter_Exps import Filter_Exps
+from grr.SpikeTrainComparator import intrinsic_reliability
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

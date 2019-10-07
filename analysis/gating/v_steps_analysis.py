@@ -11,7 +11,7 @@ import pandas as pd
 import scipy.stats as stats
 import scipy.optimize as optimize
 
-from src.cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 
 
 #%% HANDY FUNCTIONS

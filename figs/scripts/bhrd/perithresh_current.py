@@ -10,7 +10,7 @@ import numpy as np
 import sys
 sys.path.append(os.path.join('analysis', 'gating'))
 from gating_tools import *
-from src.cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 
 
 #%% LOAD DATA

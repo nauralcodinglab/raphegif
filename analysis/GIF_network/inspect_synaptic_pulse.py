@@ -8,8 +8,8 @@ import warnings
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 
-from src.Simulation import GIFnet_Simulation
-from src.Tools import PSTH
+from grr.Simulation import GIFnet_Simulation
+from grr.Tools import PSTH
 
 #%% LOAD DATA
 

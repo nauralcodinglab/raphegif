@@ -18,19 +18,19 @@ import pandas as pd
 import sys
 sys.path.append('./analysis/regression_tinkering')
 
-from src.Experiment import Experiment
-from src.GIF import GIF
-from src.resGIF import resGIF
-from src.CalciumGIF import CalciumGIF
-from src.iGIF_NP import iGIF_NP
-from src.iGIF_VR import iGIF_VR
+from grr.Experiment import Experiment
+from grr.GIF import GIF
+from grr.resGIF import resGIF
+from grr.CalciumGIF import CalciumGIF
+from grr.iGIF import iGIF_NP
+from grr.iGIF import iGIF_VR
 from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
-from src.Filter_Exps import Filter_Exps
-from src.SpikeTrainComparator import intrinsic_reliability
+from grr.Filter_Exps import Filter_Exps
+from grr.SpikeTrainComparator import intrinsic_reliability
 from model_evaluation import *
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 #%% LOAD DATA
 

@@ -12,8 +12,8 @@ import pickle
 
 import numpy as np
 
-import src.GIF_network as gfn
-from src.Tools import generateOUprocess
+import grr.GIF_network as gfn
+from grr.Tools import generateOUprocess
 
 #%% PARSE COMMANDLINE ARGUMENTS
 

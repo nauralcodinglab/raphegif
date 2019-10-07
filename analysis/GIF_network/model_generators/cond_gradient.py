@@ -10,7 +10,7 @@ import copy
 
 import numpy as np
 
-import src.GIF_network as gfn
+import grr.GIF_network as gfn
 
 
 #%% SET CONSTANTS

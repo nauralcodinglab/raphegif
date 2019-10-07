@@ -25,15 +25,15 @@ from scipy import optimize
 import sys
 sys.path.append('./analysis/regression_tinkering')
 
-from src.GIF import GIF
-from src.AugmentedGIF import AugmentedGIF
+from grr.GIF import GIF
+from grr.AugmentedGIF import AugmentedGIF
 from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
-from src.Filter_Exps import Filter_Exps
-from src.SpikeTrainComparator import intrinsic_reliability
-from src.Trace import Trace
+from grr.Filter_Exps import Filter_Exps
+from grr.SpikeTrainComparator import intrinsic_reliability
+from grr.Trace import Trace
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 from model_evaluation import *
 

@@ -5,9 +5,9 @@ from __future__ import division
 import pickle
 import os
 
-from src.GIF import GIF
-from src.Filter_Exps import Filter_Exps
-from src.Tools import gagProcess
+from grr.GIF import GIF
+from grr.Filter_Exps import Filter_Exps
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

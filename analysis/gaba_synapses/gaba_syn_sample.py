@@ -10,7 +10,7 @@ import matplotlib.gridspec as gs
 import seaborn as sns
 import scipy.optimize as optimize
 
-from src.cell_class import Cell
+from grr.cell_class import Cell
 import src.pltools as pltools
 
 

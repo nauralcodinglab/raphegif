@@ -9,7 +9,7 @@ import copy
 
 import numpy as np
 
-from src.Tools import generateOUprocess
+from grr.Tools import generateOUprocess
 
 #%% PARSE COMMANDLINE ARGUMENTS
 

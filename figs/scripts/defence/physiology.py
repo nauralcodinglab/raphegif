@@ -13,8 +13,8 @@ import sys
 sys.path.append('./analysis/gating/')
 sys.path.append('./figs/scripts')
 
-from cell_class import Cell, Recording
-import pltools
+from grr.cell_class import Cell, Recording
+from grr import pltools
 
 
 #%% LOAD DATA

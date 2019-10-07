@@ -9,7 +9,7 @@ import numpy as np
 
 import sys
 sys.path.append('./analysis/feedforward_gain_modulation')
-from src.Tools import generateOUprocess
+from grr.Tools import generateOUprocess
 
 #%% PARSE COMMANDLINE ARGUMENTS
 

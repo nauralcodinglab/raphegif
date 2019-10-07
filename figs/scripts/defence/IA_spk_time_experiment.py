@@ -15,8 +15,8 @@ import sys
 sys.path.append('./analysis/gating/')
 sys.path.append('./analysis/spk_timing/IA_mod')
 sys.path.append('./figs/scripts')
-import pltools
-from cell_class import Cell, Recording
+from grr import pltools
+from grr.cell_class import Cell, Recording
 import IAmod
 
 #%% DEFINE NECESSARY CLASSES

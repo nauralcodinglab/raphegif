@@ -10,7 +10,7 @@ import matplotlib.gridspec as gs
 import numpy as np
 from scipy import signal
 
-from src.Tools import timeToIntVec
+from grr.Tools import timeToIntVec
 
 #%% LOAD DATA
 

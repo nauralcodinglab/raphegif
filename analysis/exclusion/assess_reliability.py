@@ -7,7 +7,7 @@ import argparse
 
 import numpy as np
 
-from src.SpikeTrainComparator import intrinsic_reliability
+from grr.SpikeTrainComparator import intrinsic_reliability
 
 
 #%% PARSE COMMANDLINE ARGUMENTS

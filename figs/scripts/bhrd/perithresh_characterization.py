@@ -18,7 +18,7 @@ import sys
 sys.path.append('./analysis/gating/')
 
 
-from cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 import src.pltools as pltools
 
 

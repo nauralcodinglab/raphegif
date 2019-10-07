@@ -15,15 +15,15 @@ import seaborn as sns
 import pandas as pd
 from scipy import stats
 
-from src.Experiment import *
-from src.AEC_Badel import *
-from src.GIF import *
-from src.AugmentedGIF import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
+from grr.AugmentedGIF import AugmentedGIF
 from src.Filter_Rect_LogSpaced import *
 from src.Filter_Rect_LinSpaced import *
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% LOAD DATA

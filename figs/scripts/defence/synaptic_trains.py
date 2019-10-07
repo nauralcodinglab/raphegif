@@ -15,7 +15,7 @@ sys.path.append('./analysis/spk_timing/IA_mod')
 
 from stimgen import Stim
 import IAmod
-import pltools
+from grr import pltools
 
 
 #%% INITIALIZE MODELS

@@ -15,7 +15,7 @@ sys.path.append('./src/')
 sys.path.append('./figs/scripts/')
 sys.path.append('analysis/subthresh_mod_selection')
 
-import pltools
+from grr import pltools
 
 
 #%% LOAD DATA

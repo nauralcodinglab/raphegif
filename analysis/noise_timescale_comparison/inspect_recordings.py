@@ -7,9 +7,9 @@ import os
 import pandas as pd
 import numpy as np
 
-from src.SpikeTrainComparator import intrinsic_reliability
-from src.Experiment import *
-from src.Tools import gagProcess
+from grr.SpikeTrainComparator import intrinsic_reliability
+from grr.Experiment import Experiment
+from grr.Tools import gagProcess
 
 #%% LOAD DATA FILES
 file_index = pd.read_csv(os.path.join('.', 'data', 'raw', '5HT', 'noise_comparison', 'index.csv'))

@@ -7,10 +7,10 @@ import os
 import numpy as np
 import pandas as pd
 
-from src.Experiment import *
-from src.AEC_Badel import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
 
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

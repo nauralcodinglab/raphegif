@@ -15,14 +15,13 @@ from scipy import stats
 from scipy import optimize
 
 import sys
-sys.path.append('./src')
 sys.path.append('./analysis/gls_regression')
 
-from Experiment import *
-from AEC_Badel import *
-from SplineGIF import SplineGIF
-from Filter_Rect_LogSpaced import *
-from Filter_Exps import Filter_Exps
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.SplineGIF import SplineGIF
+from grr.Filter_Rect import Filter_Rect_LogSpaced
+from grr.Filter_Exps import Filter_Exps
 
 from model_evaluation import *
 

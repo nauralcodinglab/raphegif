@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from src.Experiment import Experiment
-from src.AEC_Badel import AEC_Badel
-from src.SpikeTrainComparator import intrinsic_reliability
-from src.Tools import gagProcess
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.SpikeTrainComparator import intrinsic_reliability
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

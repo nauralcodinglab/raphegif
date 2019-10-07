@@ -11,11 +11,11 @@ import seaborn as sns
 import pandas as pd
 from scipy import stats
 
-from src.Experiment import *
-from src.SpikeTrainComparator import intrinsic_reliability
+from grr.Experiment import Experiment
+from grr.SpikeTrainComparator import intrinsic_reliability
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% LOAD DATA

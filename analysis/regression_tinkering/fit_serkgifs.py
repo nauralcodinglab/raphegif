@@ -14,9 +14,9 @@ import sys
 sys.path.append(os.path.join('analysis', 'regression_tinkering'))
 from model_evaluation import *
 
-from src.AugmentedGIF import AugmentedGIF
-from src.Filter_Exps import Filter_Exps
-from src.Tools import gagProcess
+from grr.AugmentedGIF import AugmentedGIF
+from grr.Filter_Exps import Filter_Exps
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

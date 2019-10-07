@@ -11,14 +11,14 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import seaborn as sns
 import pandas as pd
 
-from src.Experiment import *
-from src.AEC_Badel import *
-from src.GIF import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
 from src.Filter_Rect_LogSpaced import *
-from src.Filter_Exps import Filter_Exps
+from grr.Filter_Exps import Filter_Exps
 
 import src.pltools as pltools
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% READ IN DATA

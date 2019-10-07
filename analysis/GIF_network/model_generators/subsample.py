@@ -10,7 +10,7 @@ import numpy as np
 import sys
 sys.path.append('./analysis/feedforward_gain_modulation')
 from FeedForwardDRN import SynapticKernel
-import src.GIF_network as gfn
+import grr.GIF_network as gfn
 
 
 #%% SET CONSTANTS

@@ -14,11 +14,11 @@ import sys
 sys.path.append('analysis/subthresh_mod_selection')
 
 from ModMats import ModMats
-from src.Experiment import Experiment
-from src.SubthreshGIF_K import SubthreshGIF_K
-from src.AEC_Badel import AEC_Badel
+from grr.Experiment import Experiment
+from grr.SubthreshGIF import SubthreshGIF_K
+from grr.AEC import AEC_Badel
 
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% LOAD DATA

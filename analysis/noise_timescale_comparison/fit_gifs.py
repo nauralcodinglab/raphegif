@@ -8,11 +8,11 @@ import pickle
 import pandas as pd
 import numpy as np
 
-from src.Experiment import *
-from src.AEC_Badel import AEC_Badel
-from src.GIF import GIF
-from src.Tools import gagProcess
-from src.Filter_Exps import Filter_Exps
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
+from grr.Tools import gagProcess
+from grr.Filter_Exps import Filter_Exps
 
 
 #%% LOAD DATA FILES

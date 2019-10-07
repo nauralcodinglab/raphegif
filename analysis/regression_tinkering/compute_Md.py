@@ -7,7 +7,7 @@ import pickle
 import argparse
 import warnings
 
-from src.Tools import gagProcess
+from grr.Tools import gagProcess
 
 
 #%% PARSE COMMANDLINE ARGUMENTS

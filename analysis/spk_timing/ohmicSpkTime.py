@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import pandas as pd
 
-from src.cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 
 
 #%% DEFINE SPK TIME PREDICTOR

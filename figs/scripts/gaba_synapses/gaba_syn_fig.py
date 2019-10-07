@@ -16,7 +16,7 @@ import scipy.stats as stats
 import sys
 sys.path.append('./analysis/gaba_synapses')
 
-from src.cell_class import Cell
+from grr.cell_class import Cell
 import MiniDetector
 import src.pltools as pltools
 

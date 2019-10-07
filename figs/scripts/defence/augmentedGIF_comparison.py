@@ -19,14 +19,14 @@ import sys
 sys.path.append('./src')
 sys.path.append('./figs/scripts')
 
-from Experiment import *
-from AEC_Badel import *
-from GIF import *
-from AugmentedGIF import *
-from Filter_Rect_LogSpaced import *
-from Filter_Rect_LinSpaced import *
+from grr.Experiment import Experiment
+from grr.AEC import AEC_Badel
+from grr.GIF import GIF
+from grr.AugmentedGIF import AugmentedGIF
+from grr.Filter_Rect import Filter_Rect_LogSpaced
+from grr.Filter_Rect import Filter_Rect_LinSpaced
 
-import pltools
+from grr import pltools
 
 #%% DEFINE CLASS TO GAG VERBOSE POZZORINI METHODS
 

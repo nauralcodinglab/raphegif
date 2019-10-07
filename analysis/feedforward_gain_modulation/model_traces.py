@@ -14,10 +14,10 @@ import seaborn as sns
 import sys
 sys.path.append('./analysis/feedforward_gain_modulation')
 sys.path.append('./src')
-from GIF import GIF
-from AugmentedGIF import AugmentedGIF
-from Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
-from Filter_Exps import Filter_Exps
+from grr.GIF import GIF
+from grr.AugmentedGIF import AugmentedGIF
+from grr.Filter_Rect import Filter_Rect_LogSpaced
+from grr.Filter_Exps import Filter_Exps
 
 #%% LOAD GIFS
 

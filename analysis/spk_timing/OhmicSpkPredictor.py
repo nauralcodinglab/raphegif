@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from src.cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 
 
 #%% DEFINE SPK TIME PREDICTOR

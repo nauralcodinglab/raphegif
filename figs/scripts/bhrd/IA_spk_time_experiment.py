@@ -13,7 +13,7 @@ import pandas as pd
 import sys
 sys.path.append('./analysis/gating/')
 sys.path.append('./analysis/spk_timing/IA_mod')
-from cell_class import Cell, Recording
+from grr.cell_class import Cell, Recording
 import IAmod
 
 

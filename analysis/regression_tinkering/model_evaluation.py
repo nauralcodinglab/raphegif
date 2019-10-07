@@ -10,7 +10,7 @@ import pandas as pd
 
 sys.path.append('./src')
 
-from AugmentedGIF import AugmentedGIF
+from grr.AugmentedGIF import AugmentedGIF
 
 
 #%%

@@ -8,9 +8,9 @@ import plotly.offline as pyoff
 import plotly.graph_objs as go
 from scipy import signal
 
-from src.SubthreshGIF_K import SubthreshGIF_K
-from src import Tools
-from src.cell_class import Cell
+from grr.SubthreshGIF import SubthreshGIF_K
+from grr import Tools
+from grr.cell_class import Cell
 
 
 #%% READ IN FILES
