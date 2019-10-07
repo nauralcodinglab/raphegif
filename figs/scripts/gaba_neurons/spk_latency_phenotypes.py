@@ -17,9 +17,9 @@ import src.pltools as pltools
 
 #%% LOAD DATA
 
-DATA_PATH = './data/GABA_cells/spk_time/'
+DATA_PATH = './data/raw/GABA/spk_time/'
 
-inventory = pd.read_csv(DATA_PATH + 'inventory.csv')
+inventory = pd.read_csv(DATA_PATH + 'index.csv')
 inventory['cumcount'] = inventory.groupby('Cell_ID').cumcount()
 fnames = inventory.pivot('Cell_ID', 'cumcount', values = 'Recording').values.tolist()
 fnames = [[f for f in fs if f is not None] for fs in fnames] # Remove `None`s

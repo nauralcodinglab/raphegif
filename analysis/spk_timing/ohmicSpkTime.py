@@ -239,9 +239,9 @@ class OhmicSpkPredictor(object):
 #%% LOAD RECORDINGS
 
 """
-DATA_PATH = './data/ohmic_spk_time/'
+DATA_PATH = './data/raw/5HT/spk_time/'
 
-inventory = pd.read_csv(DATA_PATH + 'inventory.csv')
+inventory = pd.read_csv(DATA_PATH + 'index.csv')
 
 ctrl_inventory = inventory.loc[np.logical_and(inventory['PE'] == 0, inventory['4AP'] == 0), :]
 

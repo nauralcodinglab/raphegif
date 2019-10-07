@@ -443,10 +443,10 @@ def _predict_spk_for_scipy(params, V0_vec):
 
 #%% IMPORT DATA
 
-DATA_PATH = './data/ohmic_spk_time/'
+DATA_PATH = './data/raw/5HT/spk_time/'
 
 """
-inventory = pd.read_csv(DATA_PATH + 'inventory.csv')
+inventory = pd.read_csv(DATA_PATH + 'index.csv')
 inventory_4AP = inventory.loc[inventory['Cell_ID'] == 'DRN332', :]
 inventory_4AP['cumcount'] = inventory_4AP.groupby('Cell_ID').cumcount()
 fnames_4AP = inventory_4AP.pivot('Cell_ID', 'cumcount', values = 'Recording')
