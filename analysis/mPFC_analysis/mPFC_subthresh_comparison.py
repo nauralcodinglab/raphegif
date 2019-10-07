@@ -23,7 +23,7 @@ from grr.Tools import gagProcess
 
 #%% LOAD DATA
 
-sert_path = ('data/subthreshold_expts/')
+sert_path = os.path.join('data', 'raw', '5HT', 'subthreshold_OU')
 
 sert_cells = [['c0_AEC_18125000.abf', 'c0_Train_18125001.abf', 'c0_Test_18125002.abf'],
          ['c1_AEC_18125011.abf', 'c1_Train_18125012.abf', 'c1_Test_18125013.abf'],
