@@ -20,7 +20,7 @@ import src.pltools as pltools
 
 #%% LOAD DATA
 
-DATA_PATH = './data/GABA_cells/nickel/'
+DATA_PATH = './data/raw/GABA/nickel/'
 
 fnames = {
     'bl_steps': ['18n16006.abf', '18n16007.abf', '18n16008.abf'],
