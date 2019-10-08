@@ -19,7 +19,7 @@ import src.pltools as pltools
 
 #%% LOAD GATING DATA
 
-FIGDATA_PATH = './figs/figdata/'
+FIGDATA_PATH = './data/raw/figdata/'
 
 with open(FIGDATA_PATH + 'peakact_pdata.pyc', 'rb') as f:
     peakact_pdata = pickle.load(f)

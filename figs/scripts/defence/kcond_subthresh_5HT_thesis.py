@@ -20,7 +20,7 @@ from grr import pltools
 
 #%% LOAD DATA
 
-PICKLE_PATH = './figs/figdata/'
+PICKLE_PATH = './data/raw/figdata/'
 
 with open(PICKLE_PATH + 'ohmic_mod.pyc', 'rb') as f:
     ohmic_mod_coeffs = pickle.load(f)

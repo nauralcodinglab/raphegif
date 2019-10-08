@@ -22,7 +22,7 @@ from stimgen import Stim
 
 #%% LOAD DATA
 
-FIGDATA_PATH = './figs/figdata/'
+FIGDATA_PATH = './data/raw/figdata/'
 
 with open(FIGDATA_PATH + 'inactivation_fits.pyc', 'rb') as f:
     IA_inact = pickle.load(f)

@@ -19,7 +19,7 @@ from grr import pltools
 
 #%% LOAD DATA
 
-FIGDATA_PATH = './figs/figdata/'
+FIGDATA_PATH = './data/raw/figdata/'
 GATING_PATH = './data/gating/'
 
 # Load current steps file

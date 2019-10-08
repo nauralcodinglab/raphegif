@@ -103,15 +103,15 @@ def subtract_leak(cell, baseline_range, test_range, V_channel = 1, I_channel = 0
 
 #%% LOAD DATA
 
-FIGDATA_PATH = './figs/figdata/'
+FIGDATA_PATH = './data/raw/figdata/'
 GATING_PATH = './data/raw/5HT/gating/'
 
 # Load V-steps files for sample pharma traces.
-baseline = Cell().read_ABF('./figs/figdata/18411010.abf')[0]
+baseline = Cell().read_ABF('./data/raw/figdata/18411010.abf')[0]
 baseline.set_dt(0.1)
-TEA = Cell().read_ABF('./figs/figdata/18411013.abf')[0]
+TEA = Cell().read_ABF('./data/raw/figdata/18411013.abf')[0]
 TEA.set_dt(0.1)
-TEA_4AP = Cell().read_ABF('./figs/figdata/18411015.abf')[0]
+TEA_4AP = Cell().read_ABF('./data/raw/figdata/18411015.abf')[0]
 TEA_4AP.set_dt(0.1)
 
 # Load gating data

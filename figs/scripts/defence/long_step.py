@@ -41,7 +41,7 @@ def detect_spks(vec, ref = 3, dt = 0.1, return_inds = False):
         return spks * dt
 
 
-DATA_PATH = './figs/figdata/'
+DATA_PATH = './data/raw/figdata/'
 
 recs = Cell().read_ABF([DATA_PATH + fname for fname in ['18n06008.abf', '18n02000.abf']])
 
