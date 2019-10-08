@@ -19,7 +19,7 @@ DRN393_fnames = {
     'V-steps': ['18n16003.abf'],
 }
 
-DATA_PATH = './data/GABA_cells/DRN393_firing_vsteps/'
+DATA_PATH = './data/raw/GABA/DRN393_firing_vsteps/'
 
 DRN393_recs = {}
 

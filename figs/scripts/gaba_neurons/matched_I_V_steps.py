@@ -44,7 +44,7 @@ matched_cells = [IVCell('DRN399', ['18n22002.abf'], ['18n22000.abf', '18n22001.a
 
 
 #%%
-DATA_PATH = 'data/GABA_cells/matched_I_V_steps/'
+DATA_PATH = 'data/raw/GABA/matched_I_V_steps/'
 
 for ce in matched_cells:
     ce.data_path = DATA_PATH

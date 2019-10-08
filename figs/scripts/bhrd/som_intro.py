@@ -28,7 +28,7 @@ params['El_est'] = -params['hold'] * params['R'] * 1e-3 - 70
 
 ### Load/preprocess voltage steps.
 
-GABA_PATH = os.path.join('data', 'GABA_cells')
+GABA_PATH = os.path.join('data', 'raw', 'GABA')
 gating = Cell().read_ABF([os.path.join(GABA_PATH, 'matched_I_V_steps', '18n22000.abf'),
                           os.path.join(GABA_PATH, 'matched_I_V_steps', '18n22003.abf'),
                           os.path.join(GABA_PATH, 'matched_I_V_steps', '18n22005.abf'),

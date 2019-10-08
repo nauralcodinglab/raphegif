@@ -38,7 +38,7 @@ unmatched_cells = [IVCell('DRN406', V_fnames = ['18n22015.abf']),
                    IVCell('DRN395', V_fnames = ['18n16005.abf']),
                    IVCell('DRN394', V_fnames = ['18n16004.abf'])]
 
-DATA_PATH = './data/GABA_cells/unmatched_V_steps/'
+DATA_PATH = './data/raw/GABA/unmatched_V_steps/'
 
 for ce in unmatched_cells:
     ce.data_path = DATA_PATH

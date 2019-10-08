@@ -21,7 +21,7 @@ DRN398_fnames = {
     'TTX+NiCl2': ['18n16017.abf', '18n16018.abf']
 }
 
-DATA_PATH = './data/GABA_cells/DRN398_firing_vsteps/'
+DATA_PATH = './data/raw/GABA/DRN398_firing_vsteps/'
 
 DRN398_recs = {}
 

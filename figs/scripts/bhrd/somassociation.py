@@ -29,7 +29,7 @@ DRN393_fnames = {
     'V-steps': ['18n16003.abf'],
 }
 
-DATA_PATH = os.path.join('data', 'GABA_cells')
+DATA_PATH = os.path.join('data', 'raw', 'GABA')
 
 DRN398_recs = {}
 
