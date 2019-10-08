@@ -16,7 +16,7 @@ sys.path.append('./analysis/spk_timing/IA_mod')
 
 sys.path.append('./src/')
 from IAmod import IAmod, Simulation
-import src.pltools as pltools
+from grr import pltools
 from grr.Tools import generateOUprocess
 
 #%%

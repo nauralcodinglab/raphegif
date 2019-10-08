@@ -14,7 +14,7 @@ import scipy.stats as stats
 import scipy.optimize as optimize
 
 from grr.cell_class import Cell, Recording
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% LOAD GATING DATA

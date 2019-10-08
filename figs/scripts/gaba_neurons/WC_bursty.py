@@ -9,7 +9,7 @@ from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 from grr.cell_class import Cell
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% LOAD DATA

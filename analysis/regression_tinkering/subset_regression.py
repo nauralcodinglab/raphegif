@@ -25,7 +25,7 @@ from grr.AugmentedGIF import AugmentedGIF
 from grr.Filter_Rect import Filter_Rect_LogSpaced
 from grr.Filter_Exps import Filter_Exps
 
-import src.pltools as pltools
+from grr import pltools
 
 from model_evaluation import *
 

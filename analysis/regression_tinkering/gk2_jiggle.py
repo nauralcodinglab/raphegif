@@ -33,7 +33,7 @@ sys.path.append('./analysis/gls_regression')
 
 from grr.AugmentedGIF import AugmentedGIF
 
-import src.pltools as pltools
+from grr import pltools
 
 from model_evaluation import *
 

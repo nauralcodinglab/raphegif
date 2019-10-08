@@ -18,7 +18,7 @@ sys.path.append('./analysis/gaba_synapses')
 
 from grr.cell_class import Cell
 import MiniDetector
-import src.pltools as pltools
+from grr import pltools
 
 #%% LOAD DATA
 

@@ -13,7 +13,7 @@ from scipy import stats
 
 import sys
 sys.path.append(os.path.join('analysis', 'gating'))
-import src.pltools as pltools
+from grr import pltools
 from grr.cell_class import Cell
 from gating_tools import *
 

@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 import sys
 sys.path.append(os.path.join('analysis', 'gating'))
-import src.pltools as pltools
+from grr import pltools
 from grr.cell_class import Cell
 from gating_tools import *
 

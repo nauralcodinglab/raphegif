@@ -14,7 +14,7 @@ from scipy import stats
 from grr.Experiment import Experiment
 from grr.SpikeTrainComparator import intrinsic_reliability
 
-import src.pltools as pltools
+from grr import pltools
 from grr.Tools import gagProcess
 
 

@@ -19,7 +19,7 @@ sys.path.append('./analysis/gating/')
 
 
 from grr.cell_class import Cell, Recording
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% HANDY FUNCTIONS

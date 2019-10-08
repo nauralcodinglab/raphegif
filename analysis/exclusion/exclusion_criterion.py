@@ -15,11 +15,11 @@ from grr.Experiment import Experiment
 from grr.AEC import AEC_Badel
 from grr.GIF import GIF
 from grr.AugmentedGIF import AugmentedGIF
-from src.Filter_Rect_LogSpaced import *
+from grr.Filter_Rect import Filter_Rect_LogSpaced
 from grr.Filter_Exps import Filter_Exps
 from grr.SpikeTrainComparator import intrinsic_reliability
 
-import src.pltools as pltools
+from grr import pltools
 from grr.Tools import gagProcess
 
 

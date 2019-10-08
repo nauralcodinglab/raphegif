@@ -11,7 +11,7 @@ import sys
 sys.path.append('./analysis/spk_timing/')
 
 import OhmicSpkPredictor as osp
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% DEFINE FUNCTIONS FOR IF CELL

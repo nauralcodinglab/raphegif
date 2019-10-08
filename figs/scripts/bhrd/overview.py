@@ -20,7 +20,7 @@ from grr.GIF import GIF
 from grr.Filter_Rect import Filter_Rect_LogSpaced
 from grr.Filter_Rect import Filter_Rect_LinSpaced
 
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% IMPORT FILES

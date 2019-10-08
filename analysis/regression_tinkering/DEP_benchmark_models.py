@@ -27,12 +27,12 @@ sys.path.append('./analysis/regression_tinkering')
 
 from grr.GIF import GIF
 from grr.AugmentedGIF import AugmentedGIF
-from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
+from grr.Filter_Rect import Filter_Rect_LogSpaced
 from grr.Filter_Exps import Filter_Exps
 from grr.SpikeTrainComparator import intrinsic_reliability
 from grr.Trace import Trace
 
-import src.pltools as pltools
+from grr import pltools
 from grr.Tools import gagProcess
 
 from model_evaluation import *

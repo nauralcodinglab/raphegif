@@ -15,7 +15,7 @@ sys.path.append('./analysis/spk_timing/')
 
 import OhmicSpkPredictor as osp
 from grr.cell_class import Cell
-import src.pltools as pltools
+from grr import pltools
 
 
 #%% LOAD DATA

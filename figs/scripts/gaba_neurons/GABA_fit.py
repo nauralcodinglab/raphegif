@@ -24,12 +24,12 @@ from grr.resGIF import resGIF
 from grr.CalciumGIF import CalciumGIF
 from grr.iGIF import iGIF_NP
 from grr.iGIF import iGIF_VR
-from src.Filter_Rect_LogSpaced import Filter_Rect_LogSpaced
+from grr.Filter_Rect import Filter_Rect_LogSpaced
 from grr.Filter_Exps import Filter_Exps
 from grr.SpikeTrainComparator import intrinsic_reliability
 from model_evaluation import *
 
-import src.pltools as pltools
+from grr import pltools
 from grr.Tools import gagProcess
 
 #%% LOAD DATA
