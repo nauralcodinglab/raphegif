@@ -8,7 +8,7 @@ import scipy.stats as stats
 
 #%% READ IN DATA
 
-params = pd.read_csv('data/DRN_membrane_parameters.csv')
+params = pd.read_csv('data/raw/5HT/membrane_parameters/DRN_membrane_parameters.csv')
 
 params['El_est'] = -params['hold'] * params['R'] * 1e-3 - 70
 

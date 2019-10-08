@@ -21,7 +21,7 @@ from gating_tools import *
 #%% LOAD DATA
 
 ### Load/preprocess membrane parameters data.
-params = pd.read_csv('data/DRN_membrane_parameters.csv')
+params = pd.read_csv('data/raw/5HT/membrane_parameters/DRN_membrane_parameters.csv')
 params['El_est'] = -params['hold'] * params['R'] * 1e-3 - 70
 params_5HT = params.loc[np.where(params['TdT'] == 1)]
 params_5HT.drop('TdT', axis = 1, inplace = True)

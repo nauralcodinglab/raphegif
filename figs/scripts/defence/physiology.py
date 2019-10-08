@@ -36,7 +36,7 @@ fct_washon = ser_1A[0, 10000:20000, :].mean(axis = 0)
 fct_support = np.arange(0, len(fct_washon)/6, 1/6)
 
 # Import passive membrane parameter data.
-params = pd.read_csv('data/DRN_membrane_parameters.csv')
+params = pd.read_csv('data/raw/5HT/membrane_parameters/DRN_membrane_parameters.csv')
 
 params['El_est'] = -params['hold'] * params['R'] * 1e-3 - 70
 
