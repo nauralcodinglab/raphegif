@@ -245,9 +245,9 @@ inventory = pd.read_csv(DATA_PATH + 'index.csv')
 
 ctrl_inventory = inventory.loc[np.logical_and(inventory['PE'] == 0, inventory['4AP'] == 0), :]
 
-ctrl_inventory['cumcount'] = ctrl_inventory.groupby('Cell_ID').cumcount()
+ctrl_inventory['cumcount'] = ctrl_inventory.groupby('Cell').cumcount()
 
-fnames = ctrl_inventory.pivot('Cell_ID', 'cumcount', values = 'Recording')
+fnames = ctrl_inventory.pivot('Cell', 'cumcount', values = 'Recording')
 
 cells = []
 for i in range(fnames.shape[0]):

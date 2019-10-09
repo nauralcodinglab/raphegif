@@ -20,11 +20,11 @@ from grr import pltools
 DATA_PATH = './data/raw/GABA/spk_time/'
 
 inventory = pd.read_csv(DATA_PATH + 'index.csv')
-inventory['cumcount'] = inventory.groupby('Cell_ID').cumcount()
-fnames = inventory.pivot('Cell_ID', 'cumcount', values = 'Recording').values.tolist()
+inventory['cumcount'] = inventory.groupby('Cell').cumcount()
+fnames = inventory.pivot('Cell', 'cumcount', values = 'Recording').values.tolist()
 fnames = [[f for f in fs if f is not None] for fs in fnames] # Remove `None`s
 
-cellnames = inventory.pivot('Cell_ID', 'cumcount', values = 'Recording').index.tolist()
+cellnames = inventory.pivot('Cell', 'cumcount', values = 'Recording').index.tolist()
 
 # Manually reject recordings.
 rejects = ['18711002.abf']

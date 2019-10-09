@@ -447,9 +447,9 @@ DATA_PATH = './data/raw/5HT/spk_time/'
 
 """
 inventory = pd.read_csv(DATA_PATH + 'index.csv')
-inventory_4AP = inventory.loc[inventory['Cell_ID'] == 'DRN332', :]
-inventory_4AP['cumcount'] = inventory_4AP.groupby('Cell_ID').cumcount()
-fnames_4AP = inventory_4AP.pivot('Cell_ID', 'cumcount', values = 'Recording')
+inventory_4AP = inventory.loc[inventory['Cell'] == 'DRN332', :]
+inventory_4AP['cumcount'] = inventory_4AP.groupby('Cell').cumcount()
+fnames_4AP = inventory_4AP.pivot('Cell', 'cumcount', values = 'Recording')
 """
 
 fnames_baseline = ['18627043.abf', '18627044.abf', '18627045.abf', '18627046.abf', '18627047.abf']

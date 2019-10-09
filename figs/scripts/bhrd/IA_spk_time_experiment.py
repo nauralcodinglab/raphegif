@@ -279,9 +279,9 @@ inventory = pd.read_csv(DATA_PATH + 'index.csv')
 
 ctrl_inventory = inventory.loc[np.logical_and(inventory['PE'] == 0, inventory['4AP'] == 0), :]
 
-ctrl_inventory['cumcount'] = ctrl_inventory.groupby('Cell_ID').cumcount()
+ctrl_inventory['cumcount'] = ctrl_inventory.groupby('Cell').cumcount()
 
-fnames = ctrl_inventory.pivot('Cell_ID', 'cumcount', values = 'Recording')
+fnames = ctrl_inventory.pivot('Cell', 'cumcount', values = 'Recording')
 
 cells = []
 for i in range(fnames.shape[0]):
@@ -290,8 +290,8 @@ for i in range(fnames.shape[0]):
 
 #%%
 
-baseline_recs = inventory.loc[np.logical_and(inventory['Cell_ID'] == 'DRN332', inventory['4AP'] == 0), 'Recording']
-_4AP_recs = inventory.loc[np.logical_and(inventory['Cell_ID'] == 'DRN332', inventory['4AP'] == 1), 'Recording']
+baseline_recs = inventory.loc[np.logical_and(inventory['Cell'] == 'DRN332', inventory['4AP'] == 0), 'Recording']
+_4AP_recs = inventory.loc[np.logical_and(inventory['Cell'] == 'DRN332', inventory['4AP'] == 1), 'Recording']
 
 baseline_ = Cell().read_ABF([DATA_PATH + fname for fname in baseline_recs])
 _4AP = Cell().read_ABF([DATA_PATH + fname for fname in _4AP_recs])

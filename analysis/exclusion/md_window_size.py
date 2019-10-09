@@ -86,7 +86,7 @@ for i in range(fnames.shape[0]):
 
         with gagProcess():
 
-            tmp_experiment = Experiment(fnames.loc[i, 'Experimenter'] + fnames.loc[i, 'Cell_ID'], 0.1)
+            tmp_experiment = Experiment(fnames.loc[i, 'Experimenter'] + fnames.loc[i, 'Cell'], 0.1)
             tmp_experiment.setAECTrace(FILETYPE = 'Axon', fname = data_paths['mPFC'] + fnames.loc[i, 'AEC'],
                 V_channel = 0, I_channel = 1)
             tmp_experiment.addTrainingSetTrace(FILETYPE = 'Axon', fname = data_paths['mPFC'] + fnames.loc[i, 'Train'],
