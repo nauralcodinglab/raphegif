@@ -1,0 +1,20 @@
+{
+    "T_ref": 6.5,
+    "eta_timescales": [3, 10, 30, 100, 300, 1000, 3000],
+    "gamma_timescales": [30, 300, 3000],
+    "DT_beforeSpike": 1.5,
+    "dt": 0.1,
+    "AugmentedGIF_fit_args": {
+        "h_tau_candidates": [10, 13, 18, 25, 33, 45, 61, 82, 111, 150]
+    },
+    "iGIF_NP_fit_args": {
+        "theta_tau_all": [1, 2, 5, 10, 22, 46, 100],
+        "last_bin_constrained": true,
+        "do_plot": true
+    },
+    "iGIF_VR_fit_args": {
+        "theta_tau_all": [1, 2, 5, 10, 22, 46, 100],
+        "last_bin_constrained": true,
+        "do_plot": true
+    }
+}
