@@ -1,15 +1,16 @@
 import math
+import warnings
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
 import numpy as np
-from numpy import nan, NaN
-from numpy.linalg import inv
 import numba as nb
 import weave
+from scipy import optimize
 
 from .GIF import GIF
 from .Filter_Rect import Filter_Rect_LogSpaced
+from . import Tools
 from .Tools import reprint
 
 
@@ -506,7 +507,39 @@ class AugmentedGIF(GIF):
 
     ### Fitting related methods
 
-    def fitSubthresholdDynamics(self, experiment, DT_beforeSpike=5.0):
+    def fit(self, experiment, h_tau_candidates, DT_beforeSpike=5.0):
+        """Fit the AugmentedGIF model to experimental data.
+
+        Fit model to training data.
+
+        Parameters
+        ----------
+        experiment : grr.Experiment object
+            Experimental data to fit the model to.
+        h_tau_candidates : list-like
+            Values for inactivation time constant line search. The inactivation
+            time constant of gK1 is treated as a hyperparameter. Following a
+            line search, the h_tau and other parameters with the highest
+            subthreshold variance explained are stored in the model.
+        DT_beforeSpike : float
+            Region of trainingset_traces before each spike to be ignored during
+            fitting in ms.
+        """
+
+        # Three step procedure used for parameters extraction
+
+        print "\n################################"
+        print "# Fit GIF"
+        print "################################\n"
+
+        self.fitVoltageReset(experiment, self.Tref, do_plot=False)
+        self.fitSubthresholdDynamics(
+            experiment, h_tau_candidates, DT_beforeSpike=DT_beforeSpike
+        )
+        self.fitStaticThreshold(experiment)
+        self.fitThresholdDynamics(experiment)
+
+    def fitSubthresholdDynamics(self, experiment, h_tau_candidates, DT_beforeSpike=5.0):
         """
         Implement Step 2 of the fitting procedure introduced in Pozzorini et al. PLOS Comb. Biol. 2015
         The voltage reset is estimated by computing the spike-triggered average of the voltage.
@@ -514,92 +547,117 @@ class AugmentedGIF(GIF):
         DT_beforeSpike: in ms, data right before spikes are excluded from the fit. This parameter can be used to define that time interval.
         """
 
-        print "\nGIF MODEL - Fit subthreshold dynamics..."
+        print "\nAugmentedGIF MODEL - Fit subthreshold dynamics..."
 
         # Expand eta in basis functions
-        self.dt = experiment.dt
+        if not np.isclose(self.dt, experiment.dt):
+            warnings.warn(
+                'AugmentedGIF.dt ({moddt}ms) and experiment.dt ({exptdt}ms) '
+                'do not match. Overwriting AugmentedGIF.dt.'
+            )
+            self.dt = experiment.dt
 
-        # Build X matrix and Y vector to perform linear regression (use all traces in training set)
-        # For each training set an X matrix and a Y vector is built.
-        ####################################################################################################
-        X = []
-        Y = []
+        # RUN REGRESSION WITH LINE SEARCH OVER H_TAU
 
-        cnt = 0
+        """Implementation note:
+        Line search of possible h_tau values requires modifying instance h_tau
+        attribute. Guarantee that h_tau is restored to its original value even
+        if errors are thrown by encapsulating line search in a try/finally
+        block.
+        """
+        old_h_tau = self.h_tau  # Save original h_tau.
+        coeffs = []
+        var_explained = []
+        try:
+            for h_tau_candidate in h_tau_candidates:
+                self.h_tau = h_tau_candidate
 
-        for tr in experiment.trainingset_traces:
+                # Build regression matrices for each trace.
+                X = []
+                Y = []
 
-            if tr.useTrace:
+                cnt = 0
+                for tr in experiment.trainingset_traces:
+                    if tr.useTrace:
+                        cnt += 1
+                        reprint("Compute X matrix for repetition %d" % (cnt))
 
-                cnt += 1
-                reprint("Compute X matrix for repetition %d" % (cnt))
+                        # Compute the the X matrix and Y=\dot_V_data vector used to perform the multilinear linear regression (see Eq. 17.18 in Pozzorini et al. PLOS Comp. Biol. 2015)
+                        (X_tmp, Y_tmp) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, DT_beforeSpike=DT_beforeSpike)
+                        X.append(X_tmp)
+                        Y.append(Y_tmp)
 
-                # Compute the the X matrix and Y=\dot_V_data vector used to perform the multilinear linear regression (see Eq. 17.18 in Pozzorini et al. PLOS Comp. Biol. 2015)
-                (X_tmp, Y_tmp) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, DT_beforeSpike=DT_beforeSpike)
+                # Concatenate matrices from different traces.
+                if cnt == 1:
+                    X = X[0]
+                    Y = Y[0]
+                elif cnt > 1:
+                    X = np.concatenate(X, axis=0)
+                    Y = np.concatenate(Y, axis=0)
+                else:
+                    raise RuntimeError(
+                        'Trace.useTrace must be True for at least one Trace in '
+                        'experiment.trainingset_traces in order to fit the model.'
+                    )
 
-                X.append(X_tmp)
-                Y.append(Y_tmp)
+                # Run bounded linear regression.
+                betas = optimize.lsq_linear(
+                    X, Y,
+                    bounds = (
+                        np.concatenate([
+                            [-np.inf, 0, -np.inf, 0, 0],
+                            np.full(X.shape[1] - 5, -np.inf)
+                        ]),
+                        np.concatenate([
+                            [0, np.inf, np.inf, np.inf, np.inf],
+                            np.full(X.shape[1] - 5, np.inf)
+                        ])
+                    )
+                )['x'].tolist()
+                coeffs.append(betas)
 
-        # Concatenate matrixes associated with different traces to perform a single multilinear regression
-        ####################################################################################################
-        if cnt == 1:
-            X = X[0]
-            Y = Y[0]
+                # Compute variance explained.
+                Yhat = np.dot(X, betas)
+                MSE = np.mean((Y - Yhat)**2)
+                var_explained.append(1. - MSE/np.var(Y))
 
-        elif cnt > 1:
-            X = np.concatenate(X, axis=0)
-            Y = np.concatenate(Y, axis=0)
+        finally:
+            self.h_tau = old_h_tau
 
-        else:
-            print "\nError, at least one training set trace should be selected to perform fit."
+        # Assign model parameters based on best regression result.
+        best_coeffs = np.array(coeffs[np.argmax(var_explained)])
 
-        # Perform linear Regression defined in Eq. 17 of Pozzorini et al. PLOS Comp. Biol. 2015
-        ####################################################################################################
+        self.C = 1./best_coeffs[1]
+        self.gl = -best_coeffs[0] * self.C
+        self.El = best_coeffs[2] * self.C / self.gl
 
-        print "\nPerform linear regression..."
-        XTX = np.dot(np.transpose(X), X)
-        XTX_inv = inv(XTX)
-        XTY = np.dot(np.transpose(X), Y)
-        b = np.dot(XTX_inv, XTY)
-        b = b.flatten()
+        self.gbar_K1 = best_coeffs[3] * self.C
+        self.gbar_K2 = best_coeffs[4] * self.C
+        self.h_tau = h_tau_candidates[np.argmax(var_explained)]
 
-        # Extract explicit model parameters from regression result b
-        ####################################################################################################
+        self.eta.setFilter_Coefficients(-best_coeffs[5:] * self.C)
 
-        self.C = 1./b[1]
-        self.gl = -b[0]*self.C
-        self.El = b[2]*self.C/self.gl
-
-        self.gbar_K1 = b[3] * self.C
-        self.gbar_K2 = b[4] * self.C
-
-        self.eta.setFilter_Coefficients(-b[5:]*self.C)
+        self.hyperparameter_search = {
+            'h_tau': h_tau_candidates,
+            'var_explained': var_explained
+        }
 
         self.printParameters()
 
-        # Compute percentage of variance explained on dV/dt
-        ####################################################################################################
-
-        var_explained_dV = 1.0 - np.mean((Y - np.dot(X, b))**2)/np.var(Y)
-
-        self.var_explained_dV = var_explained_dV
-        print "Percentage of variance explained (on dV/dt): %0.2f" % (var_explained_dV*100.0)
+        self.var_explained_dV = np.max(var_explained)
+        print "Percentage of variance explained (on dV/dt): %0.2f" % (self.var_explained_dV*100.0)
 
         # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
         ####################################################################################################
 
         SSE = 0     # sum of squared errors
         VAR = 0     # variance of data
-
         for tr in experiment.trainingset_traces:
-
             if tr.useTrace:
-
                 # Simulate subthreshold dynamics
                 (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
 
                 indices_tmp = tr.getROI_FarFromSpikes(0.0, self.Tref)
-
                 SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
                 VAR += len(indices_tmp)*np.var(tr.V[indices_tmp])
 
@@ -669,7 +727,7 @@ class AugmentedGIF(GIF):
         """
 
         print "\n-------------------------"
-        print "GIF model parameters:"
+        print "AugmentedGIF model parameters:"
         print "-------------------------"
         print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
         print "R (MOhm):\t%0.3f" % (1.0/self.gl)
