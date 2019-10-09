@@ -34,7 +34,7 @@ myGIF.h_tau = 50.
 myGIF.n_A = 1.55
 myGIF.n_Vhalf = -24.2
 myGIF.n_k = 0.216
-myGIF.n_tau = 100.
+
 
 myGIF.E_K = -101.
 

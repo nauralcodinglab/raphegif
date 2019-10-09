@@ -178,7 +178,6 @@ KGIF.h_tau = 50.
 KGIF.n_A = 1.55
 KGIF.n_Vhalf = -16.9
 KGIF.n_k = 0.114
-KGIF.n_tau = 100.
 
 KGIF.E_K = -101.
 

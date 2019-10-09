@@ -55,9 +55,9 @@ mods = {
 
 mods['V0 -5'].n_Vhalf           -=5
 mods['V0 -10'].n_Vhalf          -= 10
-mods['tau_n 50'].n_tau          = 50
+
 mods['tau_n 50 V0 -5'].n_Vhalf  -= 5
-mods['tau_n 50 V0 -5'].n_tau    = 50
+
 
 # Dict to hold output
 fitted_coeffs = {}

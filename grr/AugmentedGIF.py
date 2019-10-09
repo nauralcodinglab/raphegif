@@ -72,7 +72,6 @@ class AugmentedGIF(GIF):
         self.n_Vhalf = -24.3
         self.n_k = 0.216
         self.n_A = 1.55
-        self.n_tau = 1
 
         self.E_K = -101
 
@@ -82,19 +81,16 @@ class AugmentedGIF(GIF):
     def mInf(self, V):
         """Compute the equilibrium activation gate state of the potassium conductance.
         """
-
         return self.m_A/(1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
 
     def hInf(self, V):
         """Compute the equilibrium state of the inactivation gate of the potassium conductance.
         """
-
         return self.h_A/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
 
     def nInf(self, V):
         """Compute the equilibrium state of the non-inactivating conductance.
         """
-
         return self.n_A/(1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
 
     def computeGating(self, V, inf_vec, tau):
@@ -103,7 +99,6 @@ class AugmentedGIF(GIF):
 
         Wrapper for _computeGatingInternal, which is a nb.jit-accelerated static method.
         """
-
         return self._computeGatingInternal(V, inf_vec, tau, self.dt)
 
     @staticmethod
@@ -112,12 +107,10 @@ class AugmentedGIF(GIF):
         """
         Internal method called by computeGating.
         """
-
         output = np.empty_like(V, dtype=np.float64)
         output[0] = inf_vec[0]
 
         for i in range(1, len(V)):
-
             output[i] = output[i - 1] + (inf_vec[i - 1] - output[i - 1])/tau * dt
 
         return output
@@ -126,7 +119,6 @@ class AugmentedGIF(GIF):
         """
         Compute driving force on K based on SubthreshGIF_K.E_K and V.
         """
-
         return V - self.E_K
 
     def simulate(self, I, V0):
@@ -162,7 +154,6 @@ class AugmentedGIF(GIF):
         p_n_Vhalf = self.n_Vhalf
         p_n_k = self.n_k
         p_n_A = self.n_A
-        p_n_tau = self.n_tau
 
         p_E_K = self.E_K
 
@@ -224,7 +215,6 @@ class AugmentedGIF(GIF):
                 float n_Vhalf    = float(p_n_Vhalf);
                 float n_k        = float(p_n_k);
                 float n_A        = float(p_n_A);
-                float n_tau      = float(p_n_tau);
 
                 float E_K        = float(p_E_K);
 
@@ -269,7 +259,7 @@ class AugmentedGIF(GIF):
 
                     // INTEGRATE n GATE
                     n_inf_t = n_A/(1 + exp(-n_k * (V[t-1] - n_Vhalf)));
-                    n[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+                    n[t] = n_inf_t;
 
                     // COMPUTE K CONDUCTANCES
                     DF_K_t = V[t-1] - E_K;
@@ -312,7 +302,7 @@ class AugmentedGIF(GIF):
         vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
-                'p_n_Vhalf', 'p_n_k', 'p_n_tau', 'p_n_A',
+                'p_n_Vhalf', 'p_n_k', 'p_n_A',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
                 'V', 'I', 'm', 'h', 'n',
                 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
@@ -362,7 +352,6 @@ class AugmentedGIF(GIF):
         p_n_Vhalf = self.n_Vhalf
         p_n_k = self.n_k
         p_n_A = self.n_A
-        p_n_tau = self.n_tau
 
         p_E_K = self.E_K
 
@@ -427,7 +416,6 @@ class AugmentedGIF(GIF):
                 float n_Vhalf    = float(p_n_Vhalf);
                 float n_k        = float(p_n_k);
                 float n_A        = float(p_n_A);
-                float n_tau      = float(p_n_tau);
 
                 float E_K        = float(p_E_K);
 
@@ -468,7 +456,7 @@ class AugmentedGIF(GIF):
 
                     // INTEGRATE n GATE
                     n_inf_t = n_A/(1 + exp(-n_k * (V[t-1] - n_Vhalf)));
-                    n[t] = n[t-1] + dt/n_tau*(n_inf_t - n[t-1]);
+                    n[t] = n_inf_t;
 
                     // COMPUTE K CONDUCTANCES
                     DF_K_t = V[t-1] - E_K;
@@ -492,7 +480,7 @@ class AugmentedGIF(GIF):
         vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
-                'p_n_Vhalf', 'p_n_k', 'p_n_tau', 'p_n_A',
+                'p_n_Vhalf', 'p_n_k', 'p_n_A',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
                 'V', 'I', 'm', 'h', 'n',
                 'p_Vr', 'p_Tref',
@@ -693,7 +681,7 @@ class AugmentedGIF(GIF):
         # Compute time-dependent state of each gate over whole trace
         m_vec = m_inf_vec
         h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau)
-        n_vec = self.computeGating(trace.V, n_inf_vec, self.n_tau)
+        n_vec = n_inf_vec
 
         # Compute gating state of each conductance over whole trace
         gating_vec_1 = m_vec * h_vec

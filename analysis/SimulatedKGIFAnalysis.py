@@ -440,7 +440,7 @@ base_model.h_tau = 50.
 base_model.n_A = 1.55
 base_model.n_Vhalf = -16.9
 base_model.n_k = 0.114
-base_model.n_tau = 100.
+
 
 base_model.E_K = -101.
 

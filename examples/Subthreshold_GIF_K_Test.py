@@ -105,7 +105,7 @@ myGIF.h_tau = 50.
 myGIF.n_A = 1.55
 myGIF.n_Vhalf = -16.9
 myGIF.n_k = 0.114
-myGIF.n_tau = 100.
+
 
 myGIF.E_K = -101.
 
@@ -132,11 +132,11 @@ plt.figure(figsize = (10, 5))
 
 ax0 = plt.subplot(211)
 plt.title('Response of K_conductance gates to voltage step')
-plt.plot(t, myGIF.computeGating(V_vec, myGIF.mInf(V_vec), myGIF.m_tau),
+plt.plot(t, myGIF.mInf(V_vec),
          label = 'm')
 plt.plot(t, myGIF.computeGating(V_vec, myGIF.hInf(V_vec), myGIF.h_tau),
          label = 'h')
-plt.plot(t, myGIF.computeGating(V_vec, myGIF.nInf(V_vec), myGIF.n_tau),
+plt.plot(t, myGIF.nInf(V_vec),
          label = 'n')
 
 plt.ylabel('g')
