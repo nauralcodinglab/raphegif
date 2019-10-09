@@ -1,0 +1,11 @@
+{
+    "AEC_col": "AEC",
+    "train_cols": ["Train"],
+    "test_cols": ["Test"],
+    "no_test_traces": 10,
+    "train_ROIs": [[500, 59500]],
+    "test_ROIs": [[500, 9500]],
+    "drift_cutoff": 0.9,
+    "reliability_cutoff": 0.1,
+    "dt": 0.1
+}
