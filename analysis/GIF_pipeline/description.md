@@ -1,10 +1,6 @@
 # GIF fitting pipeline
 
 ## Pipeline for single cell models
-
-Goal is to take in raw recordings and output fitted models, benchmarks, and
-example traces.
-
 ```mermaid
 graph LR
 
@@ -12,15 +8,30 @@ raw(Raw data) --> qc{QC and preprocessing}
 qc --> good(Good recordings)
 qc --> bad(Bad recordings)
 
-good --> fit{Fit models}
-fit --> mod(Models)
-fit --> bench(Benchmarks)
-fit --> ex(Example traces)
+good -- Training data --> fit{Fit models}
+fit --> GIF(GIF)
+fit --> AugmentedGIF(AugmentedGIF)
+fit --> othermod(Other models...)
+
+GIF --> bench{Run benchmarks}
+AugmentedGIF --> bench
+othermod --> bench
+good -- Test data --> bench
+
+bench --> ex(Example traces)
+bench --> md(Spike train prediction)
+bench --> r2V(Var. explained on V)
+bench --> r2dV(Var. explained on dV)
 ```
 
-Notes:
-- Quality control step should accept parameters for rejection thresholds.
-- Each model probably needs its own fitting script.
+The analysis pipeline ingests raw electrophysiological data in Axon Binary
+Format, uses it to train single cell models from `grr`, and outputs various
+benchmarks computed on held-out data. These three stages are implemented by the
+`AEC_QC.py`, `fit_mods.py`, and `run_benchmarks.py` Python scripts in this
+directory. The scripts are designed to be run from the command line to process
+experiments/models in batches. Running `make all` from this directory reproduces
+my GIF-based models of DRN neurons and mPFC pyramidal cells along with their
+associated benchmarks.   
 
 ## Detailed pipeline
 
