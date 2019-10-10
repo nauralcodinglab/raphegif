@@ -12,19 +12,19 @@ all : \
 $(MODS)/5HT/5HT_goodcells_benchmark_sample_traces.pkl $(MODS)/5HT/5HT_goodcells_benchmark_Md_8.csv $(MODS)/5HT/5HT_goodcells_benchmark_R2_V.csv $(MODS)/5HT/5HT_goodcells_benchmark_R2_dV.csv: \
 	run_benchmarks.py \
 	$(PROCDATA)/5HT_fastnoise/5HT_goodcells.ldat \
-	$(MODS)/5HT/5HT_GIFs.lmod $(MODS)/5HT/5HT_AugmentedGIFs.lmod $(MODS)/5HT/5HT_iGIF_NPs.lmod $(MODS)/5HT/5HT/iGIF_VRs.lmod
+	$(MODS)/5HT/5HT_GIFs.lmod $(MODS)/5HT/5HT_AugmentedGIFs.lmod $(MODS)/5HT/5HT_iGIF_NPs.lmod $(MODS)/5HT/5HT_iGIF_VRs.lmod
 	python $^ -o $(MODS)/5HT --precision 8. -v
 
 $(MODS)/GABA/GABA_goodcells_benchmark_sample_traces.pkl $(MODS)/GABA/GABA_goodcells_benchmark_Md_8.csv $(MODS)/GABA/GABA_goodcells_benchmark_R2_V.csv $(MODS)/GABA/GABA_goodcells_benchmark_R2_dV.csv: \
 	run_benchmarks.py \
 	$(PROCDATA)/GABA_fastnoise/GABA_goodcells.ldat \
-	$(MODS)/GABA/GABA_GIFs.lmod $(MODS)/GABA/GABA_AugmentedGIFs.lmod $(MODS)/GABA/GABA_iGIF_NPs.lmod $(MODS)/GABA/GABA/iGIF_VRs.lmod
+	$(MODS)/GABA/GABA_GIFs.lmod $(MODS)/GABA/GABA_AugmentedGIFs.lmod $(MODS)/GABA/GABA_iGIF_NPs.lmod $(MODS)/GABA/GABA_iGIF_VRs.lmod
 	python $^ -o $(MODS)/GABA --precision 8. -v
 
 $(MODS)/mPFC/mPFC_goodcells_benchmark_sample_traces.pkl $(MODS)/mPFC/mPFC_goodcells_benchmark_Md_8.csv $(MODS)/mPFC/mPFC_goodcells_benchmark_R2_V.csv $(MODS)/mPFC/mPFC_goodcells_benchmark_R2_dV.csv: \
 	run_benchmarks.py \
 	$(PROCDATA)/mPFC_fastnoise/mPFC_goodcells.ldat \
-	$(MODS)/mPFC/mPFC_GIFs.lmod $(MODS)/mPFC/mPFC_AugmentedGIFs.lmod $(MODS)/mPFC/mPFC_iGIF_NPs.lmod $(MODS)/mPFC/mPFC/iGIF_VRs.lmod
+	$(MODS)/mPFC/mPFC_GIFs.lmod $(MODS)/mPFC/mPFC_AugmentedGIFs.lmod $(MODS)/mPFC/mPFC_iGIF_NPs.lmod $(MODS)/mPFC/mPFC_iGIF_VRs.lmod
 	python $^ -o $(MODS)/mPFC --precision 8. -v
 
 # Fit single cell models.
