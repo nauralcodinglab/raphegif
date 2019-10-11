@@ -16,7 +16,7 @@ parser.add_argument(
     help='Pickled list of Experiment objects'
 )
 parser.add_argument(
-    'models', type=str, nargs='+', required=True,
+    'models', type=str, nargs='+',
     help='Pickled lists of GIF or GIF-like models to use to compute '
     'spiketrain predictions.'
 )
@@ -157,7 +157,7 @@ for i, expt in enumerate(experiments):
         if args.verbose:
             print(
                 'Getting Md* ({:.1f}ms precision) for {} model {}'.format(
-                    label, args.precision, mod.name
+                    args.precision, label, mod.name
                 )
             )
         with gagProcess():

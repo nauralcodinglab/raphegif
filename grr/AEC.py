@@ -8,8 +8,7 @@ from numpy.linalg import *
 import matplotlib.pyplot as plt
 
 from .Filter import Filter
-from .Filter_Rect_LinSpaced import Filter_Rect_LinSpaced
-from .Filter_Rect_LogSpaced_AEC import Filter_Rect_LogSpaced_AEC
+from .Filter_Rect import Filter_Rect_LinSpaced, Filter_Rect_LogSpaced_AEC
 
 
 class AEC:
