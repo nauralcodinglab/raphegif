@@ -18,11 +18,16 @@ class OhmicSpkPredictor(object):
     def __init__(self):
         pass
 
-    def add_recordings(self, recs, baseline = None, ss = None, V_channel = 0, I_channel = 1, dt = 0.1):
+    def add_recordings(self, recs, baseline = None, ss = None, tau = None, V_channel = 0, I_channel = 1, dt = 0.1):
 
         """
         Recs should be a list of Recording objects with dimensionality [channel, time, sweep]
         """
+
+        self.tau = None
+        self.thresh = None
+        self.V0 = None
+        self.Vinf = None
 
         recs_arr = np.array(recs)
         self.V = deepcopy(recs_arr[:, V_channel, :, :])
@@ -33,10 +38,16 @@ class OhmicSpkPredictor(object):
         if type(recs[0]) is Recording and (baseline is not None and ss is not None):
 
             self.Rins = []
+            self.taus = []
 
             for rec in recs:
-                tmp = rec.fit_test_pulse(baseline, ss, V_clamp = False, verbose = False)
-                self.Rins.append(tmp['R_input'].mean())
+                if tau is None:
+                    tmp = rec.fit_test_pulse(baseline, ss, V_clamp = False, verbose = False, V_chan=V_channel, I_chan=I_channel)
+                    self.Rins.append(tmp['R_input'].mean())
+                else:
+                    tmp = rec.fit_test_pulse(baseline, ss, tau = tau, V_clamp = False, V_chan=V_channel, I_chan=I_channel, verbose = False, plot_tau=True)
+                    self.Rins.append(tmp['R_input'].mean())
+                    self.taus.append(tmp['tau'])
 
     @property
     def t_vec(self):
@@ -71,7 +82,7 @@ class OhmicSpkPredictor(object):
 
 
     def scrape_data(self, V0_range = (2495, 2595), Vinf_range = (2750, 2800), baseline_range = (0, 100),
-        quiescent_until = 2600, dVdt_thresh = 10):
+        quiescent_until = 2647, dVdt_thresh = 10, exclude_above = -55):
 
         """
         Scrape spks, V0, and Vinf from a set of recordings.
@@ -124,6 +135,9 @@ class OhmicSpkPredictor(object):
 
                 # Extract V0
                 V0_i = self.V[rec_ind, V0_slice, sw_ind].mean()
+
+                if V0_i > exclude_above:
+                    continue
 
                 # Extract Vinf
                 I_probe = self.I[rec_ind, Vinf_slice, sw_ind].mean()
@@ -192,19 +206,28 @@ class OhmicSpkPredictor(object):
                 if verbose:
                     print '\rFitting {:.1f}%'.format(100 * (i+1)/len(thresh_guesses)),
 
-                X = - np.log( (thresh - Vinf) / (self.V0 - Vinf) )
                 if force_tau is None:
+                    X = - np.log( (thresh - Vinf) / (self.V0 - Vinf) )
+
                     XTX = np.dot(X.T, X)
                     XTX_inv = 1/XTX
                     XTY = np.dot(X.T, y)
 
                     b = np.dot(XTX_inv, XTY)
+                    tau_est.append(b)
+
+                    yhat = np.dot(X, b)
+
+
                 else:
-                    b = force_tau
 
-                tau_est.append(b)
+                    yhat = self.predict_spks(tau = force_tau, thresh = thresh, Vinf = Vinf, V0 = self.V0)
 
-                yhat = np.dot(X, b)
+                    if np.all(np.isnan(yhat)):
+                        continue
+
+                    tau_est.append(force_tau)
+
                 SSE.append(np.sum( (y - yhat)**2 ))
 
                 Vinf_.append(Vinf)
@@ -213,6 +236,7 @@ class OhmicSpkPredictor(object):
         self.tau = tau_est[np.nanargmin(SSE)]
         self.thresh = thresh_[np.nanargmin(SSE)]
         self.Vinf_est = Vinf_[np.nanargmin(SSE)]
+        self.SSE_opt = np.nanmin(SSE)
 
         return tau_est, SSE
 
@@ -235,3 +259,175 @@ class OhmicSpkPredictor(object):
         spk_prediction = - tau * np.log( (thresh - Vinf) / (V0 - Vinf) )
 
         return spk_prediction
+
+
+class IASpikePredictor(OhmicSpkPredictor):
+
+    def fit_spks(self, thresh_guesses = 'default', Vinput_guesses = 'default',
+    gaprime_guesses = 'default', tauh_guesses = 'default', force_tau = None,
+    sim_dt = 0.001, max_time = 10, verbose = False):
+
+        if thresh_guesses == 'default':
+            thresh_guesses = np.linspace(-50, -25, 6)
+
+        if Vinput_guesses == 'default':
+            Vinput_guesses = np.linspace(10, 100, 5)
+
+        if gaprime_guesses == 'default':
+            gaprime_guesses = np.linspace(0, 20, 5)
+
+        if tauh_guesses == 'default':
+            tauh_guesses = np.linspace(1, 3, 4)
+
+        y = np.array(self.spks)
+        SSE         = []
+        tau     = []
+        thresh  = []
+        Vinput  = []
+        gaprime = []
+        tauh    = []
+
+        for i, thresh in enumerate(thresh_guesses):
+
+            if verbose:
+                print 'Simulating {:.1f}%'.format(100* (i + 1) / len(thresh_guesses))
+
+            for j, Vinput in enumerate(Vinput_guesses):
+
+                # Skip combinations that will never produce spks.
+                if Vinput < thresh:
+                    continue
+
+                for h_tau in tauh_guesses:
+
+                    for gaprime in gaprime_guesses:
+
+                        # List of spk predictions in units of tau_mem
+                        x = []
+
+                        for V0 in self.V0:
+                            x.append(self.predict_spk(gaprime, thresh, V0, Vinput, h_tau = h_tau, dt = sim_dt, max_time = max_time))
+
+                        x = np.array(x)
+
+                        if force_tau is None:
+                            # Calculate optimal tau
+                            tau_ = np.sum(x * y) / np.sum(x * x)
+                        else:
+                            tau_ = force_tau
+
+                        SSE.append(np.sum((y - x * tau_)**2))
+                        tau.append(tau_)
+                        thresh.append(thresh)
+                        Vinput.append(Vinput)
+                        gaprime.append(gaprime)
+                        tauh.append(h_tau)
+
+        ind = np.nanargmin(SSE)
+        self.tau = tau[ind]
+        self.thresh = thresh[ind]
+        self.Vinput = Vinput[ind]
+        self.gaprime = gaprime[ind]
+        self.tauh = tauh[ind]
+        self.SSE_opt = SSE[ind]
+
+        output_dict = {
+            'SSE': SSE,
+            'tau': tau,
+            'thresh': thresh,
+            'Vinput': Vinput,
+            'gaprime': gaprime
+        }
+
+        return output_dict
+
+    @staticmethod
+    def predict_spk(ga, thresh, V0, Vin, h_tau = 1.5, dt = 0.001, max_time = 10.):
+
+        El = -60.
+        Ea = -101.
+
+        m_Vhalf = -27.
+        m_k = 0.113
+
+        h_Vhalf = -74.7
+        h_k = -0.11
+
+        # Set initial condition
+        V_t = V0
+        h_t = 1./ (1 + np.exp(-h_k * (V0 - h_Vhalf)))
+        m_t = 1./ (1 + np.exp(-m_k * (V0 - m_Vhalf)))
+
+        cnt = 0
+        t = 0.
+        while V_t < thresh and t < max_time:
+
+            dV = -(V_t - El) - ga * m_t * h_t * (V_t - Ea) + Vin
+
+            m_t = 1./ (1 + np.exp(-m_k * (V_t - m_Vhalf)))
+
+            h_inf = 1./ (1 + np.exp(-h_k * (V_t - h_Vhalf)))
+            dh = (h_inf - h_t) / h_tau
+            h_t += dh * dt
+
+            V_t += dV * dt
+
+            t += dt
+            cnt += 1
+
+        return t
+
+
+
+def _predict_spk_for_scipy(params, V0_vec):
+
+    ga, thresh, Vin, h_tau, tau_mem = params
+    thresh *= 2
+    Vin *= 2
+    h_tau /= 10
+
+    dt = 0.001
+    max_time = 2.
+
+    El = -60.
+    Ea = -101.
+
+    m_Vhalf = -27.
+    m_k = 0.113
+
+    h_Vhalf = -74.7
+    h_k = -0.11
+
+    t_vec = []
+    for V0 in V0_vec:
+
+        # Set initial condition
+        V_t = V0
+        h_t = 1./ (1 + np.exp(-h_k * (V0 - h_Vhalf)))
+        m_t = 1./ (1 + np.exp(-m_k * (V0 - m_Vhalf)))
+
+        cnt = 0
+        t = 0.
+        while V_t < thresh and t < max_time:
+
+            dV = -(V_t - El) - ga * m_t * h_t * (V_t - Ea) + Vin
+
+            m_t = 1./ (1 + np.exp(-m_k * (V_t - m_Vhalf)))
+
+            h_inf = 1./ (1 + np.exp(-h_k * (V_t - h_Vhalf)))
+            dh = (h_inf - h_t) / h_tau
+            h_t += dh * dt
+
+            V_t += dV * dt
+
+            t += dt
+            cnt += 1
+
+        t_vec.append(t)
+
+    t_vec = np.array(t_vec)
+    V0_vec = np.array(V0_vec)
+
+    #tau_mem_est = np.sum(t_vec * V0_vec) / np.sum(t_vec * t_vec)
+
+    return np.sum((V0_vec - t_vec * tau_mem)**2)
