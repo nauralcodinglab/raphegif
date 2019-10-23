@@ -287,26 +287,26 @@ class IASpikePredictor(OhmicSpkPredictor):
         gaprime = []
         tauh    = []
 
-        for i, thresh in enumerate(thresh_guesses):
+        for i, thresh_guess in enumerate(thresh_guesses):
 
             if verbose:
                 print 'Simulating {:.1f}%'.format(100* (i + 1) / len(thresh_guesses))
 
-            for j, Vinput in enumerate(Vinput_guesses):
+            for j, Vinput_guess in enumerate(Vinput_guesses):
 
                 # Skip combinations that will never produce spks.
-                if Vinput < thresh:
+                if Vinput_guess < thresh_guess:
                     continue
 
-                for h_tau in tauh_guesses:
+                for h_tau_guess in tauh_guesses:
 
-                    for gaprime in gaprime_guesses:
+                    for gaprime_guess in gaprime_guesses:
 
                         # List of spk predictions in units of tau_mem
                         x = []
 
                         for V0 in self.V0:
-                            x.append(self.predict_spk(gaprime, thresh, V0, Vinput, h_tau = h_tau, dt = sim_dt, max_time = max_time))
+                            x.append(self.predict_spk(gaprime_guess, thresh_guess, V0, Vinput_guess, h_tau = h_tau_guess, dt = sim_dt, max_time = max_time))
 
                         x = np.array(x)
 
@@ -318,10 +318,10 @@ class IASpikePredictor(OhmicSpkPredictor):
 
                         SSE.append(np.sum((y - x * tau_)**2))
                         tau.append(tau_)
-                        thresh.append(thresh)
-                        Vinput.append(Vinput)
-                        gaprime.append(gaprime)
-                        tauh.append(h_tau)
+                        thresh.append(thresh_guess)
+                        Vinput.append(Vinput_guess)
+                        gaprime.append(gaprime_guess)
+                        tauh.append(h_tau_guess)
 
         ind = np.nanargmin(SSE)
         self.tau = tau[ind]

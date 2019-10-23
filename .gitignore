@@ -8,5 +8,5 @@ mydata
 ./src/myexamples/
 ./src/myexamples
 *.ipynb_checkpoints
-*/__pycache__
+__pycache__
 *.swp
