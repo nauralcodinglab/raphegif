@@ -5,14 +5,13 @@ from __future__ import division
 import pickle
 import argparse
 import json
+from copy import deepcopy
 
 import numpy as np
 
 import grr.GIF_network as gfn
 from grr.Tools import check_dict_fields
-import sys
-sys.path.append('./analysis/feedforward_gain_modulation')
-from FeedForwardDRN import SynapticKernel
+from ezephys.stimtools import BiexponentialSynapticKernel
 
 
 #%% PARSE COMMANDLINE ARGUMENTS
@@ -57,7 +56,12 @@ with open(args.opts, 'r') as f:
 required_fields = {
     'dt': None,
     'propagation_delay': None,
-    'IPSC_kernel': {'tau': None, 'amplitude': None, 'kernel_len': None},
+    'IPSC_kernel': {
+        'tau_rise': None,
+        'tau_decay': None,
+        'amplitude': None,
+        'duration': None
+    },
     'no_ser_neurons': None,
     'no_gaba_neurons': None,
     'connection_probability': None,
@@ -109,7 +113,7 @@ def save_model(model, type, number):
 
     """
     fname = '_'.join(
-        args.prefix, number, opts['output_model_suffixes'][type]
+        [args.prefix, str(number), opts['output_model_suffixes'][type]]
     )
     if args.verbose:
         print('Saving {} GIFnet model to {}'.format(type, fname))
@@ -117,14 +121,14 @@ def save_model(model, type, number):
         pickle.dump(model, f)
         f.close()
 
-
-gaba_kernel = SynapticKernel(
-    'alpha',
-    tau=opts['IPSC_kernel']['tau'],
-    ampli=opts['IPSC_kernel']['amplitude'],
-    kernel_len=opts['IPSC_kernel']['kernel_len'],
-    dt=opts['dt']
-).centered_kernel
+gaba_kernel = BiexponentialSynapticKernel(
+    amplitude=opts['IPSC_kernel']['amplitude'],
+    tau_rise=opts['IPSC_kernel']['tau_rise'],
+    tau_decay=opts['IPSC_kernel']['tau_decay'],
+    duration=opts['IPSC_kernel']['duration'],
+    dt=opts['dt'],
+    front_padded=True
+)
 
 for i in range(args.replicates):
     if args.verbose:
@@ -140,14 +144,14 @@ for i in range(args.replicates):
 
     subsample_gifnet = gfn.GIFnet(
         name='Subsample GIFs',
-        ser_mod=np.random.choice(sergifs, opts['no_ser_neurons']),
-        gaba_mod=np.random.choice(somgifs, opts['no_gaba_neurons']),
+        ser_mod=np.random.choice(deepcopy(sergifs), opts['no_ser_neurons']),
+        gaba_mod=np.random.choice(deepcopy(somgifs), opts['no_gaba_neurons']),
         propagation_delay=opts['propagation_delay'],
-        gaba_kernel=gaba_kernel,
+        gaba_kernel=gaba_kernel.kernel,
         connectivity_matrix=connectivity_matrix,
         dt=opts['dt']
     )
-    del gaba_kernel, connectivity_matrix
+    del connectivity_matrix
 
     # Clear cached interpolated filters to save disk space.
     subsample_gifnet.clear_interpolated_filters()
@@ -156,13 +160,13 @@ for i in range(args.replicates):
     save_model(subsample_gifnet, 'base', i)
 
     # Make/save IA KO model
-    for i in range(len(subsample_gifnet.ser_mod)):
-        subsample_gifnet.ser_mod[i].gbar_K1 = 0.
+    for j in range(len(subsample_gifnet.ser_mod)):
+        subsample_gifnet.ser_mod[j].gbar_K1 = 0.
     save_model(subsample_gifnet, 'noIA', i)
 
     # Make/save fixed IA model.
-    for i in range(len(subsample_gifnet.ser_mod)):
-        subsample_gifnet.ser_mod[i].gbar_K1 = opts['fixed_IA_conductance']
+    for j in range(len(subsample_gifnet.ser_mod)):
+        subsample_gifnet.ser_mod[j].gbar_K1 = opts['fixed_IA_conductance']
     save_model(subsample_gifnet, 'fixedIA', i)
 
 if args.verbose:
