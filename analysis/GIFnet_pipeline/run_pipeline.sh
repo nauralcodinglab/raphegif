@@ -1,3 +1,8 @@
+# Set environment variables.
+export MKL_NUM_THREADS=4
+export NUMEXPR_NUM_THREADS=4
+export OMP_NUM_THREADS=4
+
 # Define constants.
 SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
 GABAMODS=../../data/models/GABA/GABA_GIFs.lmod
@@ -9,8 +14,8 @@ python ./generate_models.py --sermods $SERMODS --gabamods $GABAMODS --prefix ../
 
 # Generate input.
 python ../GIF_network/input_generators/current_step.py ../../data/simulations/GIF_network/input/square_step.dat \
-	--baseline-ser 0.01 --min-ser 0.02 --max-ser 0.070 \
-	--baseline-gaba 0. --min-gaba 0.01 --max-gaba 0.050 \
+	--baseline-ser 0.01 --min-ser 0.010 --max-ser 0.060 \
+	--baseline-gaba 0. --min-gaba 0.010 --max-gaba 0.060 \
 	|| exit 999
 
 # Run simulations
