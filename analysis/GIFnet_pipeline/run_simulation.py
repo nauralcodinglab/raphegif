@@ -20,74 +20,74 @@ from grr.Tools import generateOUprocess
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'model',
-    help = 'Path to GIFnet model used to run the simulation.'
+    help='Path to GIFnet model used to run the simulation.'
 )
 parser.add_argument(
     'input',
-    help = 'Filepath to pickled dict with model input. '
+    help='Filepath to pickled dict with model input. '
     'Input must be in a dict with `ser_input` and `gaba_input` as '
     'keys. If inputs are vectors, they are broadcasted to match '
     'the number of neurons of each type.'
 )
 parser.add_argument(
     'output',
-    help = 'Filepath for storing the results of the simulation.'
+    help='Filepath for storing the results of the simulation.'
 )
 parser.add_argument(
     '--num-ser-examples',
-    help = 'Number of 5HT example traces to save.',
-    type = int, default = 20
+    help='Number of 5HT example traces to save.',
+    type=int, default=20
 )
 parser.add_argument(
     '--num-gaba-examples',
-    help = 'Number of GABA example traces to save.',
-    type = int, default = 20
+    help='Number of GABA example traces to save.',
+    type=int, default=20
 )
 parser.add_argument(
     '--no-ser',
-    help = 'Do not simulate 5HT neurons, even if input has been provided.',
-    action = 'store_true'
+    help='Do not simulate 5HT neurons, even if input has been provided.',
+    action='store_true'
 )
 parser.add_argument(
     '--no-gaba',
-    help = 'Do not simulate GABA neurons, even if input has been provided.',
-    action = 'store_true'
+    help='Do not simulate GABA neurons, even if input has been provided.',
+    action='store_true'
 )
 parser.add_argument(
     '--no-feedforward',
-    help = 'Passes do_feedforward = False to GIFnet.simulate. '
+    help='Passes do_feedforward = False to GIFnet.simulate. '
     'Allows 5HT and GABA cells to be simulated, but does not '
     'connect them.',
-    action = 'store_true'
+    action='store_true'
 )
 
 # Background noise params.
 # For efficiency, same noise is used for all sweeps.
 parser.add_argument(
-    '--no-noise', help = 'Turn off background network noise.',
-    action = 'store_true'
+    '--no-noise', help='Turn off background network noise.',
+    action='store_true'
 )
 parser.add_argument(
     '--tau-background',
-    help = 'Time constant of background noise (ms).',
-    type = float, default = 3.
+    help='Time constant of background noise (ms).',
+    type=float, default=3.
 )
 parser.add_argument(
     '--sigma-background',
-    help = 'Spread of background noise (nA).',
-    type = float, default = 0.005
+    help='Spread of background noise (nA).',
+    type=float, default=0.005
 )
 parser.add_argument(
     '--seed-background',
-    help = 'Seed for background noise random number generator.',
-    type = int, default = 42
+    help='Seed for background noise random number generator.',
+    type=int, default=42
 )
 
 # Misc.
 parser.add_argument(
     '-v', '--verbose',
-    help = 'Increase output verbosity.',
-    action = 'store_true'
+    help='Increase output verbosity.',
+    action='store_true'
 )
 
 args = parser.parse_args()
@@ -215,8 +215,8 @@ if args.no_ser:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            gaba_input = distal_in['gaba_input'],
-            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+            gaba_input=distal_in['gaba_input'],
+            do_feedforward=~args.no_feedforward, verbose=args.verbose
         )
 
         outfile.close()
@@ -248,8 +248,8 @@ elif args.no_gaba:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = distal_in['ser_input'],
-            do_feedforward = ~args.no_feedforward, verbose = args.verbose
+            ser_input=distal_in['ser_input'],
+            do_feedforward=~args.no_feedforward, verbose=args.verbose
         )
 
         outfile.close()
@@ -282,10 +282,10 @@ else:
         # Run simulation.
         gifnet_mod.simulate(
             outfile,
-            ser_input = distal_in['ser_input'],
-            gaba_input = distal_in['gaba_input'],
-            do_feedforward = ~args.no_feedforward,
-            verbose = args.verbose
+            ser_input=distal_in['ser_input'],
+            gaba_input=distal_in['gaba_input'],
+            do_feedforward=~args.no_feedforward,
+            verbose=args.verbose
         )
 
         outfile.close()

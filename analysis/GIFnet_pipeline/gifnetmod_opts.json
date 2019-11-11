@@ -1,0 +1,19 @@
+{
+    "dt": 0.1,
+    "propagation_delay": 2.0,
+    "IPSC_kernel": {
+        "tau_rise": 2.0,
+	"tau_decay": 20.0,
+        "amplitude": -0.005,
+        "duration": 400
+    },
+    "no_ser_neurons": 600,
+    "no_gaba_neurons": 400,
+    "connection_probability": 0.025,
+    "fixed_IA_conductance": 0.010,
+    "output_model_suffixes": {
+        "base": "subsample_base.mod",
+        "noIA": "subsample_noIA.mod",
+        "fixedIA": "subsample_fixedIA.mod"
+    }
+}

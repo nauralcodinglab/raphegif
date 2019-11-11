@@ -7,6 +7,67 @@ import weave
 
 
 ###########################################################
+# Check integrity of objects.
+###########################################################
+
+def check_dict_fields(x, template, raise_error=True):
+    """Check that fields in a dict match a template.
+
+    Arguments
+    ---------
+    x : dict
+        Dict to check.
+    template : dict
+        Dict to check against. Each field should either contain a dict (with
+        additional fields) or `None`.
+    raise_error : bool (default True)
+        Raise a `KeyError` if any fields are missing.
+
+    Returns
+    -------
+    Fields of `template` missing from `x`.
+
+    """
+    missing_fields = []
+    for key in template:
+        if key not in x:
+            # Missing field base case.
+            missing_fields.append(key)
+        elif template[key] is None:
+            # Successful base case.
+            pass
+        elif isinstance(template[key], dict):
+            # Recursive case.
+            try:
+                missing_subfields = check_dict_fields(
+                    x[key], template[key], raise_error=False
+                )
+            except TypeError as err:
+                # Handle case that x[key] is not subscriptable.
+                if 'not subscriptable' in err:
+                    missing_subfields = template[key].keys()
+                else:
+                    raise
+            if len(missing_subfields) > 0:
+                missing_fields.extend(
+                    [key + '/' + missing for missing in missing_subfields]
+                )
+        else:
+            # Exception if wrong type in template.
+            raise TypeError(
+                'Expected type `None` or `dict` for template[`{key}`], '
+                'got type `{type_}` instead.'.format(
+                    key=key, type_=type(template[key])
+                )
+            )
+
+    if len(missing_fields) > 0 and raise_error:
+        raise KeyError('Missing fields {}'.format(missing_fields))
+
+    return missing_fields
+
+
+###########################################################
 # Remove axis
 ###########################################################
 
