@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
@@ -9,6 +10,7 @@ import weave
 
 from .ThresholdModel import ThresholdModel
 from .Filter_Rect import Filter_Rect_LogSpaced
+from .ModelStimulus import ModelStimulus
 from . import Tools
 from .Tools import reprint
 
@@ -113,20 +115,57 @@ class GIF(ThresholdModel):
     # METHODS FOR NUMERICAL SIMULATIONS
     ########################################################################################################
 
+    def _coerceInputToModelStimulus(self, I):
+        """Coerce `simulate` method input to ModelStimulus."""
+        if hasattr(I, 'dt') and not np.isclose(I.dt, self.dt):
+            raise ValueError(
+                'Expected `I` dt {}ms and model instance dt {}ms to '
+                'match.'.format(I.dt, self.dt)
+            )
+        if issubclass(type(I), ModelStimulus):
+            return I
+        else:
+            modStim = ModelStimulus(self.dt)
+            modStim.appendCurrents(I)
+            return modStim
+
     def simulate(self, I, V0):
+        """Simulate the spiking response of the GIF model.
+
+        Arguments
+        ---------
+        I : float 1D array-like or ModelStimulus
+            Model input. If 1D array-like, should be an input current in nA.
+            More complicated inputs that combine multiple currents and/or
+            conductances should be passed as a `ModelStimulus` object.
+        V0 : float
+            Initial voltage (mV).
+
+        Returns
+        -------
+        Five tuple of (time, V, eta_sum, V_T, spks).
+        time : float 1D array
+            Time support vector (ms).
+        V : float 1D array
+            Model voltage (mV). Voltage is zero during spikes.
+        eta_sum : float 1D array
+            Adaptation current (nA).
+        V_T : float 1D array
+            Dynamic spike threshold (mV).
+        spks : float list-like
+            List of spike times (ms).
+
         """
-        Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
-        V0 indicate the initial condition V(0)=V0.
-        The function returns:
-        - time     : ms, support for V, eta_sum, V_T, spks
-        - V        : mV, membrane potential
-        - eta_sum  : nA, adaptation current
-        - V_T      : mV, firing threshold
-        - spks     : ms, list of spike times
-        """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -150,7 +189,6 @@ class GIF(ThresholdModel):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
         spks = np.array(np.zeros(p_T), dtype="double")
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
@@ -160,6 +198,9 @@ class GIF(ThresholdModel):
 
         code = """
                 #include <math.h>
+
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
 
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
@@ -187,7 +228,12 @@ class GIF(ThresholdModel):
 
 
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] - eta_sum[t] );
+                    float dV = dt / C * (-gl * (V[t] - El) - eta_sum[t]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                    V[t+1] = V[t] + dV;
 
 
                     // COMPUTE PROBABILITY OF EMITTING ACTION POTENTIAL
@@ -221,7 +267,12 @@ class GIF(ThresholdModel):
 
                 """
 
-        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'I', 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceMatrix', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref',
+                'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'p_eta', 'p_eta_l',
+                'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
 
@@ -247,9 +298,16 @@ class GIF(ThresholdModel):
         - V        : mV, membrane potential
         - eta_sum  : nA, adaptation current
         """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -267,7 +325,6 @@ class GIF(ThresholdModel):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
         spks = np.array(spks, dtype="double")
         spks_i = Tools.timeToIndex(spks, self.dt)
 
@@ -287,6 +344,9 @@ class GIF(ThresholdModel):
         code = """
                 #include <math.h>
 
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
+
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
 
@@ -305,8 +365,12 @@ class GIF(ThresholdModel):
 
 
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] - eta_sum[t] );
-
+                    float dV = dt / C * (-gl * (V[t] - El) - eta_sum[t]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                    V[t+1] = V[t] + dV;
 
                     if ( t == next_spike ) {
                         spks_cnt = spks_cnt + 1;
@@ -320,7 +384,11 @@ class GIF(ThresholdModel):
 
                 """
 
-        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'V', 'I', 'eta_sum', 'spks_i']
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceMatrix', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'V',
+                'eta_sum', 'spks_i']
 
         v = weave.inline(code, vars)
 

@@ -132,9 +132,16 @@ class AugmentedGIF(GIF):
         - V_T      : mV, firing threshold
         - spks     : ms, list of spike times
         """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -177,7 +184,6 @@ class AugmentedGIF(GIF):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
         spks = np.array(np.zeros(p_T), dtype="double")
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
@@ -195,6 +201,9 @@ class AugmentedGIF(GIF):
 
         code = """
                 #include <math.h>
+
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
 
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
@@ -267,7 +276,12 @@ class AugmentedGIF(GIF):
                     gk_2_term = -DF_K_t * n[t-1] * gbar_K2;
 
                     // INTEGRATE VOLTAGE
-                    V[t] = V[t-1] + dt/C*( -gl*(V[t-1] - El) + I[t-1] + gk_1_term + gk_2_term - eta_sum[t-1]);
+                    float dV = dt / C * (-gl * (V[t-1] - El) + gk_1_term + gk_2_term - eta_sum[t-1]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t-1];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV += dt / C * inputConductanceMatrix[t-1, i] * (V[t-1] - inputConductanceReversals[i]);
+                    V[t] = V[t-1] + dV;
 
 
                     // COMPUTE PROBABILITY OF EMITTING ACTION POTENTIAL
@@ -299,12 +313,15 @@ class AugmentedGIF(GIF):
 
                 """
 
-        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceMatrix', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
                 'p_n_Vhalf', 'p_n_k', 'p_n_A',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V', 'I', 'm', 'h', 'n',
+                'V', 'm', 'h', 'n',
                 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
                 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
@@ -330,9 +347,16 @@ class AugmentedGIF(GIF):
         - V_T      : mV, firing threshold
         - spks     : ms, list of spike times
         """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -369,7 +393,6 @@ class AugmentedGIF(GIF):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
         spks = np.array(spks, dtype="double")
         spks_i = Tools.timeToIndex(spks, self.dt)
 
@@ -396,6 +419,9 @@ class AugmentedGIF(GIF):
 
         code = """
                 #include <math.h>
+
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
 
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
@@ -464,7 +490,12 @@ class AugmentedGIF(GIF):
                     gk_2_term = -DF_K_t * n[t-1] * gbar_K2;
 
                     // INTEGRATE VOLTAGE
-                    V[t] = V[t-1] + dt/C*( -gl*(V[t-1] - El) + I[t-1] + gk_1_term + gk_2_term - eta_sum[t-1]);
+                    float dV = dt / C * (-gl * (V[t-1] - El) + gk_1_term + gk_2_term - eta_sum[t-1]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t-1];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV += dt / C * inputConductanceMatrix[t-1, i] * (V[t-1] - inputConductanceReversals[i]);
+                    V[t] = V[t-1] + dV;
 
                     if ( t == next_spike ) {
                         spks_cnt = spks_cnt + 1;
@@ -477,7 +508,10 @@ class AugmentedGIF(GIF):
 
                 """
 
-        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceMatrix', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
                 'p_n_Vhalf', 'p_n_k', 'p_n_A',
