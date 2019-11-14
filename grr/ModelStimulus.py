@@ -66,6 +66,9 @@ class ModelStimulus(object):
         """
         return np.asarray(self._conductanceArray.asTByNMatrix()).astype(dtype)
 
+    def getConductanceMajorFlattening(self, dtype=np.float64):
+        return np.asarray(self.getConductanceMatrix(dtype)).flatten(order='C')
+
     def getConductanceReversals(self, dtype=np.float64):
         """Get conductance reversal potentials (mV).
 
@@ -111,7 +114,7 @@ class ModelStimulus(object):
             )
 
         self._conductanceArray.append(conductanceArray)
-        self._conductanceReversals.append(np.atleast_1d(reversalPotentials))
+        self._conductanceReversals.extend(np.atleast_1d(reversalPotentials).tolist())
 
 
 class InputArray(object):

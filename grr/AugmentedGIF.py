@@ -136,7 +136,7 @@ class AugmentedGIF(GIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -280,7 +280,10 @@ class AugmentedGIF(GIF):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t-1];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t-1, i] * (V[t-1] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[(t - 1) * numberOfInputConductances + i]
+                            * (V[t-1] - inputConductanceReversals[i]);
                     V[t] = V[t-1] + dV;
 
 
@@ -314,7 +317,7 @@ class AugmentedGIF(GIF):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',
@@ -351,7 +354,7 @@ class AugmentedGIF(GIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -501,7 +504,10 @@ class AugmentedGIF(GIF):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t-1];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t-1, i] * (V[t-1] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[(t - 1) * numberOfInputConductances + i]
+                            * (V[t-1] - inputConductanceReversals[i]);
                     V[t] = V[t-1] + dV;
 
                     if ( t == next_spike ) {
@@ -516,7 +522,7 @@ class AugmentedGIF(GIF):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
                 'p_m_Vhalf', 'p_m_k', 'p_m_A',

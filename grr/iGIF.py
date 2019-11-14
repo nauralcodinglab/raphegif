@@ -411,7 +411,7 @@ class iGIF_Na(iGIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -494,7 +494,10 @@ class iGIF_Na(iGIF):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
                     V[t+1] = V[t] + dV;
 
                     // INTEGRATE THETA
@@ -533,7 +536,7 @@ class iGIF_Na(iGIF):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'theta', 'p_theta_ka', 'p_theta_ki', 'p_theta_Vi',
                 'p_theta_tau', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
@@ -1065,7 +1068,7 @@ class iGIF_NP(iGIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -1151,7 +1154,10 @@ class iGIF_NP(iGIF):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
                     V[t+1] = V[t] + dV;
 
                     // INTEGRATION THRESHOLD DYNAMICS
@@ -1210,7 +1216,7 @@ class iGIF_NP(iGIF):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins',
                 'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',

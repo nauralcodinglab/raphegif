@@ -160,7 +160,7 @@ class GIF(ThresholdModel):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -232,7 +232,10 @@ class GIF(ThresholdModel):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
                     V[t+1] = V[t] + dV;
 
 
@@ -268,7 +271,7 @@ class GIF(ThresholdModel):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref',
                 'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'p_eta', 'p_eta_l',
@@ -302,7 +305,7 @@ class GIF(ThresholdModel):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceMatrix = modStim.getConductanceMatrix(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
         inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
@@ -376,7 +379,10 @@ class GIF(ThresholdModel):
                     if (numberOfInputCurrents > 0)
                         dV += dt / C * netInputCurrent[t];
                     for (int i=0; i<numberOfInputConductances; i++)
-                        dV += dt / C * inputConductanceMatrix[t, i] * (V[t] - inputConductanceReversals[i]);
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
                     V[t+1] = V[t] + dV;
 
                     if ( t == next_spike ) {
@@ -392,7 +398,7 @@ class GIF(ThresholdModel):
                 """
 
         vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceMatrix', 'inputConductanceReversals',
+                'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'V',
                 'eta_sum', 'spks_i', 'p_no_spikes']

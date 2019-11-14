@@ -8,6 +8,7 @@ import numpy as np
 from .Tools import timeToIntVec
 from .Tools import validate_array_ndim, validate_matching_axis_lengths
 from .Simulation import GIFnet_Simulation
+from .ModelStimulus import ModelStimulus
 
 
 #%% DEFINE GIF NETWORK CLASS
@@ -17,7 +18,7 @@ class GIFnet(object):
     def __init__(self, name=None, dt=0.1,
                  ser_mod=None, gaba_mod=None,
                  propagation_delay=0., connectivity_matrix=None,
-                 gaba_kernel=None):
+                 gaba_kernel=None, gaba_reversal=None):
         """
         Feed-forward network model with GIF units.
 
@@ -41,6 +42,9 @@ class GIFnet(object):
             gaba_kernel (1D array)
                 -- IPSC kernel to convolve with GABA cell spikes for
                 feed-forward inhibition of 5HT cells.
+            gaba_reversal (float or None)
+                -- Reversal potential (mV) of GABA conductance. Set to `None`
+                to treat IPSC kernel as a current.
             no_gaba_neurons (int)
                 -- Number of gaba neurons in network.
             no_ser_neurons (int)
@@ -66,6 +70,7 @@ class GIFnet(object):
         self.propagation_delay = propagation_delay
         self.connectivity_matrix = connectivity_matrix
         self.gaba_kernel = gaba_kernel
+        self.gaba_reversal = gaba_reversal
 
     @property
     def no_gaba_neurons(self):
@@ -309,8 +314,12 @@ class GIFnet(object):
                         )
                     )
 
+                mod_stim = self._assemble_model_stimulus(
+                    ser_input[sweep_no, ser_no, :],
+                    feedforward_input[sweep_no, ser_no, :]
+                )
                 t, V, eta, v_T, spks = self.ser_mod[ser_no].simulate(
-                    I[sweep_no, ser_no, :], self.ser_mod[ser_no].El
+                    mod_stim, self.ser_mod[ser_no].El
                 )
 
                 # Save spktimes/spktrains.
@@ -336,6 +345,21 @@ class GIFnet(object):
             ser_spktimes.append(ser_spktimes_singlesweep)
 
         return ser_spktimes
+
+    def _assemble_model_stimulus(self, direct_input, feedforward_input):
+        mod_stim = ModelStimulus(self.dt)
+
+        # Direct input is always current-based.
+        mod_stim.appendCurrents(direct_input)
+
+        # Feed-forward input may be conductance-based, depending on whether
+        # `gaba_reversal` is set.
+        if self.gaba_reversal is None:
+            mod_stim.appendCurrents(feedforward_input)
+        else:
+            mod_stim.appendConductances(feedforward_input, [self.gaba_reversal])
+
+        return mod_stim
 
     def _initialize_simulation_container(self, out, ser_input, gaba_input, do_feedforward):
         valid_dims = self._get_valid_input_dims(ser_input, gaba_input)

@@ -7,6 +7,7 @@
 import unittest
 
 import numpy as np
+import numpy.testing as npt
 
 from grr import ModelStimulus
 
@@ -62,6 +63,36 @@ class TestModelStimulus_Currents(unittest.TestCase):
             [np.float64, np.float32, np.float64, np.float64, np.float32]
         ):
             checkDtype(dtype, expectedDtype)
+
+
+class TestModelStimulus_Conductances(unittest.TestCase):
+
+    def setUp(self):
+        self.dt = 0.5
+        self.modStim = ModelStimulus.ModelStimulus(self.dt)
+        self.modStim.appendConductances([1, 2], [1])
+        self.modStim.appendConductances([[3, 4], [5, 6]], [2, 3])
+
+    def test_getConductanceMatrixDims(self):
+        self.assertEqual(
+            self.modStim.numberOfConductances,
+            np.shape(self.modStim.getConductanceMatrix())[1],
+            'Number of columns in conductanceMatrix {} not equal to number '
+            'of conductances {}'.format(
+                np.shape(self.modStim.getConductanceMatrix())[1],
+                self.modStim.numberOfConductances
+            )
+        )
+
+    def test_getConductanceMajorFlattening(self):
+        npt.assert_array_equal(
+            self.modStim.getConductanceMajorFlattening(),
+            np.array([1, 3, 5, 2, 4, 6])
+        )
+        self.assertEqual(
+            len(self.modStim.getConductanceMajorFlattening()),
+            self.modStim.numberOfConductances * self.modStim.timesteps
+        )
 
 
 class TestInputArray_Constructor(unittest.TestCase):
