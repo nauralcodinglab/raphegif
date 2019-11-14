@@ -325,6 +325,7 @@ class GIF(ThresholdModel):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
+        p_no_spikes = len(spks)
         spks = np.array(spks, dtype="double")
         spks_i = Tools.timeToIndex(spks, self.dt)
 
@@ -357,7 +358,13 @@ class GIF(ThresholdModel):
                 int   Tref_ind   = int(float(p_Tref)/dt);
 
 
-                int next_spike = spks_i[0] + Tref_ind;
+                int no_spikes = int(p_no_spikes);
+                int next_spike;
+                if (no_spikes == 0) {
+                    next_spike = -1;
+                } else {
+                    next_spike = spks_i[0] + Tref_ind;
+                }
                 int spks_cnt = 0;
 
 
@@ -388,7 +395,7 @@ class GIF(ThresholdModel):
                 'inputConductanceMatrix', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'V',
-                'eta_sum', 'spks_i']
+                'eta_sum', 'spks_i', 'p_no_spikes']
 
         v = weave.inline(code, vars)
 

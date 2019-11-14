@@ -395,6 +395,7 @@ class AugmentedGIF(GIF):
         V = np.array(np.zeros(p_T), dtype="double")
         spks = np.array(spks, dtype="double")
         spks_i = Tools.timeToIndex(spks, self.dt)
+        p_no_spikes = len(spks)
 
         m = np.zeros_like(V, dtype="double")
         h = np.zeros_like(V, dtype="double")
@@ -467,7 +468,13 @@ class AugmentedGIF(GIF):
                 float gk_1_term;
                 float gk_2_term;
 
-                int next_spike = spks_i[0] + Tref_ind;
+                int no_spikes = int(p_no_spikes);
+                int next_spike;
+                if (no_spikes == 0) {
+                    next_spike = -1;
+                } else {
+                    next_spike = spks_i[0] + Tref_ind;
+                }
                 int spks_cnt = 0;
 
                 for (int t=1; t<T_ind; t++) {
@@ -518,7 +525,7 @@ class AugmentedGIF(GIF):
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
                 'V', 'I', 'm', 'h', 'n',
                 'p_Vr', 'p_Tref',
-                'eta_sum', 'spks', 'spks_i']
+                'eta_sum', 'spks', 'spks_i', 'p_no_spikes']
 
         v = weave.inline(code, vars)
 
