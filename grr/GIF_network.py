@@ -1,10 +1,12 @@
 #%% IMPORT MODULES
 
 from __future__ import division
+from copy import deepcopy
 
 import numpy as np
 
 from .Tools import timeToIntVec
+from .Tools import validate_array_ndim, validate_matching_axis_lengths
 from .Simulation import GIFnet_Simulation
 
 
@@ -56,6 +58,8 @@ class GIFnet(object):
 
         self.name = name
         self.dt = dt
+        self.__tmp_simulation_timesteps = None
+        self.__tmp_simulation_sweeps = None
 
         self.ser_mod = ser_mod
         self.gaba_mod = gaba_mod
@@ -77,21 +81,60 @@ class GIFnet(object):
         else:
             return 0
 
-    def clear_interpolated_filters(self):
-        """Interpolated eta and gamma filters in the ser and gaba mods can be
-        large and expensive to store. This removes the cached interpolated
-        versions to cut down the disk size of the GIFnet.
+    @property
+    def __tmp_simulation_duration(self):
+        if self.__tmp_simulation_timesteps is not None:
+            return self.__tmp_simulation_timesteps * self.dt
+        else:
+            raise AttributeError(
+                'Duration undefined when `__tmp_simulation_timesteps` is not '
+                'set.'
+            )
+
+    def simulate(self, out, ser_input=None, gaba_input=None, do_feedforward=True, verbose=True):
         """
+        Perform GIF network simulation.
 
-        if self.ser_mod is not None:
-            for i in range(len(self.ser_mod)):
-                self.ser_mod[i].eta.clearInterpolatedFilter()
-                self.ser_mod[i].gamma.clearInterpolatedFilter()
+        Inputs:
+            out (GIFnet_Simulation)
+                -- GIFnet_Simulation in which to place simulation output.
+            ser_input (3D array or None)
+                -- External input for driving 5HT neurons in the network.
+                Should have shape (no_sweeps, no_ser_neurons, timesteps).
+                Set to None to skip simulating 5HT cells.
+            gaba_input (3D array or None)
+                -- External input for driving GABA neurons in the network.
+                Should have shape (no_sweeps, no_gaba_neurons, timesteps).
+                Set to None to skip simulating GABA cells.
+            do_feedforward (bool, default True)
+                -- Connect GABA and 5HT layers. If false, responses of both
+                populations to external input are simulated, but GABA output
+                is not given to 5HT neurons.
 
-        if self.gaba_mod is not None:
-            for i in range(len(self.gaba_mod)):
-                self.gaba_mod[i].eta.clearInterpolatedFilter()
-                self.gaba_mod[i].gamma.clearInterpolatedFilter()
+        Returns:
+            Nothing. Results are saved directly in 'out'.
+        """
+        if (
+            (do_feedforward and gaba_input is not None)
+            and self.connectivity_matrix is None
+        ):
+            raise ValueError(
+                'Attribute `connectivity_matrix` cannot be `None` for '
+                'simulations with feed-forward input.'
+            )
+        self._initialize_simulation_container(
+            out, ser_input, gaba_input, do_feedforward
+        )
+
+        if gaba_input is not None:
+            gaba_spktimes = self._simulate_gaba(out, gaba_input, verbose)
+            if do_feedforward:
+                feedforward_input = self._convolve_feedforward(
+                    out, gaba_spktimes
+                )
+
+        if ser_input is not None:
+            self._simulate_ser(out, ser_input, feedforward_input, verbose)
 
     def _simulate_gaba(self, out, gaba_input, verbose=False):
         """Simulate response of GABA neurons to gaba_input.
@@ -109,25 +152,18 @@ class GIFnet(object):
             Nested list of spike times for internal use.
             All other output is placed in 'out'.
         """
-
-        # Input checks.
-        if gaba_input.shape[1] != self.no_gaba_neurons:
-            raise ValueError(
-                'gaba_input second axis length {} and no. gaba_mods '
-                '{} do not match'.format(
-                    gaba_input.shape[1], len(self.gaba_mod)
-                )
-            )
+        # Check input shape.
+        self._get_valid_input_dims(ser_input=None, gaba_input=gaba_input)
 
         gaba_spktimes = []
-        for sweep_no in range(gaba_input.shape[0]):
+        for sweep_no in range(self.__tmp_simulation_sweeps):
             gaba_spktimes_singlesweep = []
             for gaba_no in range(self.no_gaba_neurons):
                 if verbose:
                     print(
                         'Simulating gaba neurons sweep {} of {} '
                         '{:.1f}%'.format(
-                            sweep_no, gaba_input.shape[0],
+                            sweep_no, self.__tmp_simulation_sweeps,
                             100 * (gaba_no + 1) / self.no_gaba_neurons
                         )
                     )
@@ -141,7 +177,7 @@ class GIFnet(object):
                 # Save spktimes/spktrains.
                 gaba_spktimes_singlesweep.append(spks)
                 out.gaba_spktrains[sweep_no, gaba_no, :] = timeToIntVec(
-                    spks, out.get_T(), self.dt
+                    spks, self.__tmp_simulation_duration, self.dt
                 )
 
                 # Save sample traces.
@@ -175,60 +211,32 @@ class GIFnet(object):
             input to 5HT neurons computed based on instance gaba_kernel,
             propagation_delay, and connectivity_matrix.
         """
-
         # Input checks.
-        if len(gaba_spktimes[0]) != self.no_gaba_neurons:
-            # Only checks whether correct no neurons are in first sweep.
-            raise ValueError(
-                'Number of gaba_neurons for which spktimes are given ({}) '
-                'must match no_gaba_neurons in GIFnet ({})'.format(
-                    len(gaba_spktimes), self.no_gaba_neurons
-                )
-            )
-        elif self.connectivity_matrix is None:
+        if self.connectivity_matrix is None:
             raise AttributeError(
-                'Feed-forward inputs cannot be computed if GIFnet connectivity_matrix '
-                'is not set.'
-            )
-        elif len(gaba_spktimes[0]) != self.connectivity_matrix.shape[1]:
-            # Only checks no neurons in first sweep.
-            raise ValueError(
-                'No. cells in gaba_spktimes ({}) and connectivity matrix no cols ({}) '
-                'must match.'.format(len(gaba_spktimes[0]), self.connectivity_matrix.shape[1])
+                'Feed-forward inputs cannot be computed if GIFnet '
+                'connectivity_matrix is not set.'
             )
 
+        #TODO: extract convolution method and separate from prop delay and projection steps.
         # Convert gaba_spktimes to convolved spktrains.
         gaba_conv_spks = np.empty(
             (len(gaba_spktimes),
              self.no_gaba_neurons,
-             int(out.get_T() / self.dt + 0.5)),
+             self.__tmp_simulation_timesteps),
             dtype=np.float32
         )
         for sweep_no in range(len(gaba_spktimes)):
             for gaba_no in range(self.no_gaba_neurons):
                 gaba_conv_spks[sweep_no, gaba_no, :] = np.convolve(
                     timeToIntVec(
-                        gaba_spktimes[sweep_no][gaba_no], out.get_T(), self.dt
+                        gaba_spktimes[sweep_no][gaba_no], self.__tmp_simulation_duration, self.dt
                     ),
                     self.gaba_kernel, 'same'
                 ).astype(np.float32)
 
-        # Add propagation delay to GABA input.
-        gaba_conv_spks = np.roll(
-            gaba_conv_spks, int(self.propagation_delay / self.dt),
-            axis=2
-        )
-        gaba_conv_spks[:, :, :int(self.propagation_delay / self.dt)] = 0
-
-        # Transform GABA output tensor into 5HT input using connectivity matrix.
-        feedforward_input = np.moveaxis(
-            np.tensordot(
-                self.connectivity_matrix,
-                np.moveaxis(gaba_conv_spks, 0, -1),
-                axes=1
-            ),
-            -1, 0
-        )
+        gaba_conv_spks = self._apply_propagation_delay(gaba_conv_spks)
+        feedforward_input = self._project_onto_target_population(gaba_conv_spks)
 
         # Save synaptic input trains in 'out'.
         out.ser_examples['feedforward_input'][...] = (
@@ -237,14 +245,42 @@ class GIFnet(object):
 
         return feedforward_input
 
+    def _apply_propagation_delay(self, feedforward_array):
+        """Apply instance propagation delay to array of feed-forward input."""
+        if self.propagation_delay is None:
+            raise ValueError(
+                'Cannot apply `propagation_delay=None`, set '
+                '`propagation_delay=0.` explicitly if that is what you want.'
+            )
+
+        feedforward_array = deepcopy(feedforward_array)
+        feedforward_array = np.roll(
+            feedforward_array, int(self.propagation_delay / self.dt),
+            axis=2
+        )
+        feedforward_array[:, :, :int(self.propagation_delay / self.dt)] = 0
+
+        return feedforward_array
+
+    def _project_onto_target_population(self, feedforward_array):
+        projection = np.moveaxis(
+            np.tensordot(
+                self.connectivity_matrix,
+                np.moveaxis(feedforward_array, 0, -1),
+                axes=1
+            ),
+            -1, 0
+        )
+        return projection
+
     def _simulate_ser(self, out, ser_input, feedforward_input=None, verbose=False):
         """Simulate response of 5HT neurons to ser_input.
 
         Input:
             out (GIFnet_Simulation)
                 -- Object in which to store simulation results directly.
-            ser_input (2D array)
-                -- External input to 5HT cells. Must have no_ser_neurons rows and T/dt columns.
+            ser_input (3D array)
+                -- External input to 5HT cells. Dimensionality [sweeps, neurons, time].
             feedforward_input (2D array)
                 -- Feedforward input to 5HT cells from GABA population.
                 Must have same shape as ser_input.
@@ -255,38 +291,20 @@ class GIFnet(object):
             Dict with spktimes (list of lists of spktimes from each cell)
             and example (sample trace).
         """
-
-        # Check that ser_input has as many rows as we have models.
-        if ser_input.shape[1] != self.no_ser_neurons:
-            raise ValueError(
-                'ser_input second axis length {} and no. ser_mods {} do not match'.format(
-                    ser_input.shape[1], len(self.ser_mod)
-                )
-            )
-
-        # Check that input shapes match.
-        if feedforward_input is not None:
-            if feedforward_input.shape == ser_input.shape:
-                I = ser_input + feedforward_input
-            else:
-                raise ValueError(
-                    'Shape of ser_input {} does not match shape of feedforward_input {}.'.format(
-                        ser_input.shape, feedforward_input.shape
-                    )
-                )
-        else:
-            I = ser_input
+        # Check input shapes.
+        self._get_valid_input_dims(ser_input=ser_input, gaba_input=None)
+        self._get_valid_input_dims(ser_input=feedforward_input, gaba_input=None)
 
         # Loop over sweeps and cells.
         ser_spktimes = []
-        for sweep_no in range(I.shape[0]):
+        for sweep_no in range(self.__tmp_simulation_sweeps):
             ser_spktimes_singlesweep = []
             for ser_no in range(self.no_ser_neurons):
                 if verbose:
                     print(
                         'Simulating 5HT neurons sweep {} of {} '
                         '{:.1f}%'.format(
-                            sweep_no, I.shape[0],
+                            sweep_no, self.__tmp_simulation_sweeps,
                             100 * (ser_no + 1) / self.no_ser_neurons
                         )
                     )
@@ -298,7 +316,7 @@ class GIFnet(object):
                 # Save spktimes/spktrains.
                 ser_spktimes_singlesweep.append(spks)
                 out.ser_spktrains[sweep_no, ser_no, :] = timeToIntVec(
-                    spks, out.get_T(), self.dt
+                    spks, self.__tmp_simulation_duration, self.dt
                 )
 
                 # Save sample traces.
@@ -319,107 +337,95 @@ class GIFnet(object):
 
         return ser_spktimes
 
-    def simulate(self, out, ser_input=None, gaba_input=None, do_feedforward=True, verbose=True):
-        """
-        Perform GIF network simulation.
+    def _initialize_simulation_container(self, out, ser_input, gaba_input, do_feedforward):
+        valid_dims = self._get_valid_input_dims(ser_input, gaba_input)
+        self.__tmp_simulation_timesteps = valid_dims['timesteps']
+        self.__tmp_simulation_sweeps = valid_dims['sweeps']
 
-        Inputs:
-            out (GIFnet_Simulation)
-                -- GIFnet_Simulation in which to place simulation output.
-            ser_input (3D array or None)
-                -- External input for driving 5HT neurons in the network.
-                Should have shape (no_sweeps, no_ser_neurons, timesteps).
-                Set to None to skip simulating 5HT cells.
-            gaba_input (3D array or None)
-                -- External input for driving GABA neurons in the network.
-                Should have shape (no_sweeps, no_gaba_neurons, timesteps).
-                Set to None to skip simulating GABA cells.
-            do_feedforward (bool, default True)
-                -- Connect GABA and 5HT layers. If false, responses of both
-                populations to external input are simulated, but GABA output
-                is not given to 5HT neurons.
-
-        Returns:
-            Nothing. Results are saved directly in 'out'.
-        """
-
-        ### Input checks.
-        if type(out) is not GIFnet_Simulation:
-            raise TypeError(
-                '\'out\' must be a GIFnet_Simulation object.'
-            )
-        if ser_input is None and gaba_input is None:
-            raise ValueError(
-                'One of ser_input or gaba_input must not be None.'
-            )
-        # Check number of timesteps.
-        elif (ser_input is not None and gaba_input is not None
-              and ser_input.shape[2] != gaba_input.shape[2]):
-            raise ValueError(
-                'ser_input no_timesteps ({}) must match gaba_input '
-                'no_timesteps ({})'.format(
-                    ser_input.shape[2], gaba_input.shape[2]
-                )
-            )
-        # Check number of sweeps.
-        elif (ser_input is not None and gaba_input is not None
-              and ser_input.shape[0] != gaba_input.shape[0]):
-            raise ValueError(
-                'ser_input no_sweeps ({}) must match gaba_input no_sweeps ({})'.format(
-                    ser_input.shape[0], gaba_input.shape[0]
-                )
-            )
-        # Check number of neurons.
-        elif ser_input is not None and ser_input.shape[1] != self.no_ser_neurons:
-            raise ValueError(
-                'ser_input second dim ({}) must match GIFnet.no_ser_neurons ({})'.format(
-                    ser_input.shape[1], self.no_ser_neurons
-                )
-            )
-        elif gaba_input is not None and gaba_input.shape[1] != self.no_gaba_neurons:
-            raise ValueError(
-                'gaba_input second dim ({}) must match GIFnet.no_gaba_neurons ({})'.format(
-                    gaba_input.shape[1], self.no_gaba_neurons
-                )
-            )
-
-        ### Set metaparams in 'out'.
         out.set_dt(self.dt)
-        if ser_input is not None:
-            out.set_T(int(ser_input.shape[2] * self.dt))
-            out.set_no_sweeps(ser_input.shape[0])
-        elif gaba_input is not None:
-            out.set_T(int(gaba_input.shape[2] * self.dt))
-            out.set_no_sweeps(gaba_input.shape[0])
-        else:
-            raise RuntimeError(
-                'No inputs provided from which to get simulation length '
-                'or number of sweeps.'
-            )
+        out.set_T(self.dt)
+        out.set_no_sweeps(self.__tmp_simulation_sweeps)
 
-        ### Run simulations.
-
-        # Simulate GABA neurons (if applicable).
         if gaba_input is not None:
             out.set_no_gaba_neurons(self.no_gaba_neurons)
             out.init_gaba_spktrains()
-            gaba_spktimes = self._simulate_gaba(out, gaba_input, verbose)
-
-        # Simulate 5HT neurons (if applicable).
-        if ser_input is not None:
-
-            # Generate GABA input to 5HT cells based on GABA spks.
-            if gaba_input is not None and do_feedforward:
+            if do_feedforward:
                 out.set_propagation_delay(self.propagation_delay)
                 out.set_connectivity_matrix(self.connectivity_matrix)
-                feedforward_input = self._convolve_feedforward(out, gaba_spktimes)
-            else:
-                feedforward_input = None
 
-            # Simulate 5HT neurons.
+        if ser_input is not None:
             out.set_no_ser_neurons(self.no_ser_neurons)
             out.init_ser_spktrains()
-            self._simulate_ser(out, ser_input, feedforward_input, verbose)
+
+    def _get_valid_input_dims(self, ser_input, gaba_input):
+        """Get dimensionality of inputs to `simulate()` or raise an exception."""
+        for label, arr in zip(['ser_input', 'gaba_input'], [ser_input, gaba_input]):
+            validate_array_ndim(label, arr, 3)
+
+        # Extract input dimensions from whichever array is provided.
+        if ser_input is not None and gaba_input is not None:
+            validate_matching_axis_lengths([ser_input, gaba_input], [0, 2])  # Should match along axis 0 (sweeps) and 2 (time).
+            valid_dims = {
+                'sweeps': np.shape(ser_input)[0],
+                'timesteps': np.shape(ser_input)[2],
+                'no_ser_neurons': np.shape(ser_input)[1],
+                'no_gaba_neurons': np.shape(gaba_input)[1]
+            }
+        elif ser_input is not None and gaba_input is None:
+            valid_dims = {
+                'sweeps': np.shape(ser_input)[0],
+                'timesteps': np.shape(ser_input)[2],
+                'no_ser_neurons': np.shape(ser_input)[1],
+                'no_gaba_neurons': 0
+            }
+        elif ser_input is None and gaba_input is not None:
+            valid_dims = {
+                'sweeps': np.shape(gaba_input)[0],
+                'timesteps': np.shape(gaba_input)[2],
+                'no_ser_neurons': 0,
+                'no_gaba_neurons': np.shape(gaba_input)[1]
+            }
+        else:
+            RuntimeError('Cannot get here.')
+
+        # Ensure input dimensions match number of models in instance
+        # if input has been provided.
+        for label in ['no_ser_neurons', 'no_gaba_neurons']:
+            if (
+                (valid_dims[label] != 0)
+                and (valid_dims[label] != getattr(self, label))
+            ):
+                raise ValueError(
+                    'Expected input axis 1 `{}` length {} to match instance '
+                    'number of models {}'.format(
+                        label, valid_dims[label], getattr(self, label)
+                    )
+                )
+
+        return valid_dims
+
+    def clear_interpolated_filters(self):
+        """Clear cached interpolated spike-triggered filters.
+
+        Eta and gamma spike-triggered filters are interpolated to potentially
+        large arrays during simulations. The filters are re-interpolated as
+        needed, so saving the interpolated versions is unnecessary. Clearing
+        the interpolated filters can reduce object size significantly, and is
+        recommended to do before saving the model to disk.
+
+        """
+        if self.ser_mod is not None:
+            for i in range(len(self.ser_mod)):
+                self.ser_mod[i].eta.clearInterpolatedFilter()
+                self.ser_mod[i].gamma.clearInterpolatedFilter()
+
+        if self.gaba_mod is not None:
+            for i in range(len(self.gaba_mod)):
+                self.gaba_mod[i].eta.clearInterpolatedFilter()
+                self.gaba_mod[i].gamma.clearInterpolatedFilter()
+
+
+
 
 
 # Simple test for GIFnet

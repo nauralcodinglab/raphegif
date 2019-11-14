@@ -2,12 +2,10 @@
 
 from __future__ import division
 
-import warnings
-
 import numpy as np
 import h5py
 
-from .Tools import timeToIntVec
+from .Tools import timeToIntVec, validate_array_ndim
 
 
 #%% DEFINE CLASSES FOR REPRESENTING SIMULATIONS
@@ -214,7 +212,7 @@ class GIFnet_Simulation(h5py.File):
         else:
             return self['connectivity_matrix']
 
-    def set_connectivity_matrix(self, arr, infer_pop_size=True):
+    def set_connectivity_matrix(self, arr):
         """Create connectivity matrix for feedforward connections
 
         Inputs:
@@ -222,62 +220,37 @@ class GIFnet_Simulation(h5py.File):
                 -- 2D array with dimensionality
                 [no_ser_neurons, no_gaba_neurons] specifyinging
                 gaba->ser connections.
-            infer_pop_size (bool, default True)
-                -- Optionally, set no_ser_neurons and no_gaba_neurons
-                based on dimensionality of arr. Throws a warning
-                if these are already set to different values.
+
         """
-
-        ### Input checks.
-        # Check input dimensionality.
-        if arr.ndim != 2:
-            raise ValueError(
-                'Array must be 2D, not {}D.'.format(arr.ndim)
-            )
-
-        if (
-            hasattr(self.attrs, 'no_ser_neurons')
-            and self.attrs['no_ser_neurons'] != arr.shape[0]
-        ):
-            warnings.warn(
-                'Apparent no_ser_neurons in arr ({}) differs '
-                'from instance no_ser_neurons ({}).'
-                ''.format(arr.shape[0], self.get_no_ser_neurons())
-            )
-            ser_shape_flag = True
-        else:
-            ser_shape_flag = False
-
-        if (
-            hasattr(self.attrs, 'no_gaba_neurons')
-            and self.attrs['no_gaba_neurons'] != arr.shape[0]
-        ):
-            warnings.warn(
-                'Apparent no_gaba_neurons in arr ({}) differs '
-                'from instance no_gaba_neurons ({}).'
-                ''.format(arr.shape[0], self.get_no_gaba_neurons())
-            )
-            gaba_shape_flag = True
-        else:
-            gaba_shape_flag = False
-
-        # Halt if not allowed to overwrite pop sizes and arr dims
-        # do not match pre-set pop sizes.
-        if not infer_pop_size and (ser_shape_flag or gaba_shape_flag):
-            raise ValueError(
-                'Instance no_ser_neurons and/or no_gaba_neurons do '
-                'not match arr shape {}.'.format(arr.shape)
-            )
-
-        # Initialize connectivity_matrix.
+        self._validate_connectivity_matrix_shape(arr)
         self.create_dataset(
             'connectivity_matrix', data=arr,
             dtype=np.float32, compression=5
         )
 
-        # Ensure that pop sizes are up to date.
+        # Ensure attributes are up to date.
         self.set_no_ser_neurons(arr.shape[0])
         self.set_no_gaba_neurons(arr.shape[1])
+
+    def _validate_connectivity_matrix_shape(self, connectivity_matrix):
+        """Ensure connectivity matrix shape matches existing attributes."""
+        validate_array_ndim('connectivity matrix', connectivity_matrix, 2)
+
+        for attr, axis in zip(
+            ['no_ser_neurons', 'no_gaba_neurons'],
+            [0, 1]
+        ):
+            if hasattr(self.attrs, attr) and self.attrs[attr] != np.shape(connectivity_matrix)[axis]:
+                raise ValueError(
+                    'Instance `no_ser_neurons`={nser} and `no_gaba_neurons`='
+                    '{ngaba} imply connectivity matrix of size '
+                    '({nser}, {ngaba}), got {cm_shape} instead.'.format(
+                        nser=getattr(self.attrs, 'no_ser_neurons', 'any'),
+                        ngaba=getattr(self.attrs, 'no_gaba_neurons', 'any'),
+                        cm_shape=np.shape(connectivity_matrix)
+                    )
+
+                )
 
     ### Properties and initializers for recorded signals.
     @property

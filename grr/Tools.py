@@ -67,6 +67,42 @@ def check_dict_fields(x, template, raise_error=True):
     return missing_fields
 
 
+def validate_array_ndim(label, arr, dimensions):
+    """Raise an exception if array has the wrong number of dimensions."""
+    if dimensions == 0:
+        raise ValueError('Arrays cannot have 0 dimensions.')
+    elif np.ndim(arr) != dimensions:
+        raise ValueError(
+            'Expected {} to have {} dimensions, got {} instead.'.format(
+                label, dimensions, np.ndim(arr)
+            )
+        )
+    else:
+        pass
+
+
+def validate_matching_axis_lengths(arrs, axes_):
+    """Raise an exception if array lengths are not identical along specified axes.
+
+    Arguments
+    ---------
+    arrs : list of array-like
+    axes_ : list-like of ints
+
+    """
+    for axis_ in axes_:
+        axis_lengths = []
+        for arr in arrs:
+            axis_lengths.append(np.shape(arr)[axis_])
+        if not all(axis_lengths[0] == np.array(axis_lengths)):
+            raise ValueError(
+                'Expected all arrays to have matching lengths along axis {}, '
+                'got lengths {} instead.'.format(axis_, axis_lengths)
+            )
+        else:
+            pass
+
+
 ###########################################################
 # Remove axis
 ###########################################################
