@@ -56,10 +56,11 @@ with open(args.opts, 'r') as f:
 required_fields = {
     'dt': None,
     'propagation_delay': None,
-    'IPSC_kernel': {
+    'gaba_input': {
         'tau_rise': None,
         'tau_decay': None,
         'amplitude': None,
+        'reversal': None,
         'duration': None
     },
     'no_ser_neurons': None,
@@ -122,10 +123,10 @@ def save_model(model, type, number):
         f.close()
 
 gaba_kernel = BiexponentialSynapticKernel(
-    amplitude=opts['IPSC_kernel']['amplitude'],
-    tau_rise=opts['IPSC_kernel']['tau_rise'],
-    tau_decay=opts['IPSC_kernel']['tau_decay'],
-    duration=opts['IPSC_kernel']['duration'],
+    amplitude=opts['gaba_input']['amplitude'],
+    tau_rise=opts['gaba_input']['tau_rise'],
+    tau_decay=opts['gaba_input']['tau_decay'],
+    duration=opts['gaba_input']['duration'],
     dt=opts['dt'],
     front_padded=True
 )
@@ -148,6 +149,7 @@ for i in range(args.replicates):
         gaba_mod=np.random.choice(deepcopy(somgifs), opts['no_gaba_neurons']),
         propagation_delay=opts['propagation_delay'],
         gaba_kernel=gaba_kernel.kernel,
+        gaba_reversal=opts['gaba_input']['reversal'],
         connectivity_matrix=connectivity_matrix,
         dt=opts['dt']
     )
