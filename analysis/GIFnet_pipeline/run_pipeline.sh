@@ -33,7 +33,7 @@ for modtype in base noIA fixedIA; do
 				../../data/models/GIF_network/GIFnet_${i}_subsample_${modtype}.mod \
 				$(if [ $condition == GABA ]; then echo "$full_network_input"; elif [ $condition == noGABA ]; then echo "$null_gaba_network_input"; fi) \
 				../../data/simulations/GIF_network/subsample_${modtype}/${modtype}_${condition}_rep${i}.hdf5 \
-				--seed-background ${i}
+				--seed-background ${i} &
 			if [ $[($i + 1) % $PROCESSES] == 0 ]; then
 				wait
 			fi

@@ -367,7 +367,7 @@ class GIFnet(object):
         self.__tmp_simulation_sweeps = valid_dims['sweeps']
 
         out.set_dt(self.dt)
-        out.set_T(self.dt)
+        out.set_T(self.__tmp_simulation_timesteps * self.dt)
         out.set_no_sweeps(self.__tmp_simulation_sweeps)
 
         if gaba_input is not None:
@@ -384,7 +384,8 @@ class GIFnet(object):
     def _get_valid_input_dims(self, ser_input, gaba_input):
         """Get dimensionality of inputs to `simulate()` or raise an exception."""
         for label, arr in zip(['ser_input', 'gaba_input'], [ser_input, gaba_input]):
-            validate_array_ndim(label, arr, 3)
+            if arr is not None:
+                validate_array_ndim(label, arr, 3)
 
         # Extract input dimensions from whichever array is provided.
         if ser_input is not None and gaba_input is not None:
