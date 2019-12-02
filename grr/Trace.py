@@ -396,12 +396,18 @@ class Trace:
 
         return self.spks*self.dt
 
+    def getSpikeTimesInROI(self):
+        return self.getSpikeIndicesInROI() * self.dt
+
     def getSpikeIndices(self):
         """
         Return spike indices in units of dt.
         """
 
         return self.spks
+
+    def getSpikeIndicesInROI(self):
+        return np.intersect1d(self.getSpikeIndices(), self.getROI(), True)
 
     def getSpikeNb(self):
 
@@ -542,3 +548,38 @@ class Trace:
         plt.ylabel('V rec (mV)')
         plt.xlabel('Time (ms)')
         plt.show()
+
+
+def filterTimesByROI(times, ROI):
+    """Get subset of timestamps that are within ROI.
+
+    Arguments
+    ---------
+    times : list-like of floats (or list of lists-like of floats)
+        Timestamps (ms) to filter.
+    ROI : pair of floats
+        Start and end (ms) of inclusion window for timestamps.
+
+    """
+    try:
+        # Case that times is a list of lists.
+        iter(times[0])  # Check that first entry in times is list-like.
+        filteredTimes = []
+        for sweep in times:
+            filteredTimes.append(_unvectorizedFilterTimesByROI(sweep, ROI))
+    except TypeError:
+        # Case that times is a list of spike times.
+        filteredTimes = _unvectorizedFilterTimesByROI(times, ROI)
+
+    return filteredTimes
+
+
+def _unvectorizedFilterTimesByROI(times, ROI):
+    assert np.ndim(times) == 1
+    assert len(ROI) == 2
+    filteredTimes = np.asarray(
+        [time for time in times if time >= ROI[0] and time < ROI[1]]
+    )
+    return filteredTimes
+
+

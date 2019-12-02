@@ -7,9 +7,10 @@ import quantities as pq
 from neo import AxonIO
 
 from .SpikeTrainComparator import SpikeTrainComparator
-from .Trace import Trace
+from .Trace import Trace, filterTimesByROI
 from .AEC import AEC_Dummy
 from . import ReadIBW
+from .Tools import raiseExpectedGot, assertAllAlmostSame
 
 
 class Experiment:
@@ -362,37 +363,56 @@ class Experiment:
 
         Return a SpikeTrainComparator object that can be used to compute different performance metrics.
         """
+        self._assertAllTraceROIsAreSame(self.testset_traces)
+        testset_ROI = self.testset_traces[0].ROI
+        assert len(testset_ROI) == 1
+        testset_ROI = testset_ROI[0]  # ROIs are stored as a list [[ROI_1_start, ROI_1_stop], ...]
+
+        self._assertAllTraceDurationsAreSame(self.testset_traces)
+        testset_duration = self.testset_traces[0].T
 
         # Collect spike times in test set
-
         all_spks_times_testset = []
-
         for tr in self.testset_traces:
-
             if tr.useTrace:
-
-                spks_times = tr.getSpikeTimes()
+                spks_times = tr.getSpikeTimesInROI()
                 all_spks_times_testset.append(spks_times)
 
-        # Predict spike times using model
-
-        T_test = self.testset_traces[0].T       # duration of the test set input current
-        I_test = self.testset_traces[0].I       # test set current used in experimetns
-
-        all_spks_times_prediction = []
-
         print "Predict spike times..."
-
+        I_test = self.testset_traces[0].I       # test set current used in experimetns
+        all_spks_times_prediction = []
         for rep in np.arange(nb_rep):
             print "Progress: %2.1f %% \r" % (100*(rep+1)/nb_rep),
             spks_times = spiking_model.simulateSpikingResponse(I_test, self.dt)
-            all_spks_times_prediction.append(spks_times)
+            all_spks_times_prediction.append(
+                filterTimesByROI(spks_times, testset_ROI)
+            )
 
         # Create SpikeTrainComparator object containing experimental and predicted spike times
-
-        prediction = SpikeTrainComparator(T_test, all_spks_times_testset, all_spks_times_prediction)
+        prediction = SpikeTrainComparator(
+            testset_duration,
+            all_spks_times_testset,
+            all_spks_times_prediction
+        )
 
         return prediction
+
+    @staticmethod
+    def _assertAllTraceROIsAreSame(traces):
+        """Ensure all trace ROIs are identical and return ROI bounds."""
+        ROI_inds = [tr.getROI() for tr in traces]
+        for arr in ROI_inds:
+            if not np.array_equal(ROI_inds[0], arr):
+                raiseExpectedGot(
+                    'identical extent',
+                    'all trace ROIs',
+                    [tr.ROI for tr in traces]
+                )
+
+    @staticmethod
+    def _assertAllTraceDurationsAreSame(traces):
+        assertAllAlmostSame([tr.T for tr in traces])
+
 
     ############################################################################################
     # AUXILIARY FUNCTIONS
@@ -441,29 +461,84 @@ class Experiment:
 
         print "Done!"
 
-    def getTrainingSetNb(self):
-        """
-        Return the number of training set traces.
-        According to the experimental protocol proposed in Pozzorini et al. PLOS Comp. Biol. there is only one training set trace,
-        but this Toolbox can handle multiple training set traces.
-        """
-
-        return len(self.trainingset_traces)
-
     def getTrainingSetNbOfSpikes(self):
-        """
-        Return the number of spikes in the training set data (only consider ROI)
-        """
+        """Get number of spikes in training set ROI."""
+        return self._getNbOfSpikesInDatasetROI(self.trainingset_traces)
 
+    def getTestSetNbOfSpikes(self):
+        """Get number of spikes in test set ROI."""
+        return self._getNbOfSpikesInDatasetROI(self.testset_traces)
+
+    def getTrainingSummary(self):
+        """Get a dict summarizing training data."""
+        summary = self._summarizeDataset(self.trainingset_traces)
+        summary['dataset'] = 'training'
+        return summary
+
+    def getTestSummary(self):
+        """Get a dict summarizing test data."""
+        summary = self._summarizeDataset(self.testset_traces)
+        summary['dataset'] = 'test'
+        return summary
+
+    def _summarizeDataset(self, dataset):
+        dsetSummary = {
+            'nbOfSpikes': self._getNbOfSpikesInDataset(dataset),
+            'nbOfSpikesInROI': self._getNbOfSpikesInDatasetROI(dataset),
+            'traceDuration': self._getDatasetDuration(dataset),
+            'traceDurationInROI': self._getDatasetDurationInROI(dataset),
+            'nbOfTraces': self._getDatasetNbOfTraces(dataset),
+            'nbOfTracesInROI': self._getDatasetNbOfTracesInROI(dataset)
+        }
+        return dsetSummary
+
+    @staticmethod
+    def _getDatasetDurationInROI(dataset):
+        durations = []
+        for tr in dataset:
+            durations.append(tr.getTraceLength_inROI())
+        assertAllAlmostSame(durations)
+        return np.mean(durations)
+
+    @staticmethod
+    def _getDatasetDuration(dataset):
+        durations = []
+        for tr in dataset:
+            durations.append(tr.T)
+        assertAllAlmostSame(durations)
+        return np.mean(durations)
+
+    @staticmethod
+    def _getNbOfSpikesInDataset(dataset):
+        """Get total number of spikes in whole dataset.
+
+        For number of spikes in ROI only, see `_getNbOfSpikesInDatasetROI`.
+
+        """
         nbSpksTot = 0
-
-        for tr in self.trainingset_traces:
-
+        for tr in dataset:
             if tr.useTrace:
+                nbSpksTot += tr.getSpikeNb()
 
+        return nbSpksTot
+
+    @staticmethod
+    def _getNbOfSpikesInDatasetROI(dataset):
+        """Get total number of spikes in dataset ROI."""
+        nbSpksTot = 0
+        for tr in dataset:
+            if tr.useTrace:
                 nbSpksTot += tr.getSpikeNbInROI()
 
         return nbSpksTot
+
+    @staticmethod
+    def _getDatasetNbOfTraces(dataset):
+        return len(dataset)
+
+    @staticmethod
+    def _getDatasetNbOfTracesInROI(dataset):
+        return len([tr for tr in dataset if tr.useTrace])
 
     ############################################################################################
     # FUNCTIONS FOR PLOTTING
@@ -477,7 +552,7 @@ class Experiment:
         for tr in self.trainingset_traces:
 
             # Plot input current
-            plt.subplot(2*self.getTrainingSetNb(), 1, cnt*2+1)
+            plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, cnt*2+1)
             plt.plot(tr.getTime(), tr.I, 'gray')
 
             # Plot ROI
@@ -492,7 +567,7 @@ class Experiment:
             plt.xticks([])
 
             # Plot membrane potential
-            plt.subplot(2*self.getTrainingSetNb(), 1, cnt*2+2)
+            plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, cnt*2+2)
             plt.plot(tr.getTime(), tr.V_rec, 'black')
 
             if tr.AEC_flag:
@@ -515,7 +590,7 @@ class Experiment:
 
         plt.xlabel("Time (ms)")
 
-        plt.subplot(2*self.getTrainingSetNb(), 1, 1)
+        plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, 1)
         plt.title('Experiment ' + self.name + " - Training Set (dark region not selected)")
         plt.subplots_adjust(left=0.10, bottom=0.07, right=0.95, top=0.92, wspace=0.25, hspace=0.25)
 

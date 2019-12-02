@@ -1,0 +1,12 @@
+{
+    "train": {
+        "num_spikes": 35,
+        "pad": 20.0,
+        "mode": "same"
+    },
+    "test": {
+        "num_spikes": 8,
+        "pad": 20.0,
+        "mode": "same"
+    }
+}

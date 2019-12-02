@@ -63,6 +63,49 @@ $(MODS)/mPFC/mPFC_iGIF_NPs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_go
 $(MODS)/mPFC/mPFC_iGIF_VRs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_goodcells.ldat mPFC_fit_opts.json
 	python $< $(PROCDATA)/mPFC_fastnoise/mPFC_goodcells.ldat "$@" mPFC_fit_opts.json -m iGIF_VR -v
 
+# Fit models to minified datasets.
+.PHONY : minified_models
+minified_models : $(MODS)/5HT/5HT_minified_GIFs.lmod $(MODS)/5HT/5HT_minified_AugmentedGIFs.lmod $(MODS)/5HT/5HT_minified_iGIF_NPs.lmod $(MODS)/5HT/5HT_minified_iGIF_VRs.lmod \
+	$(MODS)/GABA/GABA_minified_GIFs.lmod $(MODS)/GABA/GABA_minified_AugmentedGIFs.lmod $(MODS)/GABA/GABA_minified_iGIF_NPs.lmod $(MODS)/GABA/GABA_minified_iGIF_VRs.lmod \
+	$(MODS)/mPFC/mPFC_minified_GIFs.lmod $(MODS)/mPFC/mPFC_minified_AugmentedGIFs.lmod $(MODS)/mPFC/mPFC_minified_iGIF_NPs.lmod $(MODS)/mPFC/mPFC_minified_iGIF_VRs.lmod
+
+$(MODS)/5HT/5HT_minified_GIFs.lmod : fit_mods.py $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat 5HT_fit_opts.json
+	python $< $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat "$@" 5HT_fit_opts.json -m GIF -v
+$(MODS)/5HT/5HT_minified_AugmentedGIFs.lmod : fit_mods.py $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat 5HT_fit_opts.json
+	python $< $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat "$@" 5HT_fit_opts.json -m AugmentedGIF -v
+$(MODS)/5HT/5HT_minified_iGIF_NPs.lmod : fit_mods.py $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat 5HT_fit_opts.json
+	python $< $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat "$@" 5HT_fit_opts.json -m iGIF_NP -v
+$(MODS)/5HT/5HT_minified_iGIF_VRs.lmod : fit_mods.py $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat 5HT_fit_opts.json
+	python $< $(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat "$@" 5HT_fit_opts.json -m iGIF_VR -v
+
+$(MODS)/GABA/GABA_minified_GIFs.lmod : fit_mods.py $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat GABA_fit_opts.json
+	python $< $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat "$@" GABA_fit_opts.json -m GIF -v
+$(MODS)/GABA/GABA_minified_AugmentedGIFs.lmod : fit_mods.py $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat GABA_fit_opts.json
+	python $< $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat "$@" GABA_fit_opts.json -m AugmentedGIF -v
+$(MODS)/GABA/GABA_minified_iGIF_NPs.lmod : fit_mods.py $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat GABA_fit_opts.json
+	python $< $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat "$@" GABA_fit_opts.json -m iGIF_NP -v
+$(MODS)/GABA/GABA_minified_iGIF_VRs.lmod : fit_mods.py $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat GABA_fit_opts.json
+	python $< $(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat "$@" GABA_fit_opts.json -m iGIF_VR -v
+
+$(MODS)/mPFC/mPFC_minified_GIFs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat mPFC_fit_opts.json
+	python $< $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat "$@" mPFC_fit_opts.json -m GIF -v
+$(MODS)/mPFC/mPFC_minified_AugmentedGIFs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat mPFC_fit_opts.json
+	python $< $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat "$@" mPFC_fit_opts.json -m AugmentedGIF -v
+$(MODS)/mPFC/mPFC_minified_iGIF_NPs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat mPFC_fit_opts.json
+	python $< $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat "$@" mPFC_fit_opts.json -m iGIF_NP -v
+$(MODS)/mPFC/mPFC_minified_iGIF_VRs.lmod : fit_mods.py $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat mPFC_fit_opts.json
+	python $< $(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat "$@" mPFC_fit_opts.json -m iGIF_VR -v
+
+# Make smaller datasets to test effect of dataset size on performance.
+$(PROCDATA)/5HT_fastnoise/5HT_minified_goodcells.ldat : minify_goodcells.py $(PROCDATA)/5HT_fastnoise/5HT_goodcells.ldat minify_opts.json 
+	python $^ $@ -v
+
+$(PROCDATA)/GABA_fastnoise/GABA_minified_goodcells.ldat : minify_goodcells.py $(PROCDATA)/GABA_fastnoise/GABA_goodcells.ldat minify_opts.json 
+	python $^ $@ -v
+
+$(PROCDATA)/mPFC_fastnoise/mPFC_minified_goodcells.ldat : minify_goodcells.py $(PROCDATA)/mPFC_fastnoise/mPFC_goodcells.ldat minify_opts.json 
+	python $^ $@ -v
+
 # Quality control and preprocessing.
 $(PROCDATA)/5HT_fastnoise/5HT_goodcells.ldat : AEC_QC.py 5HT_QC_opts.json $(shell find $(RAWDATA)/5HT/fast_noise -iname '*.abf' -o -iname '*.csv')
 	python $< $(RAWDATA)/5HT/fast_noise/index.csv $@ 5HT_QC_opts.json -v

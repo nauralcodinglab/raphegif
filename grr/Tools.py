@@ -102,6 +102,44 @@ def validate_matching_axis_lengths(arrs, axes_):
         else:
             pass
 
+def raiseExpectedGot(expected, for_, got):
+    """Raise an error for an unexpected value.
+
+    Raise a ValueError with the following message:
+    `Expected `expected` for `for_`, got `got` instead.`
+
+    """
+    raise ValueError(
+        'Expected {} for {}, got {} instead.'.format(expected, for_, got)
+    )
+
+def assertAllAlmostSame(values, rtol=1e-5, atol=1e-8, equal_nan=False):
+    """Raise a ValueError if not all values are almost the same."""
+    # Raise a more helpful error message is non-equality is due to NaN values.
+    if not equal_nan:
+        if any(np.isnan(values)) and not all(np.isnan(values)):
+            raise ValueError(
+                "Expected all values to be close, but {} out of {} are NaN.".format(
+                    sum(np.isnan(values)), np.asarray(values).size
+                )
+            )
+
+    # Check non-NaN values.
+    if not all(
+        np.isclose(
+            np.asarray(values).flatten()[0],
+            values,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=True,
+        )
+    ):
+        raise ValueError(
+            "Expected all values to be close, got values ranging from {} to {} (mean {}).".format(
+                np.nanmin(values), np.nanmax(values), np.nanmean(values)
+            )
+        )
+
 
 ###########################################################
 # Remove axis
@@ -239,7 +277,7 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
 ###########################################################
 def timeToIndex(x_t, dt):
 
-    x_t = np.array(x_t)
+    x_t = np.atleast_1d(x_t)
     x_i = np.array([int(np.round(s/dt)) for s in x_t])
     x_i = x_i.astype('int')
 
