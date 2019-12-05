@@ -83,7 +83,7 @@ class ModelStimulus(object):
         if hasattr(currentArray, 'dt') and not np.isclose(self.dt, currentArray.dt):
             raise ValueError(
                 'currentArray.dt {} does not match ModelStimulus.dt {}'.format(
-                    currentArray.dt, ModelStimulus.dt
+                    currentArray.dt, self.dt
                 )
             )
 
