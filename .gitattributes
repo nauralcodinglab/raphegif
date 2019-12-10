@@ -1,4 +1,4 @@
-* annex.largefiles=(largerthan=1Mb)
+* annex.largefiles=(largerthan=250kb)
 *.abf annex.largefiles=anything
 *.py annex.largefiles=nothing
 *.mk annex.largefiles=nothing
