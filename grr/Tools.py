@@ -275,10 +275,10 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
 ###########################################################
 # Functin to convert spike times in spike indices
 ###########################################################
-def timeToIndex(x_t, dt):
+def timeToIndex(time_, dt):
 
-    x_t = np.atleast_1d(x_t)
-    x_i = np.array([int(np.round(s/dt)) for s in x_t])
+    time_ = np.atleast_1d(time_)
+    x_i = np.array([int(np.round(s/dt)) for s in time_])
     x_i = x_i.astype('int')
 
     return x_i
