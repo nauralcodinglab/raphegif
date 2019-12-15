@@ -142,7 +142,7 @@ def assertAllAlmostSame(values, rtol=1e-5, atol=1e-8, equal_nan=False):
 
 
 ###########################################################
-# Remove axis
+# Tools for plotting.
 ###########################################################
 
 def removeAxis(ax, which_ax=['top', 'right']):
@@ -153,6 +153,16 @@ def removeAxis(ax, which_ax=['top', 'right']):
 
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
+
+
+def dashedBorder(ax=None, lw=0.5, color='gray'):
+    if ax is None:
+        ax = plt.gca()
+
+    for side in ['right', 'left', 'top', 'bottom']:
+        ax.spines[side].set_linestyle('--')
+        ax.spines[side].set_linewidth(lw)
+        ax.spines[side].set_edgecolor(color)
 
 
 ###########################################################
