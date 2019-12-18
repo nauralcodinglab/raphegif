@@ -333,6 +333,7 @@ class Experiment:
         print "Saving: " + filename + "..."
         f = open(filename, 'w')
         pkl.dump(self, f)
+        f.close()
         print "Done!"
 
     @classmethod
@@ -345,6 +346,7 @@ class Experiment:
 
         f = open(filename, 'r')
         expr = pkl.load(f)
+        f.close()
 
         print "Done!"
 

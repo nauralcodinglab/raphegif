@@ -65,6 +65,7 @@ class SpikingModel:
         print "Saving: " + path + "..."
         f = open(path, 'w')
         pkl.dump(self, f)
+        f.close()
         print "Done!"
 
     @classmethod
@@ -74,7 +75,7 @@ class SpikingModel:
 
         f = open(path, 'r')
         model = pkl.load(f)
-
+        f.close()
         print "Done!"
 
         return model
