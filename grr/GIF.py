@@ -908,6 +908,26 @@ class GIF(ThresholdModel):
     # PLOT AND PRINT FUNCTIONS
     ########################################################################################################
 
+    def getInterpolatedMembraneFilter(self, duration, filter_dt):
+        """Get passive membrane filter.
+
+        Arguments
+        ---------
+        duration : float
+            Length (ms) of filter interpolation.
+        filter_dt : float
+            Time step (ms) of filter interpolation.
+
+        Returns
+        -------
+        (support, membrane_filter)
+
+        """
+        support = np.arange(0, duration, filter_dt)
+        membrane_filter = 1. / self.C * np.exp(-support / (self.C / self.gl))
+        return (support, membrane_filter)
+
+
     def plotParameters(self):
         """
         Generate figure with model filters.
@@ -918,8 +938,7 @@ class GIF(ThresholdModel):
         # Plot kappa
         plt.subplot(1, 3, 1)
 
-        K_support = np.linspace(0, 150.0, 300)
-        K = 1./self.C*np.exp(-K_support/(self.C/self.gl))
+        K_support, K = self.getInterpolatedMembraneFilter(150., 0.5)
 
         plt.plot(K_support, K, color='red', lw=2)
         plt.plot([K_support[0], K_support[-1]], [0, 0], ls=':', color='black', lw=2)
