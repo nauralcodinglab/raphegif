@@ -35,6 +35,11 @@ class GIF(ThresholdModel):
     and \hat t_j denote the spike times.
     """
 
+    scalarParameters = (
+        'dt', 'gl', 'C', 'El', 'Vr', 'Tref', 'Vt_star', 'DV', 'lambda0'
+    )
+    filterParameters = ('eta', 'gamma')
+
     def __init__(self, dt=0.1):
 
         self.dt = dt                    # dt used in simulations (eta and gamma are interpolated according to this value)
@@ -1292,3 +1297,4 @@ class GIF(ThresholdModel):
         plt.xlabel('DV (mV)')
         Tools.removeAxis(plt.gca(), ['top', 'left', 'right'])
         plt.yticks([])
+

@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 
+from grr.ThresholdModel import constructMedianModel
 from grr.ModelStimulus import ModelStimulus
 from ezephys import stimtools
 
@@ -180,6 +181,50 @@ class TestSimulate_StimulusResponse(unittest.TestCase):
             np.allclose(self.V0, V, self.rtol, self.atol),
             'Conductance input does not affect voltage.'
         )
+
+
+class TestConstructMedianModel(object):
+    def setUp(self):
+        self._setModelType()
+        self._instantiateRandomModels()
+        self._instantiateExpectedModel()
+
+    def _setModelType(self):
+        raise NotImplementedError('Must be implemented by subclasses.')
+        # self.modelType = <someModelType>
+
+    def _instantiateRandomModels(self):
+        noOfModels = 10
+        self.randomCoefficients = {
+            paramName: np.random.normal(size=(noOfModels))
+            for paramName in self.modelType.scalarParameters
+        }
+        self.models = [self.modelType() for i in range(noOfModels)]
+
+        for paramName in self.modelType.scalarParameters:
+            for i, mod in enumerate(self.models):
+                setattr(mod, paramName, self.randomCoefficients[paramName][i])
+
+    def _instantiateExpectedModel(self):
+        self.expectedModel = self.modelType()
+        for paramName in self.randomCoefficients:
+            setattr(
+                self.expectedModel,
+                paramName,
+                np.median(self.randomCoefficients[paramName]),
+            )
+
+    def testSetsCorrectScalarParameters(self):
+        medianModel = constructMedianModel(self.modelType, self.models)
+        self._assertEqualScalarParameters(medianModel, self.expectedModel)
+
+    @staticmethod
+    def _assertEqualScalarParameters(mod1, mod2):
+        assert mod1.scalarParameters == mod2.scalarParameters
+        for paramName in mod1.scalarParameters:
+            assert getattr(mod1, paramName, np.nan) == getattr(
+                mod2, paramName, np.nan
+            )
 
 
 if __name__ == '__main__':

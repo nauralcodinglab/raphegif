@@ -4,6 +4,8 @@ import grr.ThresholdModel_testutil as tmt
 from grr.GIF import GIF
 
 
+# SIMULATION TESTS
+
 class TestGIFSimulateDoesNotCrash_VectorInput(
     tmt.TestSimulateDoesNotCrash_VectorInput, unittest.TestCase
 ):
@@ -28,6 +30,17 @@ class TestGIFSimulate_StimulusResponse(
         self.mod = GIF(self.dt)
         self.mod.El = self.V0
 
+
+# MEDIANMODEL TESTS
+
+class TestConstructMedianModel_GIF(
+    tmt.TestConstructMedianModel, unittest.TestCase
+):
+    def _setModelType(self):
+        self.modelType = GIF
+
+
+# RUN TESTS
 
 if __name__ == '__main__':
     unittest.main()

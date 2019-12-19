@@ -29,6 +29,11 @@ class TestAugmentedGIFSimulate_StimulusResponse(
         self.mod.El = self.V0
         self.mod.E_K = self.V0
 
+class TestConstructMedianModel_AugmentedGIF(
+    tmt.TestConstructMedianModel, unittest.TestCase
+):
+    def _setModelType(self):
+        self.modelType = AugmentedGIF
 
 if __name__ == '__main__':
     unittest.main()

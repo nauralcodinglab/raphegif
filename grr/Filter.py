@@ -358,3 +358,33 @@ class Filter:
             result = result + bs[i] * np.exp(-x/taus[i])
 
         return result
+
+
+def constructMedianFilter(filterType, filters):
+    # Ensure all filters are of type filtertype.
+    for filt in filters:
+        if not isinstance(filt, filterType):
+            raise TypeError(
+                'All filters must be of type {}; got instance of '
+                'type {}'.format(
+                    filterType, type(filt)
+                )
+            )
+
+    medianFilter = copy.deepcopy(filters[0])
+
+    filterCoeffs = []
+    for filt in filters:
+        filterCoeffs.append(filt.filter_coeff)
+    filterCoeffs = np.array(filterCoeffs)
+
+    if filterCoeffs.ndim != 2:
+        raise RuntimeError(
+            'Could not construct a matrix of filter coefficients. Maybe '
+            'some filters have a different number of coeffs?'
+        )
+
+    medianFilter.filter_coeff = np.median(filterCoeffs, axis=0)
+
+    return medianFilter
+

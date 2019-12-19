@@ -18,6 +18,15 @@ from .Tools import reprint
 
 class AugmentedGIF(GIF):
 
+    scalarParameters = (
+        'dt', 'gl', 'C', 'El', 'Vr', 'Tref', 'Vt_star', 'DV', 'lambda0',
+        'm_Vhalf', 'm_k', 'm_A',
+        'h_Vhalf', 'h_k', 'h_A', 'h_tau',
+        'n_Vhalf', 'n_k', 'n_A',
+        'E_K', 'gbar_K1', 'gbar_K2'
+    )
+    filterParameters = ('eta', 'gamma')
+
     def __init__(self, dt=0.1):
 
         self.dt = dt                    # dt used in simulations (eta and gamma are interpolated according to this value)
