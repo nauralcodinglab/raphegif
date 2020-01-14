@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>description</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="gif-fitting-pipeline">GIF fitting pipeline</h1>
+<h2 id="pipeline-for-single-cell-models">Pipeline for single cell models</h2>
+<div class="mermaid">graph LR
+
+raw(Raw data) --&gt; qc{QC and preprocessing}
+qc --&gt; good(Good recordings)
+qc --&gt; bad(Bad recordings)
+
+good -- Training data --&gt; fit{Fit models}
+fit --&gt; GIF(GIF)
+fit --&gt; AugmentedGIF(AugmentedGIF)
+fit --&gt; othermod(Other models...)
+
+GIF --&gt; bench{Run benchmarks}
+AugmentedGIF --&gt; bench
+othermod --&gt; bench
+good -- Test data --&gt; bench
+
+bench --&gt; ex(Example traces)
+bench --&gt; md(Spike train prediction)
+bench --&gt; r2V(Var. explained on V)
+bench --&gt; r2dV(Var. explained on dV)</div>
+<p>The analysis pipeline ingests raw electrophysiological data in Axon Binary Format, uses it to train single cell models from <code>grr</code>, and outputs various benchmarks computed on held-out data. These three stages are implemented by the <code>AEC_QC.py</code>, <code>fit_mods.py</code>, and <code>run_benchmarks.py</code> Python scripts in this directory. The scripts are designed to be run from the command line to process experiments/models in batches. Running <code>make all</code> from this directory reproduces my GIF-based models of DRN neurons and mPFC pyramidal cells along with their associated benchmarks.</p>
+<h2 id="detailed-pipeline">Detailed pipeline</h2>
+<p>From single cells to networks.</p>
+<div class="mermaid">graph TB
+
+subgraph ser[5HT]
+
+rawser[Raw recordings] -- preprocess_experiments.py --&gt; proser[Cleaned recordings]
+
+proser --&gt; serGIF[GIF]
+proser --&gt; serKGIF[KGIF]
+proser --&gt; seriGIF[iGIF]
+
+serKGIF --&gt; latency[Spike latency simulations]
+
+end
+
+subgraph pyr[mPFC]
+
+rawpyr[Raw recordings] -- preprocess_experiments.py --&gt; propyr[Cleaned recordings]
+
+propyr --&gt; pyrGIF[GIF]
+propyr --&gt; pyriGIF[iGIF]
+
+end
+
+subgraph som[SOM]
+
+rawsom[Raw recordings] -- preprocess_experiments.py --&gt; prosom[Cleaned recordings]
+
+prosom --&gt; somGIF[GIF]
+prosom --&gt; somiGIF[iGIF]
+
+end
+
+serGIF --&gt; Benchmarks
+serKGIF --&gt; Benchmarks
+seriGIF --&gt; Benchmarks
+pyrGIF --&gt; Benchmarks
+pyriGIF --&gt; Benchmarks
+somGIF --&gt; Benchmarks
+somiGIF --&gt; Benchmarks
+
+
+serKGIF --&gt; netmod[Network model]
+somGIF --&gt; netmod
+netmod --&gt; netsim[Network simulations]
+netin[Network input] --&gt; netsim
+</div>
+<script  src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.3.1/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+</body>
+</html>
