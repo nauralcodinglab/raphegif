@@ -7,8 +7,6 @@ import argparse
 
 import numpy as np
 
-import sys
-sys.path.append('./analysis/feedforward_gain_modulation')
 from grr.Tools import generateOUprocess
 
 #%% PARSE COMMANDLINE ARGUMENTS
@@ -210,7 +208,7 @@ distal_input['metaparams'].update({
 })
 
 
-#%% SAVE CURRENT STEPS 
+#%% SAVE CURRENT STEPS
 if args.verbose:
     print 'Saving current steps to {}'.format(args.output)
 with open(args.output, 'wb') as f:

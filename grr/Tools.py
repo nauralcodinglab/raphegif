@@ -7,7 +7,142 @@ import weave
 
 
 ###########################################################
-# Remove axis
+# Check integrity of objects.
+###########################################################
+
+def check_dict_fields(x, template, raise_error=True):
+    """Check that fields in a dict match a template.
+
+    Arguments
+    ---------
+    x : dict
+        Dict to check.
+    template : dict
+        Dict to check against. Each field should either contain a dict (with
+        additional fields) or `None`.
+    raise_error : bool (default True)
+        Raise a `KeyError` if any fields are missing.
+
+    Returns
+    -------
+    Fields of `template` missing from `x`.
+
+    """
+    missing_fields = []
+    for key in template:
+        if key not in x:
+            # Missing field base case.
+            missing_fields.append(key)
+        elif template[key] is None:
+            # Successful base case.
+            pass
+        elif isinstance(template[key], dict):
+            # Recursive case.
+            try:
+                missing_subfields = check_dict_fields(
+                    x[key], template[key], raise_error=False
+                )
+            except TypeError as err:
+                # Handle case that x[key] is not subscriptable.
+                if 'not subscriptable' in err:
+                    missing_subfields = template[key].keys()
+                else:
+                    raise
+            if len(missing_subfields) > 0:
+                missing_fields.extend(
+                    [key + '/' + missing for missing in missing_subfields]
+                )
+        else:
+            # Exception if wrong type in template.
+            raise TypeError(
+                'Expected type `None` or `dict` for template[`{key}`], '
+                'got type `{type_}` instead.'.format(
+                    key=key, type_=type(template[key])
+                )
+            )
+
+    if len(missing_fields) > 0 and raise_error:
+        raise KeyError('Missing fields {}'.format(missing_fields))
+
+    return missing_fields
+
+
+def validate_array_ndim(label, arr, dimensions):
+    """Raise an exception if array has the wrong number of dimensions."""
+    if dimensions == 0:
+        raise ValueError('Arrays cannot have 0 dimensions.')
+    elif np.ndim(arr) != dimensions:
+        raise ValueError(
+            'Expected {} to have {} dimensions, got {} instead.'.format(
+                label, dimensions, np.ndim(arr)
+            )
+        )
+    else:
+        pass
+
+
+def validate_matching_axis_lengths(arrs, axes_):
+    """Raise an exception if array lengths are not identical along specified axes.
+
+    Arguments
+    ---------
+    arrs : list of array-like
+    axes_ : list-like of ints
+
+    """
+    for axis_ in axes_:
+        axis_lengths = []
+        for arr in arrs:
+            axis_lengths.append(np.shape(arr)[axis_])
+        if not all(axis_lengths[0] == np.array(axis_lengths)):
+            raise ValueError(
+                'Expected all arrays to have matching lengths along axis {}, '
+                'got lengths {} instead.'.format(axis_, axis_lengths)
+            )
+        else:
+            pass
+
+def raiseExpectedGot(expected, for_, got):
+    """Raise an error for an unexpected value.
+
+    Raise a ValueError with the following message:
+    `Expected `expected` for `for_`, got `got` instead.`
+
+    """
+    raise ValueError(
+        'Expected {} for {}, got {} instead.'.format(expected, for_, got)
+    )
+
+def assertAllAlmostSame(values, rtol=1e-5, atol=1e-8, equal_nan=False):
+    """Raise a ValueError if not all values are almost the same."""
+    # Raise a more helpful error message is non-equality is due to NaN values.
+    if not equal_nan:
+        if any(np.isnan(values)) and not all(np.isnan(values)):
+            raise ValueError(
+                "Expected all values to be close, but {} out of {} are NaN.".format(
+                    sum(np.isnan(values)), np.asarray(values).size
+                )
+            )
+
+    # Check non-NaN values.
+    if not all(
+        np.isclose(
+            np.asarray(values).flatten()[0],
+            values,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=True,
+        )
+    ):
+        raise ValueError(
+            "Expected all values to be close, got values ranging from {} to {} (mean {}).".format(
+                np.nanmin(values), np.nanmax(values), np.nanmean(values)
+            )
+        )
+
+
+###########################################################
+# Tools for plotting.
 ###########################################################
 
 def removeAxis(ax, which_ax=['top', 'right']):
@@ -18,6 +153,16 @@ def removeAxis(ax, which_ax=['top', 'right']):
 
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
+
+
+def dashedBorder(ax=None, lw=0.5, color='gray'):
+    if ax is None:
+        ax = plt.gca()
+
+    for side in ['right', 'left', 'top', 'bottom']:
+        ax.spines[side].set_linestyle('--')
+        ax.spines[side].set_linewidth(lw)
+        ax.spines[side].set_edgecolor(color)
 
 
 ###########################################################
@@ -140,10 +285,10 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
 ###########################################################
 # Functin to convert spike times in spike indices
 ###########################################################
-def timeToIndex(x_t, dt):
+def timeToIndex(time_, dt):
 
-    x_t = np.array(x_t)
-    x_i = np.array([int(np.round(s/dt)) for s in x_t])
+    time_ = np.atleast_1d(time_)
+    x_i = np.array([int(np.round(s/dt)) for s in time_])
     x_i = x_i.astype('int')
 
     return x_i

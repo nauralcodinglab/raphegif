@@ -1,4 +1,5 @@
 import abc
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
@@ -406,9 +407,16 @@ class iGIF_Na(iGIF):
         - V_T      : mV, firing threshold
         - spks     : ms, list of spike times
         """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -439,7 +447,6 @@ class iGIF_Na(iGIF):
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         theta = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
         spks = np.array(np.zeros(p_T), dtype="double")
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
@@ -449,6 +456,9 @@ class iGIF_Na(iGIF):
 
         code = """
                 #include <math.h>
+
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
 
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
@@ -480,7 +490,15 @@ class iGIF_Na(iGIF):
 
 
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] - eta_sum[t] );
+                    float dV = dt / C * (-gl * (V[t] - El) - eta_sum[t]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
+                    V[t+1] = V[t] + dV;
 
                     // INTEGRATE THETA
                     theta[t+1] = theta[t] + dt/theta_tau*(-theta[t] + theta_ka*log(1+exp((V[t]-theta_Vi)/theta_ki)));
@@ -517,7 +535,14 @@ class iGIF_Na(iGIF):
 
                 """
 
-        vars = ['theta', 'p_theta_ka', 'p_theta_ki', 'p_theta_Vi', 'p_theta_tau', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'I', 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceVector', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'theta', 'p_theta_ka', 'p_theta_ki', 'p_theta_Vi',
+                'p_theta_tau', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
+                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V',
+                'p_eta', 'p_eta_l', 'eta_sum',
+                'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
 
@@ -1039,9 +1064,16 @@ class iGIF_NP(iGIF):
         - spks     : ms, list of spike times
 
         """
+        # Input variables.
+        modStim = deepcopy(self._coerceInputToModelStimulus(I))
+        netInputCurrent = modStim.getNetCurrentVector(dtype='double')
+        p_numberOfInputCurrents = modStim.numberOfCurrents
+        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
+        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
-        p_T = len(I)
+        p_T = modStim.timesteps
         p_dt = self.dt
 
         # Model parameters
@@ -1072,7 +1104,6 @@ class iGIF_NP(iGIF):
 
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
-        I = np.array(I, dtype="double")
 
         theta_trace = np.array(np.zeros(p_T), dtype="double")
         R = len(self.theta_bins)-1                 # subthreshold coupling theta
@@ -1088,6 +1119,9 @@ class iGIF_NP(iGIF):
 
         code = """
                 #include <math.h>
+
+                int numberOfInputCurrents = int(p_numberOfInputCurrents);
+                int numberOfInputConductances = int(p_numberOfInputConductances);
 
                 int   T_ind      = int(p_T);
                 float dt         = float(p_dt);
@@ -1116,8 +1150,15 @@ class iGIF_NP(iGIF):
 
 
                     // INTEGRATE VOLTAGE
-                    V[t+1] = V[t] + dt/C*( -gl*(V[t] - El) + I[t] - eta_sum[t] );
-
+                    float dV = dt / C * (-gl * (V[t] - El) - eta_sum[t]);
+                    if (numberOfInputCurrents > 0)
+                        dV += dt / C * netInputCurrent[t];
+                    for (int i=0; i<numberOfInputConductances; i++)
+                        dV +=
+                            dt / C
+                            * inputConductanceVector[t * numberOfInputConductances + i]
+                            * (V[t] - inputConductanceReversals[i]);
+                    V[t+1] = V[t] + dV;
 
                     // INTEGRATION THRESHOLD DYNAMICS
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1174,7 +1215,14 @@ class iGIF_NP(iGIF):
 
                 """
 
-        vars = ['theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins', 'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'I', 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
+                'inputConductanceVector', 'inputConductanceReversals',
+                'p_numberOfInputConductances',
+                'theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins',
+                'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
+                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V',
+                'p_eta', 'p_eta_l', 'eta_sum',
+                'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
 

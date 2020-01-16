@@ -84,6 +84,21 @@ if any([len(experiments) < len(models[label]) for label in models]):
     )
 
 
+# STORE METADATA
+
+fname_prefix = os.path.basename(args.experiments).split(".")[0]
+
+training_metadata = pd.DataFrame(
+    [expt.getTrainingSummary() for expt in experiments]
+)
+test_metadata = pd.DataFrame([expt.getTestSummary() for expt in experiments])
+metadata_dframe = pd.concat([training_metadata, test_metadata], axis=1)
+metadata_dframe["Cell"] = [expt.name for expt in experiments]
+metadata_dframe.to_csv(
+    os.path.join(args.output, fname_prefix + "metadata.csv"), index=False
+)
+
+
 # RUN BENCHMARKS
 
 # Initialize tables to hold 3 benchmarks: sample traces, Md*, and subthreshold R^2.
@@ -196,11 +211,9 @@ print('\nDone benchmarks!')
 
 # SAVE OUTPUT
 
+
 # Save sample traces.
-sample_tr_fname = (
-    os.path.basename(args.experiments).split('.')[0]
-    + 'benchmark_sample_traces.pkl'
-)
+sample_tr_fname = fname_prefix + 'benchmark_sample_traces.pkl'
 if args.verbose:
     print('Saving sample traces to {}'.format(
         os.path.join(args.output, sample_tr_fname)
@@ -211,39 +224,36 @@ with open(os.path.join(args.output, sample_tr_fname), 'wb') as f:
 del sample_tr_fname
 
 # Save Md*.
-Md_fname = (
-    os.path.basename(args.experiments).split('.')[0]
-    + 'benchmark_Md_{:d}.csv'.format(int(args.precision))
-)
+Md_fname = fname_prefix + 'benchmark_Md_{:d}.csv'.format(int(args.precision))
 if args.verbose:
     print('Saving Md* to {}'.format(os.path.join(args.output, Md_fname)))
-pd.DataFrame(benchmarks['Md_vals']).to_csv(Md_fname, index=False)
+pd.DataFrame(benchmarks["Md_vals"]).to_csv(
+    os.path.join(args.output, Md_fname), index=False
+)
 
 # Save R^2 on V.
-R2_V_fname = (
-    os.path.basename(args.experiments).split('.')[0]
-    + 'benchmark_R2_V.csv'
-)
+R2_V_fname = fname_prefix + 'benchmark_R2_V.csv'
 if args.verbose:
     print(
         'Saving R^2 on subthreshold V to {}'.format(
             os.path.join(args.output, R2_V_fname)
         )
     )
-pd.DataFrame(benchmarks['R2_V_vals']).to_csv(R2_V_fname, index=False)
+pd.DataFrame(benchmarks["R2_V_vals"]).to_csv(
+    os.path.join(args.output, R2_V_fname), index=False
+)
 
 # Save R^2 on V.
-R2_dV_fname = (
-    os.path.basename(args.experiments).split('.')[0]
-    + 'benchmark_R2_dV.csv'
-)
+R2_dV_fname = fname_prefix + 'benchmark_R2_dV.csv'
 if args.verbose:
     print(
         'Saving R^2 on subthreshold dV to {}'.format(
             os.path.join(args.output, R2_dV_fname)
         )
     )
-pd.DataFrame(benchmarks['R2_dV_vals']).to_csv(R2_dV_fname, index=False)
+pd.DataFrame(benchmarks["R2_dV_vals"]).to_csv(
+    os.path.join(args.output, R2_dV_fname), index=False
+)
 
 # Exit.
 if args.verbose:

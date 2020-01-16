@@ -3,6 +3,8 @@ import json
 import pickle
 import warnings
 
+from numpy.linalg import LinAlgError
+
 from grr.Filter_Exps import Filter_Exps
 from grr.Tools import gagProcess
 # Model to be fitted is imported lower down.
@@ -98,6 +100,7 @@ else:
     raise RuntimeError('Could not load model {}'.format(args.model))
 
 # Fit model to each experiment.
+linalg_err_mods = []  # Some models can't be fitted due to singular matrices.
 models = []
 for i, expt in enumerate(experiments):
 
@@ -110,52 +113,63 @@ for i, expt in enumerate(experiments):
             )
         )
 
-    tmp_mod = model_type(opts['dt'])
-    tmp_mod.name = expt.name
+    try:
+        tmp_mod = model_type(opts['dt'])
+        tmp_mod.name = expt.name
 
-    # Set hyperparameters.
-    tmp_mod.Tref = opts['T_ref']
-    tmp_mod.eta = Filter_Exps()
-    tmp_mod.eta.setFilter_Timescales(opts['eta_timescales'])
-    tmp_mod.gamma = Filter_Exps()
-    tmp_mod.gamma.setFilter_Timescales(opts['gamma_timescales'])
+        # Set hyperparameters.
+        tmp_mod.Tref = opts['T_ref']
+        tmp_mod.eta = Filter_Exps()
+        tmp_mod.eta.setFilter_Timescales(opts['eta_timescales'])
+        tmp_mod.gamma = Filter_Exps()
+        tmp_mod.gamma.setFilter_Timescales(opts['gamma_timescales'])
 
-    # Fit model silently.
-    with gagProcess():
-        if args.model.lower() == 'gif':
-            tmp_mod.fit(
-                expt,
-                DT_beforeSpike=opts['DT_beforeSpike']
-            )
-        elif args.model.lower() == 'augmentedgif':
-            tmp_mod.fit(
-                expt,
-                DT_beforeSpike=opts['DT_beforeSpike'],
-                **opts['AugmentedGIF_fit_args']
-            )
-        elif args.model.lower() == 'igif_np':
-            tmp_mod.fit(
-                expt,
-                DT_beforeSpike=opts['DT_beforeSpike'],
-                **opts['iGIF_NP_fit_args']
-            )
-        elif args.model.lower() == 'igif_vr':
-            tmp_mod.fit(
-                expt,
-                DT_beforeSpike=opts['DT_beforeSpike'],
-                **opts['iGIF_VR_fit_args']
-            )
-        else:
-            raise RuntimeError('Could not fit model {}'.format(args.model))
+        # Fit model silently.
+        with gagProcess():
+            if args.model.lower() == 'gif':
+                tmp_mod.fit(
+                    expt,
+                    DT_beforeSpike=opts['DT_beforeSpike']
+                )
+            elif args.model.lower() == 'augmentedgif':
+                tmp_mod.fit(
+                    expt,
+                    DT_beforeSpike=opts['DT_beforeSpike'],
+                    **opts['AugmentedGIF_fit_args']
+                )
+            elif args.model.lower() == 'igif_np':
+                tmp_mod.fit(
+                    expt,
+                    DT_beforeSpike=opts['DT_beforeSpike'],
+                    **opts['iGIF_NP_fit_args']
+                )
+            elif args.model.lower() == 'igif_vr':
+                tmp_mod.fit(
+                    expt,
+                    DT_beforeSpike=opts['DT_beforeSpike'],
+                    **opts['iGIF_VR_fit_args']
+                )
+            else:
+                raise RuntimeError('Could not fit model {}'.format(args.model))
 
-    # Clear interpolated filter cache to save space when saved.
-    tmp_mod.eta.clearInterpolatedFilter()
-    tmp_mod.gamma.clearInterpolatedFilter()
+        # Clear interpolated filter cache to save space when saved.
+        tmp_mod.eta.clearInterpolatedFilter()
+        tmp_mod.gamma.clearInterpolatedFilter()
 
-    models.append(tmp_mod)
+        models.append(tmp_mod)
 
-    if args.verbose:
-        tmp_mod.printParameters()
+        if args.verbose:
+            tmp_mod.printParameters()
+    except LinAlgError:
+        linalg_err_mods.append(expt.name)
+
+if len(linalg_err_mods) > 0:
+    warnings.warn(
+        "{} models could not be fitted due to numpy LinAlgErrors (usually "
+        "singular matrices):\n{}".format(
+            len(linalg_err_mods), linalg_err_mods
+        )
+    )
 
 if args.verbose:
     print('Done fitting {}s!'.format(args.model))

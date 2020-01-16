@@ -3,6 +3,7 @@ import abc
 import numpy as np
 
 from .SpikingModel import SpikingModel
+from .Filter import constructMedianFilter
 from . import Tools
 
 
@@ -70,3 +71,50 @@ class ThresholdModel(SpikingModel):
                     thetaI_VT_all[s_cnt, m_cnt, r] = theta_VT
 
         return (FI_all, thetaI_all, thetaI_VT_all)
+
+
+def constructMedianModel(modelType, models, nan_behavior='default'):
+    # INPUT CHECKS
+    if nan_behavior not in ('default', 'ignore'):
+        raise ValueError(
+            'Expected `default` or `ignore` for argument `nan_behavior`; '
+            'got {} instead.'.format(
+                nan_behavior
+            )
+        )
+
+    # Ensure all models are of type modelType.
+    for mod in models:
+        if not isinstance(mod, modelType):
+            raise TypeError(
+                'All models must be of type {}; got instance of '
+                'type {}'.format(modelType, type(mod))
+            )
+
+    # CONSTRUCT MEDIANMODEL
+    medianModel = modelType()
+
+    # Set values of scalar parameters.
+    for paramName in modelType.scalarParameters:
+        paramValues = []
+        for mod in models:
+            paramValues.append(getattr(mod, paramName, np.nan))
+        if nan_behavior == 'default':
+            setattr(medianModel, paramName, np.median(paramValues))
+        elif nan_behavior == 'ignore':
+            setattr(medianModel, paramName, np.nanmedian(paramValues))
+        else:
+            raise RuntimeError('Unexpectedly reached end of switch.')
+
+    # Set values of filter parameters.
+    for filtName in modelType.filterParameters:
+        filtInstances = []
+        for mod in models:
+            filtInstances.append(getattr(mod, filtName, None))
+        setattr(
+            medianModel,
+            filtName,
+            constructMedianFilter(type(filtInstances[0]), filtInstances),
+        )
+
+    return medianModel

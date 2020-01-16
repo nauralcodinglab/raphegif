@@ -123,28 +123,23 @@ class SpikeTrainComparator:
         return dotProduct
 
     def computeMD(self, dotProduct, dotProductArgs, dt):
-
-        T = self.T
-
         # Compute experimental spike trains (given spike times)
         all_spike_train_data = []
         all_spike_train_data_nb = len(self.spks_data)
 
         for s in self.spks_data:
 
-            spike_train_tmp = SpikeTrainComparator.getSpikeTrain(s, T, dt)
+            spike_train_tmp = SpikeTrainComparator.getSpikeTrain(s, self.T, dt)
             all_spike_train_data.append(spike_train_tmp)
 
         # Compute average spike-strain for both sets
-        spiketrain_data_avg = SpikeTrainComparator.getAverageSpikeTrain(self.spks_data, T, dt)
-        spiketrain_model_avg = SpikeTrainComparator.getAverageSpikeTrain(self.spks_model, T, dt)
+        spiketrain_data_avg = SpikeTrainComparator.getAverageSpikeTrain(self.spks_data, self.T, dt)
+        spiketrain_model_avg = SpikeTrainComparator.getAverageSpikeTrain(self.spks_model, self.T, dt)
 
         # Compute dot product <data, model>
-        #dotproduct_dm = SpikeTrainComparator.Md_dotProduct_Kistler(spiketrain_data_avg, spiketrain_model_avg, delta, dt)
         dotproduct_dm = dotProduct(spiketrain_data_avg, spiketrain_model_avg, dotProductArgs, dt=dt)
 
         # Compute dot product <model, model>
-        #dotproduct_mm = SpikeTrainComparator.Md_dotProduct_Kistler(spiketrain_model_avg, spiketrain_model_avg, delta, dt)
         dotproduct_mm = dotProduct(spiketrain_model_avg, spiketrain_model_avg, dotProductArgs, dt=dt)
 
         # Compute dot product <data, data> using unbiased method
@@ -183,6 +178,7 @@ class SpikeTrainComparator:
         """
         Given set of spike trains s (defined as list of spike times), build the mean spike train vector of duration T (in ms) and with a resolution of dt.
         """
+        #TODO limit this to ROI if all_s is a set of traces. Md should only be computed on test set ROI.
 
         T_i = int(T/dt)
         average_spike_train = np.zeros(T_i)
