@@ -402,3 +402,15 @@ def PSTH(spktrain, window_width, no_neurons, dt=0.1):
     kernel = np.ones(int(window_width / dt)) / (window_width * no_neurons)
     psth = np.convolve(spktrain, kernel, 'same')
     return psth
+
+
+###########################################################
+# Misc utilities for handling arrays.
+###########################################################
+
+def stripNan(x):
+    """Return copy of x with NaN values removed."""
+    if np.ndim(x) > 1:
+        raiseExpectedGot('vector-like', '`arr`', '{}d array'.format(np.ndim(x)))
+    return np.array(x, copy=True).flatten()[~np.isnan(np.asarray(x).flatten())]
+
