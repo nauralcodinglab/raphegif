@@ -6,6 +6,7 @@ import numba as nb
 from scipy import signal
 import weave
 
+from .Tools import timeToIndex
 
 class Trace:
 
@@ -534,3 +535,63 @@ def getRisingEdges(x, threshold, debounce):
         rising_edges_inds_debounced = rising_edges_inds
 
     return rising_edges_inds_debounced
+
+
+def detectSpikes(arr, threshold, ref, axis, dt=0.1):
+    """Detect spikes in a voltage array.
+
+    Vectorized implementation.
+
+    Arguments
+    ---------
+    arr : float vector or matrix-like
+        Array of voltages in which to detect spikes.
+    threshold : float
+        Voltage threshold for spike detection.
+    ref : float
+        Absolute refractory period (ms). Avoids the same spike being detected
+        multiple times due to recording noise.
+    axis : -1, 0, or 1
+        Time axis of array. -1 flattens the array before detection.
+    dt : float, default 0.1
+        Timestep of recording (ms).
+
+    Returns
+    -------
+    Nested list of spike times (ms). If axis=-1, a flat list is returned.
+
+    """
+    # Input checks.
+    if np.ndim(arr) > 2:
+        raiseExpectedGot(
+            'vector or matrix-like',
+            'argument `arr`',
+            '{}d array'.format(np.ndim(arr)),
+        )
+    if not any([axis == valid_axis for valid_axis in (-1, 0, 1)]):
+        raiseExpectedGot('one of [-1, 0, 1]', 'argument `axis`', axis)
+
+    # Coerce arr to numpy array and prep for vectorization over rows.
+    if axis == -1:
+        arr = np.array(arr, copy=True).flatten()[np.newaxis, :]
+    elif axis == 0:
+        arr = np.asarray(arr).T
+    elif axis == 1:
+        arr = np.asarray(arr)
+    else:
+        # Cannot get here.
+        raise RuntimeError('Unexpectedly reached end of switch.')
+
+    # Get spike times.
+    spktimes = []
+    for i in range(arr.shape[0]):
+        row_spktimes = (
+            getRisingEdges(arr[i, :], threshold, timeToIndex(ref, dt)[0]) * dt
+        )
+        spktimes.append(row_spktimes)
+
+    # Flatten result if axis == -1
+    if axis == -1:
+        spktimes = np.asarray(spktimes).flatten()
+
+    return spktimes
