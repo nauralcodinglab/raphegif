@@ -251,95 +251,13 @@ class Trace:
         """
         Detect action potentials by threshold crossing (parameter threshold, mV) from below (i.e. with dV/dt>0).
         To avoid multiple detection of same spike due to noise, use an 'absolute refractory period' ref, in ms.
-        Fast, vectorized implementation using numpy.
         """
-
-        # Convert refractory period into index-based units
         ref_ind = int(np.round(ref/self.dt))
+        spk_inds = getRisingEdges(self.V, threshold, ref_ind)
 
-        # Detect points above or below threshold to get rising edges
-        above_thresh = self.V >= threshold
-        below_thresh = ~above_thresh
-
-        rising_edges = above_thresh[1:] & below_thresh[:-1]
-
-        # Convert rising edges to spk inds
-        spks = np.where(rising_edges)[0] + 1
-
-        # Remove points that reference the same spk, if any spks were detected
-        if len(spks) >= 1:
-            redundant_pts = np.where(np.diff(spks) <= ref_ind)[0] + 1
-            spks = np.delete(spks, redundant_pts)
-
-        # Assign output
-        self.spks = spks
+        self.spks = spk_inds
         self.spks_flag = True
 
-    def detectSpikes_python(self, threshold=0.0, ref=3.0):
-        """
-        Detect action potentials by threshold crossing (parameter threshold, mV) from below (i.e. with dV/dt>0).
-        To avoid multiple detection of same spike due to noise, use an 'absolute refractory period' ref, in ms.
-        """
-
-        self.spks = []
-        ref_ind = int(ref/self.dt)
-        t = 0
-        while (t < len(self.V)-1):
-
-            if (self.V[t] >= threshold and self.V[t-1] <= threshold):
-                self.spks.append(t)
-                t += ref_ind
-            t += 1
-
-        self.spks = np.array(self.spks)
-        self.spks_flag = True
-
-    def detectSpikes_weave(self, threshold=0.0, ref=3.0):
-        """
-        Detect action potentials by threshold crossing (parameter threshold, mV) from below (i.e. with dV/dt>0).
-        To avoid multiple detection of same spike due to noise, use an 'absolute refractory period' ref, in ms.
-        Code implemented in C.
-        """
-
-        # Define parameters
-        p_T_i = int(np.round(self.T/self.dt))
-        p_ref_ind = int(np.round(ref/self.dt))
-        p_threshold = threshold
-
-        # Define vectors
-        V = np.array(self.V, dtype='double')
-
-        spike_train = np.zeros(p_T_i)
-        spike_train = np.array(spike_train, dtype='double')
-
-        code = """
-                #include <math.h>
-
-                int T_i = int(p_T_i)-1;
-                int ref_ind = int(p_ref_ind);
-                float threshold = p_threshold;
-
-                int t = 0;
-
-                while (t < T_i) {
-
-                    if (V[t] >= threshold && V[t-1] < threshold) {
-                        spike_train[t] = 1.0;
-                        t += ref_ind;
-                    }
-
-                    t++;
-
-                }
-                """
-
-        vars = ['p_T_i', 'p_ref_ind', 'p_threshold', 'V', 'spike_train']
-
-        v = weave.inline(code, vars)
-
-        spks_ind = np.where(spike_train == 1.0)[0]
-
-        self.spks = np.array(spks_ind)
         self.spks_flag = True
 
     def computeAverageSpikeShape(self):
@@ -583,3 +501,36 @@ def _unvectorizedFilterTimesByROI(times, ROI):
     return filteredTimes
 
 
+def getRisingEdges(x, threshold, debounce):
+    """Get indices where x has risen across a threshold.
+
+    Arguments
+    ---------
+    x : 1d numeric array
+    threshold : float
+    debounce : int
+        Ignore threshold crossings for debounce indices after each detected
+        rising edge. Avoids the same rising edge being detected several times
+        due to signal noise.
+
+    Returns
+    -------
+    1d int array of indices at which x has risen across threshold.
+
+    """
+    # Get indices of edges rising across threshold.
+    above_thresh = np.asarray(x) >= threshold
+    below_thresh = ~above_thresh
+    rising_edges_bool = above_thresh[1:] & below_thresh[:-1]
+    rising_edges_inds = np.where(rising_edges_bool)[0] + 1
+
+    # Debounce.
+    if len(rising_edges_inds) >= 1:
+        redundant_pts = np.where(np.diff(rising_edges_inds) <= debounce)[0] + 1
+        rising_edges_inds_debounced = np.delete(
+            rising_edges_inds, redundant_pts
+        )
+    else:
+        rising_edges_inds_debounced = rising_edges_inds
+
+    return rising_edges_inds_debounced

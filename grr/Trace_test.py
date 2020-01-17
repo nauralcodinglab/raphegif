@@ -23,6 +23,25 @@ class TestFilterTimesByROI(unittest.TestCase):
         )
 
 
+class TestGetRisingEdges(unittest.TestCase):
+    def testGetsOnlyRising(self):
+        x = [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]
+        expected = [1, 3]
+        actual = Trace.getRisingEdges(x, 0.5, 0)
+        npt.assert_array_equal(expected, actual)
+
+    def testDebounceInclusiveEdge(self):
+        x = [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0]
+        expected = [3]
+        actual = Trace.getRisingEdges(x, 0.5, 2)
+        npt.assert_array_equal(expected, actual)
+
+    def testDebounce(self):
+        x = [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0]
+        expected = [3]
+        actual = Trace.getRisingEdges(x, 0.5, 3)
+        npt.assert_array_equal(expected, actual)
+
 if __name__ == '__main__':
     unittest.main()
 
