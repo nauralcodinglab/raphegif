@@ -249,7 +249,7 @@ elif args.no_gaba:
         gifnet_mod.simulate(
             outfile,
             ser_input=distal_in['ser_input'],
-            do_feedforward=~args.no_feedforward, verbose=args.verbose
+            do_feedforward=False, verbose=args.verbose
         )
 
         outfile.close()
