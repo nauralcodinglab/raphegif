@@ -2,8 +2,8 @@
     "dt": 0.1,
     "propagation_delay": 2.0,
     "gaba_input": {
-        "tau_rise": 2.0,
-	    "tau_decay": 20.0,
+        "tau_rise": 1.44,
+	    "tau_decay": 26.0,
         "amplitude": -0.0003,
         "reversal": -76.7,
         "duration": 400

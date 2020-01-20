@@ -67,7 +67,7 @@ for tr in IV_recs:
     plt.figure()
     plt.subplot(121)
     plt.title('Sample traces')
-    plt.plot(t_vec, sub, 'k-', lw = 0.5, alpha = 0.7)
+    plt.plot(t_vec, sub_I, 'k-', lw = 0.5, alpha = 0.7)
     plt.ylim(-100, 200)
 
     plt.subplot(122)
@@ -265,12 +265,12 @@ for i in range(len(averaged_traces['traces'])):
 
 #%% DUMP DATA
 
-SAMPLE_TR_PATH = './data/raw/5HT/GABA_synapses/sample_traces/'
+SAMPLE_TR_PATH = './data/processed/5HT/GABA_synapses/sample_traces/'
 
-with open(SAMPLE_TR_PATH + 'averaged_traces.pyc', 'wb') as f:
+with open(SAMPLE_TR_PATH + 'averaged_traces.dat', 'wb') as f:
     pickle.dump(averaged_traces, f)
 
-with open(SAMPLE_TR_PATH + 'sample_decay_fit.pyc', 'wb') as f:
+with open(SAMPLE_TR_PATH + 'sample_decay_fit.dat', 'wb') as f:
     pickle.dump(sample_tr, f)
 
 
@@ -279,7 +279,7 @@ with open(SAMPLE_TR_PATH + 'sample_decay_fit.pyc', 'wb') as f:
 spec_outer = gs.GridSpec(2, 3, wspace = 0.4)
 spec_tau = gs.GridSpecFromSubplotSpec(1, 2, spec_outer[1, 2], width_ratios = [1, 0.4], wspace = 1)
 
-plt.style.use('./figs/scripts/thesis/thesis_mplrc.dms')
+plt.style.use('./figs/scripts/writeup/publication_figure_style.dms')
 plt.rc('font', size = 8)
 
 plt.figure(figsize = (6, 4))
