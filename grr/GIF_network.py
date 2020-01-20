@@ -137,6 +137,10 @@ class GIFnet(object):
                 feedforward_input = self._convolve_feedforward(
                     out, gaba_spktimes
                 )
+            else:
+                feedforward_input = None
+        else:
+            feedforward_input = None
 
         if ser_input is not None:
             self._simulate_ser(out, ser_input, feedforward_input, verbose)
