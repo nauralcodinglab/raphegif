@@ -1,0 +1,9 @@
+{
+    "dt": 0.1,
+    "no_principal_neurons": 600,
+    "output_model_suffixes": {
+        "base": "subsample_base.mod",
+        "noIA": "subsample_noIA.mod",
+        "fixedIA": "subsample_fixedIA.mod"
+    }
+}
