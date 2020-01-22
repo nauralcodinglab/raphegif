@@ -5,6 +5,7 @@
 """
 
 import unittest
+import warnings
 
 import numpy as np
 import numpy.testing as npt
@@ -95,6 +96,42 @@ class TestModelStimulus_Conductances(unittest.TestCase):
         )
 
 
+class TestModelStimulus_NoneTypeCurrent(unittest.TestCase):
+    def setUp(self):
+        self.dt = 0.5
+        self.modStim = ModelStimulus.ModelStimulus(self.dt)
+
+    def test_NoneTypeCurrentsDoNotCount(self):
+        """None type conductances should count towards numberOfConductances."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.modStim.appendCurrents(None)
+        self.assertEqual(
+            self.modStim.numberOfCurrents,
+            0,
+            'Expected to get 0 for `numberOfCurrents`; got {} '
+            'instead.'.format(self.modStim.numberOfCurrents)
+        )
+
+
+class TestModelStimulus_NoneTypeConductance(unittest.TestCase):
+    def setUp(self):
+        self.dt = 0.5
+        self.modStim = ModelStimulus.ModelStimulus(self.dt)
+
+    def test_NoneTypeConductancesDoNotCount(self):
+        """None type conductances should count towards numberOfConductances."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.modStim.appendConductances(None, [-70])
+        self.assertEqual(
+            self.modStim.numberOfConductances,
+            0,
+            'Expected to get 0 for `numberOfConductances`; got {} '
+            'instead.'.format(self.modStim.numberOfConductances)
+        )
+
+
 class TestInputArray_Constructor(unittest.TestCase):
     """Ensure that constructor raises errors for invalid input."""
 
@@ -147,7 +184,7 @@ class TestInputArray_Properties(unittest.TestCase):
             'InputArray timesteps incorrect for matrix input.'
         )
 
-    def test_numberOfInputVectors(self):
+    def test_numberOfInputVectors_EmptyInput(self):
         numInputVecs = ModelStimulus.InputArray([], 0.1).numberOfInputVectors
         self.assertEqual(
             numInputVecs, 0,
@@ -155,6 +192,15 @@ class TestInputArray_Properties(unittest.TestCase):
             'expected {}'.format(numInputVecs, 0)
         )
 
+    def test_numberOfInputVectors_NoneTypeInput(self):
+        numInputVecs = ModelStimulus.InputArray(None, 0.1).numberOfInputVectors
+        self.assertEqual(
+            numInputVecs, 0,
+            'Got {} for numberOfInputVectors with None type InputArray, '
+            'expected {}'.format(numInputVecs, 0)
+        )
+
+    def test_numberOfInputVectors_VectorInput(self):
         numInputVecs = ModelStimulus.InputArray([0], 0.1).numberOfInputVectors
         self.assertEqual(
             numInputVecs, 1,
@@ -162,6 +208,7 @@ class TestInputArray_Properties(unittest.TestCase):
             'expected {}'.format(numInputVecs, 1)
         )
 
+    def test_numberOfInputVectors_MatrixInput(self):
         numInputVecs = ModelStimulus.InputArray([[0], [0]], 0.1).numberOfInputVectors
         self.assertEqual(
             numInputVecs, 2,

@@ -319,10 +319,18 @@ class GIFnet(object):
                         )
                     )
 
-                mod_stim = self._assemble_model_stimulus(
-                    ser_input[sweep_no, ser_no, :],
-                    feedforward_input[sweep_no, ser_no, :]
-                )
+                if feedforward_input is not None:
+                    mod_stim = self._assemble_model_stimulus(
+                        ser_input[sweep_no, ser_no, :],
+                        feedforward_input[sweep_no, ser_no, :]
+                    )
+                else:
+                    mod_stim = self._assemble_model_stimulus(
+                        ser_input[sweep_no, ser_no, :],
+                        None
+                    )
+
+
                 t, V, eta, v_T, spks = self.ser_mod[ser_no].simulate(
                     mod_stim, self.ser_mod[ser_no].El
                 )

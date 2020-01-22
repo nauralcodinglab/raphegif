@@ -4,6 +4,8 @@
 
 """
 
+import warnings
+
 import numpy as np
 
 
@@ -20,21 +22,20 @@ class ModelStimulus(object):
     @property
     def timesteps(self):
         """Duration of the stimulus in timesteps."""
-        timesteps_ = [
-            self._currentArray.timesteps,
-            self._conductanceArray.timesteps
-        ]
+        self._validate_timesteps_consistency()
+        return max(self._get_component_timesteps())
+
+    def _validate_timesteps_consistency(self):
+        timesteps_ = self._get_component_timesteps()
         # Check consistency.
         if min(timesteps_) > 0 and (max(timesteps_) != min(timesteps_)):
             raise RuntimeError(
                 'Expected currents and conductances to have same number of '
-                'timesteps; got {} and {} instead.'.format(
-                    self._currentArray.timesteps,
-                    self._conductanceArray.timesteps
-                )
+                'timesteps; got {} instead.'.format(timesteps_)
             )
 
-        return max(timesteps_)
+    def _get_component_timesteps(self):
+        return (self._currentArray.timesteps, self._conductanceArray.timesteps)
 
     @property
     def duration(self):
@@ -79,15 +80,20 @@ class ModelStimulus(object):
 
     def appendCurrents(self, currentArray):
         """Add an array of currents."""
+        currentArray = self._coerceToInputArray(currentArray)
+
         # Check that timestep is compatible.
-        if hasattr(currentArray, 'dt') and not np.isclose(self.dt, currentArray.dt):
+        if not np.isclose(self.dt, currentArray.dt):
             raise ValueError(
                 'currentArray.dt {} does not match ModelStimulus.dt {}'.format(
                     currentArray.dt, self.dt
                 )
             )
 
-        self._currentArray.append(currentArray)
+        if currentArray.numberOfInputVectors >= 1:  # May be zero if currentArray is empty or None.
+            self._currentArray.append(currentArray)
+        else:
+            warnings.warn('currentArray is empty and will not be appended', RuntimeWarning)
 
     def appendConductances(self, conductanceArray, reversalPotentials):
         """Add an array of conductances.
@@ -99,23 +105,31 @@ class ModelStimulus(object):
             Reveral potential (mV) for each conductance.
 
         """
-        if not issubclass(type(conductanceArray), InputArray):
-            if hasattr(conductanceArray, 'dt'):
-                conductanceArray = InputArray(conductanceArray, conductanceArray.dt)
-            else:
-                conductanceArray = InputArray(conductanceArray, self.dt)
-        if len(np.atleast_1d(reversalPotentials)) != conductanceArray.numberOfInputVectors:
-            raise ValueError(
-                'Expected same number of reversalPotentials and '
-                'conductanceVectors; got {} and {}'.format(
-                    len(np.atleast_1d(reversalPotentials)),
-                    conductanceArray.numberOfInputVectors
+        conductanceArray = self._coerceToInputArray(conductanceArray)
+
+        if conductanceArray.numberOfInputVectors >= 1:  # May be zero if conductanceArray is None or empty.
+            if len(np.atleast_1d(reversalPotentials)) != conductanceArray.numberOfInputVectors:
+                raise ValueError(
+                    'Expected same number of reversalPotentials and '
+                    'conductanceVectors; got {} and {}'.format(
+                        len(np.atleast_1d(reversalPotentials)),
+                        conductanceArray.numberOfInputVectors
+                    )
                 )
-            )
 
-        self._conductanceArray.append(conductanceArray)
-        self._conductanceReversals.extend(np.atleast_1d(reversalPotentials).tolist())
+            self._conductanceArray.append(conductanceArray)
+            self._conductanceReversals.extend(np.atleast_1d(reversalPotentials).tolist())
+        else:
+            warnings.warn('conductanceArray is empty and will not be appended', RuntimeWarning)
 
+    def _coerceToInputArray(self, arr):
+        if not issubclass(type(arr), InputArray):
+            if hasattr(arr, 'dt'):
+                arr = InputArray(arr, arr.dt)
+            else:
+                arr = InputArray(arr, self.dt)
+
+        return arr
 
 class InputArray(object):
     """An array to be provided as input to a model."""
@@ -130,6 +144,10 @@ class InputArray(object):
             Timestep (ms).
 
         """
+        # Replace None-type array with empty array.
+        if array is None:
+            array = []
+
         arr_to_store = np.atleast_2d(array)
         if arr_to_store.ndim != 2:
             raise ValueError(
