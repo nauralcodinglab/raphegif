@@ -302,7 +302,8 @@ class GIFnet(object):
         """
         # Check input shapes.
         self._get_valid_input_dims(ser_input=ser_input, gaba_input=None)
-        self._get_valid_input_dims(ser_input=feedforward_input, gaba_input=None)
+        if feedforward_input is not None:
+            self._get_valid_input_dims(ser_input=feedforward_input, gaba_input=None)
 
         # Loop over sweeps and cells.
         ser_spktimes = []
@@ -414,8 +415,12 @@ class GIFnet(object):
                 'no_ser_neurons': 0,
                 'no_gaba_neurons': np.shape(gaba_input)[1]
             }
+        elif ser_input is None and gaba_input is None:
+            raise ValueError(
+                'Arguments `ser_input` and `gaba_input` cannot both be None.'
+            )
         else:
-            RuntimeError('Cannot get here.')
+            raise RuntimeError('Unexpectedly reached end of switch.')
 
         # Ensure input dimensions match number of models in instance
         # if input has been provided.
