@@ -14,7 +14,7 @@ python ./generate_mpfc_models.py --mods $MPFCMODS  --prefix ../../data/models/GI
 # Generate input.
 mpfc_network_input=../../data/simulations/GIF_network/step_input/square_step_mPFC.dat
 python ../GIF_network/input_generators/current_step.py $mpfc_network_input \
-	--baseline-ser 0.00 --min-ser 0.100 --max-ser 0.600 \
+	--baseline-ser 0.00 --min-ser 0.010 --max-ser 0.250 \
 	--baseline-gaba 0. --min-gaba 0. --max-gaba 0. \
 	|| exit 999
 
@@ -26,7 +26,7 @@ for i in $(seq 0 $[$REPEATS - 1]); do
         ../../data/models/GIF_network/mPFC/GIFnet_${i}_subsample_base.mod \
         $mpfc_network_input \
         ../../data/simulations/GIF_network/step_input/mPFC_base/GABA_KO/rep${i}.hdf5 \
-        --seed-background ${i} --sigma-background 0.010 \
+        --seed-background ${i} --sigma-background 0.001 \
         --no-gaba &
     if [ $[($i + 1) % $PROCESSES] == 0 ]; then
         wait
