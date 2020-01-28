@@ -14,7 +14,7 @@ python ./generate_mpfc_models.py --mods $MPFCMODS  --prefix ../../data/models/GI
 # Generate input.
 mpfc_network_input=../../data/simulations/GIF_network/step_input/square_step_mPFC.dat
 python ../GIF_network/input_generators/current_step.py $mpfc_network_input \
-	--baseline-ser 0.00 --min-ser 0.010 --max-ser 0.250 \
+	--baseline-ser 0.00 --min-ser 0.005 --max-ser 0.150 \
 	--baseline-gaba 0. --min-gaba 0. --max-gaba 0. \
 	|| exit 999
 
