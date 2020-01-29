@@ -1,13 +1,13 @@
 # Set environment variables.
-export MKL_NUM_THREADS=4
-export NUMEXPR_NUM_THREADS=4
-export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=2
+export NUMEXPR_NUM_THREADS=2
+export OMP_NUM_THREADS=2
 
 # Define constants.
 SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
 GABAMODS=../../data/models/GABA/GABA_GIFs.lmod
 REPEATS=10
-PROCESSES=4
+PROCESSES=10
 
 # Generate GIFnet models.
 python ./generate_models.py --sermods $SERMODS --gabamods $GABAMODS --prefix ../../data/models/GIF_network/GIFnet --opts gifnetmod_opts.json -r $REPEATS -v || exit 999
@@ -25,7 +25,7 @@ python ../GIF_network/input_generators/current_step.py $null_gaba_network_input 
 	|| exit 999
 
 # Run simulations
-for modtype in base noIA fixedIA; do
+for modtype in base noIA fixedIA truncatedAHP truncatedAHP_noIA; do
 
     # GABA CONTROL
     echo "Starting $modtype GABA control simulations."

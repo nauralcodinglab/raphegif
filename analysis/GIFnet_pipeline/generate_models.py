@@ -161,15 +161,33 @@ for i in range(args.replicates):
     # Save base model to disk.
     save_model(subsample_gifnet, 'base', i)
 
+    # Make/save model with truncated AHP.
+    truncated_ahp_gifnet = deepcopy(subsample_gifnet)
+    for j in range(len(truncated_ahp_gifnet.ser_mod)):
+        truncated_adaptation_coeffs = truncated_ahp_gifnet.ser_mod[i].eta.getCoefficients()
+        truncated_adaptation_coeffs[3:] = 0.
+        truncated_ahp_gifnet.ser_mod[j].eta.setFilter_Coefficients(truncated_adaptation_coeffs)
+    save_model(truncated_ahp_gifnet, 'truncatedAHP', i)
+    del truncated_ahp_gifnet
+    
+    # Make/save fixed IA model.
+    for j in range(len(subsample_gifnet.ser_mod)):
+        subsample_gifnet.ser_mod[j].gbar_K1 = opts['fixed_IA_conductance']
+    save_model(subsample_gifnet, 'fixedIA', i)
+
     # Make/save IA KO model
     for j in range(len(subsample_gifnet.ser_mod)):
         subsample_gifnet.ser_mod[j].gbar_K1 = 0.
     save_model(subsample_gifnet, 'noIA', i)
 
-    # Make/save fixed IA model.
+    # Make/save IA KO and truncated AHP model
+    # NOTE: IA must be knocked out separately first!
     for j in range(len(subsample_gifnet.ser_mod)):
-        subsample_gifnet.ser_mod[j].gbar_K1 = opts['fixed_IA_conductance']
-    save_model(subsample_gifnet, 'fixedIA', i)
+        truncated_adaptation_coeffs = subsample_gifnet.ser_mod[i].eta.getCoefficients()
+        truncated_adaptation_coeffs[3:] = 0.
+        subsample_gifnet.ser_mod[i].eta.setFilter_Coefficients(truncated_adaptation_coeffs)
+    save_model(subsample_gifnet, 'truncatedAHP_noIA', i)
+
 
 if args.verbose:
     print('Finished! Exiting.')

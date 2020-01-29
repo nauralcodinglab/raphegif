@@ -1,12 +1,12 @@
 # Set environment variables.
-export MKL_NUM_THREADS=4
-export NUMEXPR_NUM_THREADS=4
-export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+export OMP_NUM_THREADS=1
 
 # Define constants.
 MPFCMODS=../../data/models/mPFC/mPFC_GIFs.lmod
 REPEATS=10
-PROCESSES=5
+PROCESSES=10
 
 # Generate GIFnet models.
 python ./generate_mpfc_models.py --mods $MPFCMODS  --prefix ../../data/models/GIF_network/mPFC/GIFnet --opts mpfcmod_opts.json -r $REPEATS -v || exit 999
