@@ -1,6 +1,6 @@
 {
     "T_ref": 4.0,
-    "eta_timescales": [3, 10, 30, 100, 300, 1000],
+    "eta_timescales": [3, 10, 30, 100, 300, 1000, 3000],
     "gamma_timescales": [3, 30, 300, 3000],
     "DT_beforeSpike": 1.5,
     "dt": 0.1,
