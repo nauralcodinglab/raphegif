@@ -141,6 +141,25 @@ def assertAllAlmostSame(values, rtol=1e-5, atol=1e-8, equal_nan=False):
         )
 
 
+def assertHasAttributes(obj, requiredAttributes):
+    """Raise TypeError if obj does not have all requiredAttributes.
+
+    Arguments
+    ---------
+    obj : object instance
+        Object to check for required attributes.
+    requiredAttributes : list-like of strings
+        Attributes obj must have.
+
+    """
+    for requiredAttribute in requiredAttributes:
+        if not hasattr(obj, requiredAttribute):
+            raise TypeError(
+                '{} object is missing required '
+                'attribute {}'.format(str(type(obj)), requiredAttribute)
+            )
+
+
 ###########################################################
 # Tools for plotting.
 ###########################################################

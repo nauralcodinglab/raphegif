@@ -1,4 +1,5 @@
 import abc
+import re
 
 import numpy as np
 
@@ -118,3 +119,62 @@ def constructMedianModel(modelType, models, nan_behavior='default'):
         )
 
     return medianModel
+
+
+def modelsToRecords(models):
+    """Get a list of dicts of model parameters from list of models.
+
+    Vectorized wrapper for ThresholdModel.modelToRecord; see its documentation
+    for details.
+
+    """
+    records = [modelToRecord(mod) for mod in models]
+    return records
+
+
+def modelToRecord(model):
+    """Get a dict of model parameters from model.
+
+    #TODO: implement for filter types other than Exponentials.
+
+    Arguments
+    ---------
+    model : object with `scalarParameters` and `filterParameters` attributes
+
+    Returns
+    -------
+    Dict of model parameters. For scalarParameters, each dict key is the name
+    of the parameter. For filterParameters, the dict keys are strings of the
+    form `<filterName>_<tau>` where tau is the timescale of the coefficient.
+
+    """
+    Tools.assertHasAttributes(model, ['scalarParameters', 'filterParameters'])
+
+    # Extract model name and type.
+    modelIdentifiers = {
+        'name': getattr(model, 'name', ''),
+        'type': re.search(r'(\w+)\'', str(type(model))).groups()[-1]
+    }
+
+    # Extract scalar parameters.
+    scalarParams = {
+        paramname: getattr(model, paramname, None)
+        for paramname in model.scalarParameters
+    }
+
+    # Extract filter coefficients.
+    filterParams = {}
+    for filterName in model.filterParameters:
+        Tools.assertHasAttributes(getattr(model, filterName), ['taus'])
+        for i, tau in enumerate(getattr(model, filterName).taus):
+            filterParams['{}_{:.1f}'.format(filterName, tau)] = getattr(
+                model, filterName
+            ).getCoefficients()[i]
+
+    # Merge scalar parameters and filter coeffs into single record.
+    record = {}
+    record.update(modelIdentifiers)
+    record.update(scalarParams)
+    record.update(filterParams)
+
+    return record
