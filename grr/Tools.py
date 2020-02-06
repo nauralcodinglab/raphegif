@@ -371,6 +371,60 @@ def fitMultiExpResiduals(bs, taus, x, y):
     return (bs_opt, taus_opt, fitted_data)
 
 
+def getIndicesByPercentile(x, percentiles):
+    """Get indices based on percentile of x.
+
+    Main use case is to get eighty-twenty interval for fitting exponentials.
+
+    Arguments
+    ---------
+    x : 1D array like
+    percentiles : list of floats, range 0. - 1.
+        Percentiles of x for which to return indices.
+
+    Returns
+    -------
+    List of indices of x closest to percentiles, in order of appearance in
+    percentiles.
+
+    Example usage
+    -------------
+    > getIndicesByPercentile(np.arange(10, 0, -1), [0.80, 0.20])
+    [8, 2]
+
+    """
+    # Input checks.
+    if np.ndim(x) > 1:
+        raiseExpectedGot(
+            '1D array-like',
+            'argument `x`',
+            '{}D array-like'.format(np.ndim(x)),
+        )
+    if any(
+        np.logical_or(
+            np.asarray(percentiles) > 1.0, np.asarray(percentiles) < 0.0
+        )
+    ):
+        raiseExpectedGot(
+            'values between 0.0 and 1.0 ',
+            'argument `percentiles`',
+            'values ranging from {:.1f} to {:.1f}'.format(
+                np.min(percentiles), np.max(percentiles)
+            ),
+        )
+
+    # Convert x to percentiles.
+    x = np.array(x, copy=True).astype(np.float64)
+    data_percentiles = x - x.min()
+    data_percentiles /= data_percentiles.max()
+
+    # Find inds with closest match to `percentiles` argument.
+    output = []
+    for pctile in percentiles:
+        output.append(np.argmin(np.abs(data_percentiles - pctile)))
+    return output
+
+
 ###########################################################
 # Get indices far from spikes
 ###########################################################

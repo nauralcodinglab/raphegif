@@ -1,5 +1,6 @@
 import unittest
 
+import numpy.testing as npt
 import numpy as np
 
 import Tools
@@ -149,6 +150,13 @@ class Test_validate_matching_axis_lengths(unittest.TestCase):
             'Non-matching axis 1 not stated correctly in error message.'
         )
 
+
+class Test_getIndicesByPercentile(unittest.TestCase):
+    def test_exactMatch(self):
+        x = np.arange(10, -1, -1)
+        expected = [2, 8]
+        observed = Tools.getIndicesByPercentile(x, [0.80, 0.20])
+        npt.assert_array_equal(observed, expected)
 
 
 if __name__ == '__main__':
