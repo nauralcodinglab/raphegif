@@ -99,26 +99,6 @@ myExp.performAEC()
 # STEP 3: DETECT SPIKES
 ############################################################################################################
 
-# Detect spks using weave
-spks_weave = []
-
-myExp.trainingset_traces[0].detectSpikes_weave()
-spks_weave.append(myExp.trainingset_traces[0].spks.copy())
-
-for tr in myExp.testset_traces:
-    tr.detectSpikes_weave()
-    spks_weave.append(tr.spks.copy())
-
-# Detect spks using python
-spks_python = []
-
-myExp.trainingset_traces[0].detectSpikes_python()
-spks_python.append(myExp.trainingset_traces[0].spks.copy())
-
-for tr in myExp.testset_traces:
-    tr.detectSpikes_python()
-    spks_python.append(tr.spks.copy())
-
 # Detect spks using new numpy method
 spks_quickpy = []
 
@@ -128,22 +108,4 @@ spks_quickpy.append(myExp.trainingset_traces[0].spks.copy())
 for tr in myExp.testset_traces:
     tr.detectSpikes()
     spks_quickpy.append(tr.spks.copy())
-
-
-############################################################################################################
-# STEP 4: COMPARE SPIKETRAINS
-############################################################################################################
-
-# Print tests for identical output
-
-weave_vs_base = all(
-        [np.array_equal(arr_1, arr_2) for arr_1, arr_2 in zip(spks_weave, spks_python)])
-print('\nWeave and base python methods produce identical output'
-      ' (positive control): {}'.format(
-              weave_vs_base))
-
-weave_vs_quickpy = all(
-        [np.array_equal(arr_1, arr_2) for arr_1, arr_2 in zip(spks_weave, spks_quickpy)])
-print('Weave and numpy methods produce identical output: {}'.format(
-        weave_vs_quickpy))
 
