@@ -7,5 +7,7 @@ colors = {
     'fit': 'black',
     'm': sns.color_palette()[2],
     'h': sns.color_palette()[3],
-    'n': sns.color_palette()[4]
+    'n': sns.color_palette()[4],
+    '4AP': sns.color_palette()[5],
+    'input': 'gray',
 }
