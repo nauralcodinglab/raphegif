@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 
 from grr.Simulation import GIFnet_Simulation
-from grr.Tools import PSTH
+from grr.Spiketrain import PSTH
 
 #%% LOAD DATA
 
