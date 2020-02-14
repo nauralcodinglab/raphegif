@@ -19,8 +19,8 @@ class IAmod(object):
 
         self.ga = ga
 
-        self.El = -60
-        self.Ea = -101
+        self.El = -70.
+        self.Ea = -101.
 
         self.m_A = 1.61
         self.m_Vhalf = -23.7
@@ -33,8 +33,8 @@ class IAmod(object):
 
         self.sigma_noise = sigma_noise
 
-        self.theta = -45
-        self.vreset = -55
+        self.theta = -40.
+        self.vreset = -55.
 
     def m_inf(self, V):
         return self.m_A / (1 + np.exp( -self.m_k * (V - self.m_Vhalf) ))
