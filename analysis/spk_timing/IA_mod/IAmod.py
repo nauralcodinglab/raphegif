@@ -22,12 +22,14 @@ class IAmod(object):
         self.El = -60
         self.Ea = -101
 
+        self.m_A = 1.61
         self.m_Vhalf = -23.7
         self.m_k = 0.0985
 
         self.h_Vhalf = -59.2
         self.h_k = -0.165
         self.h_tau = tau_h
+        self.h_A = 1.03
 
         self.sigma_noise = sigma_noise
 
@@ -35,10 +37,10 @@ class IAmod(object):
         self.vreset = -55
 
     def m_inf(self, V):
-        return 1 / (1 + np.exp( -self.m_k * (V - self.m_Vhalf) ))
+        return self.m_A / (1 + np.exp( -self.m_k * (V - self.m_Vhalf) ))
 
     def h_inf(self, V):
-        return 1 / (1 + np.exp( -self.h_k * (V - self.h_Vhalf) ))
+        return self.h_A / (1 + np.exp( -self.h_k * (V - self.h_Vhalf) ))
 
 
     def simulate(self, V0, Vin, dt = 1e-3, random_seed = 42):
