@@ -33,7 +33,7 @@ class IAmod(object):
 
         self.sigma_noise = sigma_noise
 
-        self.theta = -40.
+        self.theta = -20.
         self.vreset = -55.
 
     def m_inf(self, V):
