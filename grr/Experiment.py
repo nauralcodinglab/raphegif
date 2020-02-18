@@ -419,28 +419,6 @@ class Experiment:
     ############################################################################################
     # AUXILIARY FUNCTIONS
     ############################################################################################
-    def detectSpikes_python(self, threshold=0.0, ref=3.0):
-        """
-        Extract spike times form all experimental traces.
-        Python implementation (to speed up, use the function detectSpikes implemented in C).
-        """
-
-        print "Detect spikes!"
-
-        self.spikeDetection_threshold = threshold
-        self.spikeDetection_ref = ref
-
-        if self.AEC_trace != 0:
-            self.AEC_trace.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
-
-        for tr in self.trainingset_traces:
-            tr.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
-
-        for tr in self.testset_traces:
-            tr.detectSpikes_python(self.spikeDetection_threshold, self.spikeDetection_ref)
-
-        print "Done!"
-
     def detectSpikes(self, threshold=0.0, ref=3.0):
         """
         Extract spike times form all experimental traces.
