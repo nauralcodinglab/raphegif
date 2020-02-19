@@ -35,8 +35,11 @@ class GainEstimator(object):
 
         Initializes the following attributes
         ------------------------------------
-        gain : float 1D array
-        intercept : float 1D array
+        gainByRep, interceptByRep: float 2D array
+            Gain and intercept over time for each rep. Dimensionality is
+            [rep, time].
+        gain, intercept: float 1D array
+            Mean gain and intercept over time.
         gainUncertainty, interceptUncertainty : float 1D array
             Standard deviation of estimated gain and intercept over time.
 
@@ -46,14 +49,19 @@ class GainEstimator(object):
         self._baselineIntervalTime = baselineInterval
         self._stimulusIntervalTime = stimulusInterval
 
-        coeffs, uncertainties = self._getLinearFitCoeffsAndUncertainties()
+        coeffs = self._getLinearFitCoeffs()
 
-        self.gain = coeffs[0, :]
-        self.intercept = coeffs[1, :]
-        self.gainUncertainty = uncertainties[0, :]
-        self.interceptUncertainty = uncertainties[1, :]
+        # 2D arrays [cells, time]
+        self.gainByRep = coeffs[:, 0, :]
+        self.interceptByRep = coeffs[:, 0, :]
 
-    def _getLinearFitCoeffsAndUncertainties(self):
+        repAxis = 0
+        self.gain = coeffs[:, 0, :].mean(axis=repAxis)
+        self.intercept = coeffs[:, 1, :].mean(axis=repAxis)
+        self.gainUncertainty = coeffs[:, 0, :].std(axis=repAxis)
+        self.interceptUncertainty = coeffs[:, 1, :].std(axis=repAxis)
+
+    def _getLinearFitCoeffs(self):
         """Linear fit of measured response."""
         x = self.inputAmplitudes
         y = (
@@ -66,16 +74,12 @@ class GainEstimator(object):
         # Implementation note: time is usually over the last axis in this
         # class. Here, time is over the first axis so that coeffs (second axis)
         # from a given fit are adjacent in memory.
-        coeffsOverTime = np.empty((no_timesteps, 2), order='C')
-        coeffUncertaintiesOverTime = np.empty_like(coeffsOverTime)
+        coeffsOverTime = np.empty((no_timesteps, 2, self.no_reps), order='C')
         for t in range(no_timesteps):
-            coeffs = np.polyfit(x, y[..., t].T, deg=1)
-            coeffsOverTime[t, :] = coeffs.mean(axis=1)
-            coeffUncertaintiesOverTime[t, :] = coeffs.std(axis=1)
+            coeffsOverTime[t, :, :] = np.polyfit(x, y[..., t].T, deg=1)
 
-        # Return transpose of coeffsOverTime, coeffUncer... so that time is
-        # on last axis.
-        return coeffsOverTime.T, coeffUncertaintiesOverTime.T
+        # Return transpose of coeffsOverTime so that time is on last axis.
+        return coeffsOverTime.T
 
     def _getMeanMeasuredResponseBaselineBySweep(self):
         averageBaselineBySweep = (

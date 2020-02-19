@@ -105,6 +105,34 @@ class GainEstimatorFitTests(unittest.TestCase):
             err_msg='Estimated uncertainty on intercept is not correct.'
         )
 
+    def testGainByRepFirstAxisIsReps(self):
+        sampleResponses = self._drawSampleResponses()
+        self.gainEstimator.fit(sampleResponses, self.inputAmplitudes, self.baselineInterval, self.stimulusInterval)
+
+        self.assertEqual(
+            self.gainEstimator.no_reps,
+            self.gainEstimator.gainByRep.shape[0],
+            '`no_reps` {} does not match length of `gainByRep` '
+            'first axis {}'.format(
+                self.gainEstimator.no_reps,
+                self.gainEstimator.gainByRep.shape[0]
+            )
+        )
+
+    def testInterceptByRepFirstAxisIsReps(self):
+        sampleResponses = self._drawSampleResponses()
+        self.gainEstimator.fit(sampleResponses, self.inputAmplitudes, self.baselineInterval, self.stimulusInterval)
+
+        self.assertEqual(
+            self.gainEstimator.no_reps,
+            self.gainEstimator.interceptByRep.shape[0],
+            '`no_reps` {} does not match length of `interceptByRep`'
+            ' first axis {}'.format(
+                self.gainEstimator.no_reps,
+                self.gainEstimator.interceptByRep.shape[0]
+            )
+        )
+
 if __name__ == '__main__':
     np.random.seed(42)
     unittest.main()
