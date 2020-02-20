@@ -25,7 +25,7 @@ args = parser.parse_args()
 records = []
 for fname in args.models:
     if args.verbose:
-        print('Scraping parameters from models in {}'.frmat(fname))
+        print('Scraping parameters from models in {}'.format(fname))
     with open(fname, 'rb') as f:
         modList = pickle.load(f)
         f.close()
