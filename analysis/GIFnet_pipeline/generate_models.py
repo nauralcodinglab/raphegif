@@ -67,7 +67,15 @@ required_fields = {
     'no_gaba_neurons': None,
     'connection_probability': None,
     'fixed_IA_conductance': None,
-    'output_model_suffixes': {'base': None, 'noIA': None, 'fixedIA': None}
+    'output_model_suffixes': {
+        'base': None,
+        'noIA': None,
+        'fixedIA': None,
+        'adaptation_swap': None,
+        'homogenous_adaptation_swap': None,
+        'homogenous': None,
+        'homogenous_GABA_only': None
+    }
 }
 check_dict_fields(opts, required_fields)
 
@@ -122,6 +130,50 @@ def save_model(model, type, number):
         pickle.dump(model, f)
         f.close()
 
+def set_5HT_IA_in_gifnet(gifnet, g_A):
+    """Set IA max conductance for all 5HT cells in copy of gifnet."""
+    gifnet = deepcopy(gifnet)
+    for ind in range(len(gifnet.ser_mod)):
+        gifnet.ser_mod[ind].gbar_K1 = g_A
+    return gifnet
+
+
+def generate_swapped_adaptation_gifnet(gifnet, ser_adaptation_donors, gaba_adaptation_donors):
+    """Generate new gifnet by grafting adaptation kernels onto opposite cell type."""
+    gifnet = deepcopy(gifnet)
+
+    adaptation_donors = np.random.choice(gaba_adaptation_donors, len(gifnet.ser_mod))
+    for ind in range(len(gifnet.ser_mod)):
+        gifnet.ser_mod[ind].eta.setFilter_Coefficients(
+            adaptation_donors[ind].eta.getCoefficients()
+        )
+        gifnet.ser_mod[ind].gamma.setFilter_Coefficients(
+            adaptation_donors[ind].gamma.getCoefficients()
+        )
+
+    adaptation_donors = np.random.choice(ser_adaptation_donors, len(gifnet.gaba_mod))
+    for ind in range(len(gifnet.gaba_mod)):
+        gifnet.gaba_mod[ind].eta.setFilter_Coefficients(
+            adaptation_donors[ind].eta.getCoefficients()
+        )
+        gifnet.gaba_mod[ind].gamma.setFilter_Coefficients(
+            adaptation_donors[ind].gamma.getCoefficients()
+        )
+
+    return gifnet
+
+
+def generate_random_connectivity_matrix():
+    connectivity_matrix = (
+        np.random.uniform(
+            size=(opts['no_ser_neurons'], opts['no_gaba_neurons'])
+        ) < opts['connection_probability']
+    ).astype(np.int8)
+    return connectivity_matrix
+
+
+
+
 gaba_kernel = BiexponentialSynapticKernel(
     amplitude=opts['gaba_input']['amplitude'],
     tau_rise=opts['gaba_input']['tau_rise'],
@@ -161,32 +213,21 @@ for i in range(args.replicates):
     # Save base model to disk.
     save_model(subsample_gifnet, 'base', i)
 
-    # Make/save model with truncated AHP.
-    truncated_ahp_gifnet = deepcopy(subsample_gifnet)
-    for j in range(len(truncated_ahp_gifnet.ser_mod)):
-        truncated_adaptation_coeffs = truncated_ahp_gifnet.ser_mod[i].eta.getCoefficients()
-        truncated_adaptation_coeffs[3:] = 0.
-        truncated_ahp_gifnet.ser_mod[j].eta.setFilter_Coefficients(truncated_adaptation_coeffs)
-    save_model(truncated_ahp_gifnet, 'truncatedAHP', i)
-    del truncated_ahp_gifnet
-    
-    # Make/save fixed IA model.
-    for j in range(len(subsample_gifnet.ser_mod)):
-        subsample_gifnet.ser_mod[j].gbar_K1 = opts['fixed_IA_conductance']
-    save_model(subsample_gifnet, 'fixedIA', i)
+    # Model with fixed IA conductance.
+    fixed_IA_gifnet = set_5HT_IA_in_gifnet(
+        subsample_gifnet, opts['fixed_IA_conductance']
+    )
+    save_model(fixed_IA_gifnet, 'fixedIA', i)
 
-    # Make/save IA KO model
-    for j in range(len(subsample_gifnet.ser_mod)):
-        subsample_gifnet.ser_mod[j].gbar_K1 = 0.
-    save_model(subsample_gifnet, 'noIA', i)
+    # Model with IA knocked out.
+    IA_KO_gifnet = set_5HT_IA_in_gifnet(subsample_gifnet, 0.)
+    save_model(IA_KO_gifnet, 'noIA', i)
 
-    # Make/save IA KO and truncated AHP model
-    # NOTE: IA must be knocked out separately first!
-    for j in range(len(subsample_gifnet.ser_mod)):
-        truncated_adaptation_coeffs = subsample_gifnet.ser_mod[i].eta.getCoefficients()
-        truncated_adaptation_coeffs[3:] = 0.
-        subsample_gifnet.ser_mod[i].eta.setFilter_Coefficients(truncated_adaptation_coeffs)
-    save_model(subsample_gifnet, 'truncatedAHP_noIA', i)
+    # Model with swapped adaptation mechanisms.
+    swapped_adaptation_gifnet = generate_swapped_adaptation_gifnet(
+        subsample_gifnet, sergifs, somgifs
+    )
+    save_model(swapped_adaptation_gifnet, 'adaptation_swap', i)
 
 
 if args.verbose:
