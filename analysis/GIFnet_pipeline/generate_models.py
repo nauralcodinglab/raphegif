@@ -121,9 +121,10 @@ def construct_file_name(number, kind):
 # GENERATE MODELS
 
 gaba_kernel = BiexponentialSynapticKernel(
-    amplitude=opts['gaba_input']['amplitude'],
+    size=opts['gaba_input']['amplitude'],
     tau_rise=opts['gaba_input']['tau_rise'],
     tau_decay=opts['gaba_input']['tau_decay'],
+    size_method='amplitude',
     duration=opts['gaba_input']['duration'],
     dt=opts['dt'],
     front_padded=True
