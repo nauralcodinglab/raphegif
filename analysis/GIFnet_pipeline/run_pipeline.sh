@@ -25,14 +25,14 @@ python ../GIF_network/input_generators/current_step.py $endocannabinoid_like_inp
 	|| exit 999
 
 # Run simulations
-for modtype in base noIA fixedIA truncatedAHP truncatedAHP_noIA; do
+for modtype in subsample_base subsample_noIA subsample_fixedIA homogenous_GABA_only homogenous_base homogenous_adaptation_swap subsample_adaptation_swap; do
 
     # GABA CONTROL
     echo "Starting $modtype GABA control simulations."
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
             $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
-            ../../data/models/GIF_network/GIFnet_${i}_subsample_${modtype}.mod \
+            ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $full_network_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/GABA_base/rep${i}.hdf5 \
             --seed-background ${i} --sigma-background 0.001 &
@@ -47,7 +47,7 @@ for modtype in base noIA fixedIA truncatedAHP truncatedAHP_noIA; do
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
             $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
-            ../../data/models/GIF_network/GIFnet_${i}_subsample_${modtype}.mod \
+            ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $full_network_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/GABA_KO/rep${i}.hdf5 \
             --seed-background ${i} --sigma-background 0.001 \
@@ -62,7 +62,7 @@ for modtype in base noIA fixedIA truncatedAHP truncatedAHP_noIA; do
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
             $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
-            ../../data/models/GIF_network/GIFnet_${i}_subsample_${modtype}.mod \
+            ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $endocannabinoid_like_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/endocannabinoid/rep${i}.hdf5 \
             --seed-background ${i} --sigma-background 0.001 &
