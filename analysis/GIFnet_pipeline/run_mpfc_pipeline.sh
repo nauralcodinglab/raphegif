@@ -5,7 +5,7 @@ export OMP_NUM_THREADS=1
 
 # Define constants.
 MPFCMODS=../../data/models/mPFC/mPFC_GIFs.lmod
-REPEATS=10
+REPEATS=20
 PROCESSES=10
 
 # Generate GIFnet models.

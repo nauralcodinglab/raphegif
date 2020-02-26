@@ -6,7 +6,7 @@ export OMP_NUM_THREADS=2
 # Define constants.
 SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
 GABAMODS=../../data/models/GABA/GABA_GIFs.lmod
-REPEATS=10
+REPEATS=20
 PROCESSES=10
 
 # Generate GIFnet models.
