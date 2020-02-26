@@ -614,8 +614,11 @@ class HomogenousGIFnetBuilder(GIFnetBuilder):
     def __init__(self, ser_mod_bank, gaba_mod_bank, no_ser_neurons, no_gaba_neurons, propagation_delay, gaba_kernel, gaba_reversal, connection_probability, dt, label):
         super(HomogenousGIFnetBuilder, self).__init__(dt, label)
 
-        self._ser_mod_bank = ser_mod_bank
-        self._gaba_mod_bank = gaba_mod_bank
+        self.__heterogenous_ser_mod_bank = ser_mod_bank  # Internal bank of raw models.
+        self._ser_mod_bank = [self._get_median_ser_model()]  # Friend attribute usable by other GIFnetBuilders.
+        self.__heterogenous_gaba_mod_bank = gaba_mod_bank
+        self._gaba_mod_bank = [self._get_median_gaba_model()]
+
         self._no_ser_neurons = no_ser_neurons
         self._no_gaba_neurons = no_gaba_neurons
         self._propagation_delay = propagation_delay
@@ -623,11 +626,11 @@ class HomogenousGIFnetBuilder(GIFnetBuilder):
         self._gaba_reversal = gaba_reversal
         self._connection_probability = connection_probability
 
-    def _construct_median_ser_model(self):
-        self._median_ser_model = constructMedianModel(type(self._ser_mod_bank[0]), self._ser_mod_bank)
+    def _get_median_ser_model(self):
+        return constructMedianModel(type(self.__heterogenous_ser_mod_bank[0]), self.__heterogenous_ser_mod_bank)
 
-    def _construct_median_gaba_model(self):
-        self._median_gaba_model = constructMedianModel(type(self._gaba_mod_bank[0]), self._gaba_mod_bank)
+    def _get_median_gaba_model(self):
+        return constructMedianModel(type(self.__heterogenous_gaba_mod_bank[0]), self.__heterogenous_gaba_mod_bank)
 
     def homogenous_build(self, homogenous_5HT=True, homogenous_GABA=True):
         """Build GIFnet with potentially homogenous neuronal populations.
@@ -645,14 +648,12 @@ class HomogenousGIFnetBuilder(GIFnetBuilder):
 
         """
         if homogenous_5HT:
-            self._construct_median_ser_model()
-            ser_models = [self._median_ser_model] * self._no_ser_neurons
+            ser_models = self._ser_mod_bank * self._no_ser_neurons  # Contains only median model.
         else:
             ser_models = self._subsample_ser_models()
 
         if homogenous_GABA:
-            self._construct_median_gaba_model()
-            gaba_models = [self._median_gaba_model] * self._no_gaba_neurons
+            gaba_models = self._gaba_mod_bank * self._no_gaba_neurons  # Contains only median model.
         else:
             gaba_models = self._subsample_gaba_models()
 
