@@ -35,7 +35,7 @@ for modtype in subsample_base subsample_noIA subsample_fixedIA homogenous_GABA_o
             ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $full_network_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/GABA_base/rep${i}.hdf5 \
-            --seed-background ${i} --sigma-background 0.001 &
+            --seed-background ${i} --sigma-background 0.002 &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
             wait
         fi
@@ -50,7 +50,7 @@ for modtype in subsample_base subsample_noIA subsample_fixedIA homogenous_GABA_o
             ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $full_network_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/GABA_KO/rep${i}.hdf5 \
-            --seed-background ${i} --sigma-background 0.001 \
+            --seed-background ${i} --sigma-background 0.002 \
             --no-gaba &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
             wait
@@ -65,7 +65,7 @@ for modtype in subsample_base subsample_noIA subsample_fixedIA homogenous_GABA_o
             ../../data/models/GIF_network/GIFnet_${i}_${modtype}.mod \
             $endocannabinoid_like_input \
             ../../data/simulations/GIF_network/step_input/DRN_$modtype/endocannabinoid/rep${i}.hdf5 \
-            --seed-background ${i} --sigma-background 0.001 &
+            --seed-background ${i} --sigma-background 0.002 &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
             wait
         fi

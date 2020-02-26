@@ -26,7 +26,7 @@ for i in $(seq 0 $[$REPEATS - 1]); do
         ../../data/models/GIF_network/mPFC/GIFnet_${i}_subsample_base.mod \
         $mpfc_network_input \
         ../../data/simulations/GIF_network/step_input/mPFC_base/GABA_KO/rep${i}.hdf5 \
-        --seed-background ${i} --sigma-background 0.001 \
+        --seed-background ${i} --sigma-background 0.002 \
         --no-gaba &
     if [ $[($i + 1) % $PROCESSES] == 0 ]; then
         wait
