@@ -2,13 +2,15 @@
 
 from __future__ import division
 from copy import deepcopy
+import pickle
 
 import numpy as np
 
 from .Tools import timeToIntVec
-from .Tools import validate_array_ndim, validate_matching_axis_lengths
+from .Tools import validate_array_ndim, validate_matching_axis_lengths, raiseExpectedGot
 from .Simulation import GIFnet_Simulation
 from .ModelStimulus import ModelStimulus
+from .ThresholdModel import constructMedianModel
 
 
 #%% DEFINE GIF NETWORK CLASS
@@ -467,7 +469,203 @@ class GIFnet(object):
                 self.gaba_mod[i].gamma.clearInterpolatedFilter()
 
 
+# GIFNET MODEL BUILDERS
 
+class GIFnetBuilder(object):
+
+    def __init__(self, dt, label):
+        self.dt = dt
+        self.label = label
+
+        self.gifnet = None
+        self._ser_mod_bank = []
+        self._gaba_mod_bank = []
+        self._no_ser_neurons = 0
+        self._no_gaba_neurons = 0
+        self._connection_probability = 0.0
+
+    def copy_gifnet_from(self, other):
+        if issubclass(type(other), GIFnetBuilder):
+            assert np.isclose(self.dt, other.dt)
+            self.gifnet = deepcopy(other.gifnet)
+            self._ser_mod_bank = other._ser_mod_bank
+            self._gaba_mod_bank = other._gaba_mod_bank
+            self._no_ser_neurons = other._no_ser_neurons
+            self._no_gaba_neurons = other._no_ser_neurons
+            self._connection_probability = other._connection_probability
+        elif issubclass(type(other), GIFnet):
+            assert np.isclose(self.dt, other.dt)
+            self.gifnet = deepcopy(other)
+        else:
+            raiseExpectedGot(
+                'GIFnetBuilder or GIFnet',
+                'argument `other`',
+                type(other)
+            )
+
+    def export_to_file(self, fname, verbose=False):
+        if verbose:
+            print('Exporting {} GIFnet to {}'.format(self.label, fname))
+
+        # Save a copy of instance gifnet with interpolated filters cleared.
+        # Implementation note: interpolated filters are cleared on a copy so
+        # that instance gifnet is not modified by calls to `export_to_file`
+        # method.
+        gifnet_to_save = deepcopy(self.gifnet)
+        gifnet_to_save.clear_interpolated_filters()
+
+        with open(fname, 'wb') as f:
+            pickle.dump(gifnet_to_save, f)
+            f.close()
+
+    def _subsample_ser_models(self):
+        return np.random.choice(self._ser_mod_bank, replace=True, size=self._no_ser_neurons)
+
+    def _subsample_gaba_models(self):
+        return np.random.choice(self._gaba_mod_bank, replace=True, size=self._no_gaba_neurons)
+
+    def _generate_random_connectivity_matrix(self):
+        connectivity_matrix = (
+            np.random.uniform(
+                size=(self._no_ser_neurons, self._no_gaba_neurons)
+            ) < self._connection_probability
+        ).astype(np.int8)
+        return connectivity_matrix
+
+
+class SubsampleGIFnetBuilder(GIFnetBuilder):
+
+    def __init__(self, ser_mod_bank, gaba_mod_bank, no_ser_neurons, no_gaba_neurons, propagation_delay, gaba_kernel, gaba_reversal, connection_probability, dt, label):
+        super(SubsampleGIFnetBuilder, self).__init__(dt, label)
+
+        self._ser_mod_bank = ser_mod_bank
+        self._gaba_mod_bank = gaba_mod_bank
+        self._no_ser_neurons = no_ser_neurons
+        self._no_gaba_neurons = no_gaba_neurons
+        self._propagation_delay = propagation_delay
+        self._gaba_kernel = gaba_kernel
+        self._gaba_reversal = gaba_reversal
+        self._connection_probability = connection_probability
+
+    def random_build(self):
+        """Build a random subsampled GIFnet"""
+        self.gifnet = GIFnet(
+            name=self.label,
+            ser_mod=self._subsample_ser_models(),
+            gaba_mod=self._subsample_gaba_models(),
+            propagation_delay=self._propagation_delay,
+            gaba_kernel=self._gaba_kernel.kernel,
+            gaba_reversal=self._gaba_reversal,
+            connectivity_matrix=self._generate_random_connectivity_matrix(),
+            dt=self.dt
+        )
+
+
+class SwappedAdaptationGIFnetBuilder(GIFnetBuilder):
+
+    def __init__(self, base_builder, dt, label):
+        super(SwappedAdaptationGIFnetBuilder, self).__init__(dt, label)
+
+        self.copy_gifnet_from(base_builder)
+        self._ser_mod_bank = base_builder._ser_mod_bank
+        self._gaba_mod_bank = base_builder._gaba_mod_bank
+
+    def swap_adaptation(self):
+        # Graft GABA adaptation onto 5HT
+        adaptation_donors = np.random.choice(self._gaba_mod_bank, len(self.gifnet.ser_mod))
+        for ind in range(len(self.gifnet.ser_mod)):
+            self.gifnet.ser_mod[ind].eta.setFilter_Coefficients(
+                adaptation_donors[ind].eta.getCoefficients()
+            )
+            self.gifnet.ser_mod[ind].gamma.setFilter_Coefficients(
+                adaptation_donors[ind].gamma.getCoefficients()
+            )
+
+        # Graft 5HT adaptation onto GABA
+        adaptation_donors = np.random.choice(self._ser_mod_bank, len(self.gifnet.gaba_mod))
+        for ind in range(len(self.gifnet.gaba_mod)):
+            self.gifnet.gaba_mod[ind].eta.setFilter_Coefficients(
+                adaptation_donors[ind].eta.getCoefficients()
+            )
+            self.gifnet.gaba_mod[ind].gamma.setFilter_Coefficients(
+                adaptation_donors[ind].gamma.getCoefficients()
+            )
+
+
+class FixedIAGIFnetBuilder(GIFnetBuilder):
+
+    def __init__(self, base_builder, dt, label):
+        super(FixedIAGIFnetBuilder, self).__init__(dt, label)
+
+        self.copy_gifnet_from(base_builder)
+
+    def fix_IA(self, maximal_conductance, inactivation_tau):
+        if maximal_conductance is not None:
+            for mod in self.gifnet.ser_mod:
+                mod.gbar_K1 = maximal_conductance
+
+        if inactivation_tau is not None:
+            for mod in self.gifnet.ser_mod:
+                mod.h_tau = inactivation_tau
+
+
+class HomogenousGIFnetBuilder(GIFnetBuilder):
+
+    def __init__(self, ser_mod_bank, gaba_mod_bank, no_ser_neurons, no_gaba_neurons, propagation_delay, gaba_kernel, gaba_reversal, connection_probability, dt, label):
+        super(HomogenousGIFnetBuilder, self).__init__(dt, label)
+
+        self._ser_mod_bank = ser_mod_bank
+        self._gaba_mod_bank = gaba_mod_bank
+        self._no_ser_neurons = no_ser_neurons
+        self._no_gaba_neurons = no_gaba_neurons
+        self._propagation_delay = propagation_delay
+        self._gaba_kernel = gaba_kernel
+        self._gaba_reversal = gaba_reversal
+        self._connection_probability = connection_probability
+
+    def _construct_median_ser_model(self):
+        self._median_ser_model = constructMedianModel(type(self._ser_mod_bank[0]), self._ser_mod_bank)
+
+    def _construct_median_gaba_model(self):
+        self._median_gaba_model = constructMedianModel(type(self._gaba_mod_bank[0]), self._gaba_mod_bank)
+
+    def homogenous_build(self, homogenous_5HT=True, homogenous_GABA=True):
+        """Build GIFnet with potentially homogenous neuronal populations.
+
+        Arguments
+        ---------
+        homogenous_5HT, homogenous_GABA: bool, default True
+            Construct GIFnet with all 5HT and/or GABA models fixed to the
+            median of the corresponding model bank. If False, subsample from
+            model bank instead.
+
+        Result
+        ------
+        Initializes `gifnet` attribute.
+
+        """
+        if homogenous_5HT:
+            self._construct_median_ser_model()
+            ser_models = [self._median_ser_model] * self._no_ser_neurons
+        else:
+            ser_models = self._subsample_ser_models()
+
+        if homogenous_GABA:
+            self._construct_median_gaba_model()
+            gaba_models = [self._median_gaba_model] * self._no_gaba_neurons
+        else:
+            gaba_models = self._subsample_gaba_models()
+
+        self.gifnet = GIFnet(
+            name=self.label,
+            ser_mod=ser_models,
+            gaba_mod=gaba_models,
+            propagation_delay=self._propagation_delay,
+            gaba_kernel=self._gaba_kernel.kernel,
+            gaba_reversal=self._gaba_reversal,
+            connectivity_matrix=self._generate_random_connectivity_matrix(),
+            dt=self.dt
+        )
 
 
 # Simple test for GIFnet

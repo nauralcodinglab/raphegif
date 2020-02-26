@@ -16,7 +16,9 @@
         "base": "subsample_base.mod",
         "noIA": "subsample_noIA.mod",
         "fixedIA": "subsample_fixedIA.mod",
-	"truncatedAHP": "subsample_truncatedAHP.mod",
-	"truncatedAHP_noIA": "subsample_truncatedAHP_noIA.mod"
+        "adaptation_swap": "subsample_adaptation_swap.mod",
+        "homogenous_adaptation_swap": "homogenous_adaptation_swap.mod",
+        "homogenous": "homogenous_base.mod",
+        "homogenous_GABA_only": "homogenous_GABA_only.mod"
     }
 }
