@@ -14,14 +14,14 @@ python ./generate_models.py --sermods $SERMODS --gabamods $GABAMODS --prefix ../
 
 # Generate input.
 full_network_input=../../data/simulations/GIF_network/step_input/square_step_full.dat
-null_gaba_network_input=../../data/simulations/GIF_network/step_input/square_step_5HT_only.dat
+endocannabinoid_like_input=../../data/simulations/GIF_network/step_input/square_step_endocannabinoid_like.dat
 python ../GIF_network/input_generators/current_step.py $full_network_input \
 	--baseline-ser 0. --min-ser 0.005 --max-ser 0.150 \
 	--baseline-gaba 0. --min-gaba 0.005 --max-gaba 0.150 \
 	|| exit 999
-python ../GIF_network/input_generators/current_step.py $null_gaba_network_input \
+python ../GIF_network/input_generators/current_step.py $endocannabinoid_like_input \
 	--baseline-ser 0. --min-ser 0.005 --max-ser 0.150 \
-	--baseline-gaba 0. --min-gaba 0. --max-gaba 0. \
+	--baseline-gaba 0. --min-gaba 0.0035 --max-gaba 0.105 \
 	|| exit 999
 
 # Run simulations
@@ -58,13 +58,13 @@ for modtype in base noIA fixedIA truncatedAHP truncatedAHP_noIA; do
     done
     wait
 
-    echo "Starting $modtype GABA no input simulations."
+    echo "Starting $modtype endocannabinoid-like input simulations."
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
             $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
             ../../data/models/GIF_network/GIFnet_${i}_subsample_${modtype}.mod \
-            $null_gaba_network_input \
-            ../../data/simulations/GIF_network/step_input/DRN_$modtype/GABA_noinput/rep${i}.hdf5 \
+            $endocannabinoid_like_input \
+            ../../data/simulations/GIF_network/step_input/DRN_$modtype/endocannabinoid/rep${i}.hdf5 \
             --seed-background ${i} --sigma-background 0.001 &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
             wait
