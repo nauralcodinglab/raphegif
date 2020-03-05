@@ -426,6 +426,33 @@ def getIndicesByPercentile(x, percentiles):
     return output
 
 
+def getIndexOfClosestValue(vector, value):
+    """Find the position of the closest value in a list, ignoring NaNs.
+
+    Finds argmin(|vector - value|).
+
+    Arguments
+    ---------
+    vector: 1D array-like
+        Vector to search for values.
+    value: float
+        Value to look for.
+
+    Returns
+    -------
+    Index of value in `vector` closest to `value`.
+
+    """
+    vector_asarray = np.array(vector, copy=True)
+    if vector_asarray.ndim > 1:
+        raiseExpectedGot(
+            '1D array-like',
+            'argument `vector`',
+            '{}D array-like instead.'.format(vector_asarray.ndim),
+        )
+    return np.nanargmin(np.abs(vector_asarray - value))
+
+
 ###########################################################
 # Misc utilities for handling arrays.
 ###########################################################

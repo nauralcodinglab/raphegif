@@ -159,5 +159,43 @@ class Test_getIndicesByPercentile(unittest.TestCase):
         npt.assert_array_equal(observed, expected)
 
 
+class Test_getIndexOfClosestValue(unittest.TestCase):
+    def test_integerExactMatch(self):
+        x = [0, 4, 2, 6, 4, 5]
+        value = 6
+        expected = 3
+        observed = Tools.getIndexOfClosestValue(x, value)
+        self.assertEqual(observed, expected)
+
+    def test_integerNoExactMatch(self):
+        x = [0, 4, 2, 6, 4, 5]
+        value = 7
+        expected = 3
+        observed = Tools.getIndexOfClosestValue(x, value)
+        self.assertEqual(observed, expected)
+
+    def test_floatExactMatch(self):
+        x = [0., 2.45, 2.22, 7.3, 9.2]
+        value = 2.22
+        expected = 2
+        observed = Tools.getIndexOfClosestValue(x, value)
+        self.assertEqual(observed, expected)
+
+    def test_floatNoExactMatch(self):
+        x = [0., 2.45, 2.22, 7.3, 9.2]
+        value = 2.23
+        expected = 2
+        observed = Tools.getIndexOfClosestValue(x, value)
+        self.assertEqual(observed, expected)
+
+    def test_multipleMatchesReturnsFirstMatch(self):
+        x = [0, 4, 2, 6, 4, 5]
+        value = 4
+        expected = 1
+        observed = Tools.getIndexOfClosestValue(x, value)
+        self.assertEqual(observed, expected)
+
+
+
 if __name__ == '__main__':
     unittest.main()
