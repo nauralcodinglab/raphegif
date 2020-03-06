@@ -109,7 +109,7 @@ with open(args.input, 'rb') as f:
     distal_in = pickle.load(f)
     f.close()
 
-if 'ser_input' in distal_in.keys():
+if 'ser_input' in distal_in.keys() and not args.no_ser:
     if distal_in['ser_input'].ndim == 1:
         distal_in['ser_input'] = np.broadcast_to(
             distal_in['ser_input'],
@@ -127,7 +127,7 @@ if 'ser_input' in distal_in.keys():
             'ser_input must be a 1D or 3D array'
         )
 
-if 'gaba_input' in distal_in.keys():
+if 'gaba_input' in distal_in.keys() and not args.no_gaba:
     if distal_in['gaba_input'].ndim == 1:
         distal_in['gaba_input'] = np.broadcast_to(
             distal_in['gaba_input'],
@@ -158,6 +158,12 @@ if not args.no_noise:
         # Ensure input_type is allowable.
         # (distal_in might also have a key for metaparams)
         if input_type not in ['ser_input', 'gaba_input']:
+            continue
+
+        # Skip adding noise for populations that will not be simulated anyway.
+        if input_type == 'ser_input' and args.no_ser:
+            continue
+        if input_type == 'gaba_input' and args.no_gaba:
             continue
 
         # Copy distal_in to ensure it is writable.
