@@ -45,9 +45,9 @@ cos_wave = stimtools.CosStimulus(
     args.dt,
 )
 
-synaptic_pulse = stimtools.BiexponentialSynapticKernel(
-    stimulus_parameters['amplitude'], 1.0, 20.0, duration=500, dt=args.dt
-).kernel
+short_step = stimtools.StepStimulus(
+    [200.0], [stimulus_parameters['amplitude']], dt=args.dt
+)
 
 step = stimtools.StepStimulus(
     [2000.0], [stimulus_parameters['amplitude']], args.dt
@@ -57,7 +57,7 @@ full_stimulus = stimtools.concatenate([
     pad_stimulus,
     cos_wave,
     pad_stimulus,
-    synaptic_pulse,
+    short_step,
     pad_stimulus,
     step,
     pad_stimulus
