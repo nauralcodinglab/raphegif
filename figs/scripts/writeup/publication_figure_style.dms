@@ -1,7 +1,7 @@
 ### LINES
 # See http://matplotlib.org/api/artist_api.html#module-matplotlib.lines for more
 # information on line properties.
-lines.linewidth   : 0.5     # line width in points
+lines.linewidth   : 0.8     # line width in points
 lines.color       : black    # has no affect on plot(); see axes.prop_cycle
 #lines.dash_joinstyle : miter        # miter|round|bevel
 #lines.dash_capstyle : butt          # butt|round|projecting
@@ -28,7 +28,7 @@ font.size           : 8.
 # text properties used by text.Text.  See
 
 #text.color          : black
-text.usetex         : True
+text.usetex         : False
 
 
 ### AXES
@@ -73,7 +73,7 @@ ytick.labelsize      : 6 # fontsize of the tick labels
 ### Legend
 legend.fontsize      : 6
 #legend.borderpad     : 0.5    # border whitespace in fontsize units
-#legend.markerscale   : 1.0    # the relative size of legend markers vs. original
+legend.markerscale   : 1.5    # the relative size of legend markers vs. original
 # the following dimensions are in axes coords
 legend.labelspacing  : 0.20    # the vertical space between the legend entries in fraction of fontsize
 legend.handlelength  : 1.     # the length of the legend lines in fraction of fontsize
