@@ -15,3 +15,4 @@ colors = {
 pvalue_thresholds = [[1e-4, '****'], [1e-3, '***'], [1e-2, '**'], [5e-2, '*'], [0.1, 'o'], [1., 'ns']]
 
 sbarlw = 1.5  # Scale bar line width
+insetlw = 0.75  # Line width for dashed border used to mark insets.
