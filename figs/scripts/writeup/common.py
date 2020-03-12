@@ -13,3 +13,5 @@ colors = {
 }
 
 pvalue_thresholds = [[1e-4, '****'], [1e-3, '***'], [1e-2, '**'], [5e-2, '*'], [0.1, 'o'], [1., 'ns']]
+
+sbarlw = 1.5  # Scale bar line width
