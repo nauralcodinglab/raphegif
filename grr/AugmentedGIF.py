@@ -328,10 +328,12 @@ class AugmentedGIF(GIF):
 
                         spks[t] = 1.0;
 
+                        float h_now = h[t];  // Store h gate update and make sure it gets used at reset.
                         t = t + Tref_ind;
-                        if (t < T_ind)
+                        if (t < T_ind) {
                             V[t] = Vr;
-
+                            h[t] = h_now;
+                        }
 
                         // UPDATE ADAPTATION PROCESSES
                         for(int j=0; j<eta_l; j++)
@@ -375,7 +377,10 @@ class AugmentedGIF(GIF):
                 'V_T': V_T,
                 'spike_times': spks,
                 'Ik1': Ik1_storage,
-                'Ik2': Ik2_storage
+                'Ik2': Ik2_storage,
+                'm': m,
+                'h': h,
+                'n': n
             }
         else:
             # Return tuple (backwards compatible with other GIF classes)
@@ -762,14 +767,17 @@ class AugmentedGIF(GIF):
         ####################################################################################################
         X = np.zeros((selection_l, 5))
 
+
+        voltage_far_from_spikes = trace.V[selection]
+
         # Compute equilibrium state of each gate
-        m_inf_vec = self.mInf(trace.V)
-        h_inf_vec = self.hInf(trace.V)
-        n_inf_vec = self.nInf(trace.V)
+        m_inf_vec = self.mInf(voltage_far_from_spikes)
+        h_inf_vec = self.hInf(voltage_far_from_spikes)
+        n_inf_vec = self.nInf(voltage_far_from_spikes)
 
         # Compute time-dependent state of each gate over whole trace
         m_vec = m_inf_vec
-        h_vec = self.computeGating(trace.V, h_inf_vec, self.h_tau)
+        h_vec = self.computeGating(voltage_far_from_spikes, h_inf_vec, self.h_tau)
         n_vec = n_inf_vec
 
         # Compute gating state of each conductance over whole trace
@@ -777,16 +785,16 @@ class AugmentedGIF(GIF):
         gating_vec_2 = n_vec
 
         # Compute K driving force over whole trace
-        DF_K = self.getDF_K(trace.V)
+        DF_K = self.getDF_K(voltage_far_from_spikes)
 
         # Fill first two columns of X matrix
-        X[:, 0] = trace.V[selection]
+        X[:, 0] = voltage_far_from_spikes
         X[:, 1] = trace.I[selection]
         X[:, 2] = np.ones(selection_l)
 
         # Fill K-conductance columns
-        X[:, 3] = -(gating_vec_1 * DF_K)[selection]
-        X[:, 4] = -(gating_vec_2 * DF_K)[selection]
+        X[:, 3] = -(gating_vec_1 * DF_K)
+        X[:, 4] = -(gating_vec_2 * DF_K)
 
         # Compute and fill the remaining columns associated with the spike-triggered current eta
         X_eta = self.eta.convolution_Spiketrain_basisfunctions(trace.getSpikeTimes() + self.Tref, trace.T, trace.dt)
