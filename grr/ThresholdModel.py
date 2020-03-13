@@ -1,5 +1,6 @@
 import abc
 import re
+from copy import deepcopy
 
 import numpy as np
 
@@ -26,6 +27,23 @@ class ThresholdModel(SpikingModel):
         V    : voltage trace (in mV)
         Vt   : voltage threshold trace (in mV)
         """
+
+    def copyParametersFrom(self, other):
+        """Copy constructor.
+
+        Parameters listed in `scalarParameters` and `filterParameters` are
+        initialized by value to match `other`.
+
+        """
+        Tools.assertHasAttributes(self, ['scalarParameters', 'filterParameters'])
+        Tools.assertHasAttributes(other, self.scalarParameters)
+        Tools.assertHasAttributes(other, self.filterParameters)
+
+        for scalarParam in self.scalarParameters:
+            setattr(self, scalarParam, deepcopy(getattr(other, scalarParam)))
+
+        for filterParam in self.filterParameters:
+            setattr(self, filterParam, deepcopy(getattr(other, filterParam)))
 
     def computeRateAndThreshold_vs_I(self, mu, sigma, tau, dt, T, ROI, nbRep=10):
         """
