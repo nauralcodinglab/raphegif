@@ -130,16 +130,31 @@ class AugmentedGIF(GIF):
         """
         return V - self.E_K
 
-    def simulate(self, I, V0):
-        """
-        Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
-        V0 indicate the initial condition V(0)=V0.
-        The function returns:
-        - time     : ms, support for V, eta_sum, V_T, spks
-        - V        : mV, membrane potential
-        - eta_sum  : nA, adaptation current
-        - V_T      : mV, firing threshold
-        - spks     : ms, list of spike times
+    def simulate(self, I, V0, return_dict=False):
+        """Simulate the spiking response of the AugmentedGIF.
+
+        Arguments
+        ---------
+        I : 1D float array
+            Input current in nA.
+        V0 : float
+            Initial voltage (mV).
+        return_dict : bool, default False
+            Whether to return a tuple (for backwards compatibility) or a dict.
+
+        Returns
+        -------
+        If return_dict is False, a tuple of
+        (time, V, eta_sum, V_T, spike_times).
+        Otherwise, a dict containing the following keys:
+            - `time`
+            - `V`
+            - `eta_sum` (adaptation current in nA)
+            - `V_T` (voltage threshold in mV)
+            - `spike_times`
+            - `Ik1` (inactivating current in nA)
+            - `Ik2` (non-inactivating current in nA)
+
         """
         # Input variables.
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
@@ -200,6 +215,9 @@ class AugmentedGIF(GIF):
         m = np.zeros_like(V, dtype="double")
         h = np.zeros_like(V, dtype="double")
         n = np.zeros_like(V, dtype="double")
+
+        Ik1_storage = np.zeros_like(V, dtype="double")
+        Ik2_storage = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -284,6 +302,9 @@ class AugmentedGIF(GIF):
                     gk_1_term = -DF_K_t * m[t-1] * h[t-1] * gbar_K1;
                     gk_2_term = -DF_K_t * n[t-1] * gbar_K2;
 
+                    Ik1_storage[t] = gk_1_term;
+                    Ik2_storage[t] = gk_2_term;
+
                     // INTEGRATE VOLTAGE
                     float dV = dt / C * (-gl * (V[t-1] - El) + gk_1_term + gk_2_term - eta_sum[t-1]);
                     if (numberOfInputCurrents > 0)
@@ -333,7 +354,7 @@ class AugmentedGIF(GIF):
                 'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
                 'p_n_Vhalf', 'p_n_k', 'p_n_A',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V', 'm', 'h', 'n',
+                'V', 'm', 'h', 'n', 'Ik1_storage', 'Ik2_storage',
                 'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
                 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
@@ -346,7 +367,19 @@ class AugmentedGIF(GIF):
 
         spks = (np.where(spks == 1)[0])*self.dt
 
-        return (time, V, eta_sum, V_T, spks)
+        if return_dict:
+            return {
+                'time': time,
+                'V': V,
+                'eta_sum': eta_sum,
+                'V_T': V_T,
+                'spike_times': spks,
+                'Ik1': Ik1_storage,
+                'Ik2': Ik2_storage
+            }
+        else:
+            # Return tuple (backwards compatible with other GIF classes)
+            return (time, V, eta_sum, V_T, spks)
 
     def simulateDeterministic_forceSpikes(self, I, V0, spks):
         """
