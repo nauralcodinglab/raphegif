@@ -5,7 +5,7 @@ export OMP_NUM_THREADS=2
 
 # Define constants.
 SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
-GABAMODS=../../data/models/GABA/GABA_GIFs.lmod
+GABAMODS=../../data/models/GABA/GABA_iGIF_NPs.lmod
 REPEATS=20
 PROCESSES=10
 
