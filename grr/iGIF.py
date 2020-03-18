@@ -549,7 +549,8 @@ class iGIF_Na(iGIF):
         time = np.arange(p_T)*self.dt
 
         eta_sum = eta_sum[:p_T]
-        V_T = gamma_sum[:p_T] + p_Vt_star + theta[:p_T]
+        gamma_sum = gamma_sum[:p_T]
+        V_T = gamma_sum + p_Vt_star + theta[:p_T]
 
         spks = (np.where(spks == 1)[0])*self.dt
 
@@ -1050,18 +1051,31 @@ class iGIF_NP(iGIF):
 
         return (spks_times, V, V_T)
 
-    def simulate(self, I, V0):
-        """
-        Simulate the spiking response of the GIF model to an input current I (nA) with time step dt.
-        V0 (mV) indicate the initial condition V(0)=V0.
+    def simulate(self, I, V0, return_dict=False):
+        """Simulate the spiking response of the iGIF_NP.
 
-        The function returns:
+        Arguments
+        ---------
+        I : 1D float array
+            Input current in nA.
+        V0 : float
+            Initial voltage (mV).
+        return_dict : bool, default False
+            Whether to return a tuple (for backwards compatibility) or a dict.
 
-        - time     : ms, support for V, eta_sum, V_T, spks
-        - V        : mV, membrane potential
-        - eta_sum  : nA, adaptation current
-        - V_T      : mV, firing threshold
-        - spks     : ms, list of spike times
+        Returns
+        -------
+        If return_dict is False, a tuple of
+        (time, V, eta_sum, V_T, spike_times).
+        Otherwise, a dict containing the following keys:
+            - `time`
+            - `V`
+            - `eta_sum` (adaptation current in nA)
+            - `gamma_sum` (threshold movement in mV)
+            - `theta` (voltage-threshold coupling in mV)
+            - `V_T` (voltage threshold in mV)
+            - `firing_intensity` (intensity of spike-generating process in Hz)
+            - `spike_times`
 
         """
         # Input variables.
@@ -1113,6 +1127,8 @@ class iGIF_NP(iGIF):
         spks = np.array(np.zeros(p_T), dtype="double")
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+
+        lambda_storage = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -1183,6 +1199,7 @@ class iGIF_NP(iGIF):
 
                     // COMPUTE PROBABILITY OF EMITTING ACTION POTENTIAL
                     lambda = lambda0*exp( (V[t+1]-Vt_star-gamma_sum[t+1]-theta_trace[t+1])/DeltaV );
+                    lambda_storage[t+1] = lambda;
                     p_dontspike = exp(-lambda*(dt/1000.0));                                  // since lambda0 is in Hz, dt must also be in Hz (this is why dt/1000.0)
 
 
@@ -1220,7 +1237,7 @@ class iGIF_NP(iGIF):
                 'p_numberOfInputConductances',
                 'theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins',
                 'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
-                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V',
+                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'lambda_storage', 'V',
                 'p_eta', 'p_eta_l', 'eta_sum',
                 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
@@ -1228,10 +1245,24 @@ class iGIF_NP(iGIF):
 
         time = np.arange(p_T)*self.dt
         eta_sum = eta_sum[:p_T]
-        V_T = gamma_sum[:p_T] + p_Vt_star + theta_trace[:p_T]
+        gamma_sum = gamma_sum[:p_T]
+        V_T = gamma_sum + p_Vt_star + theta_trace[:p_T]
         spks = (np.where(spks == 1)[0])*self.dt
 
-        return (time, V, eta_sum, V_T, spks)
+        if return_dict:
+            return {
+                'time': time,
+                'V': V,
+                'eta_sum': eta_sum,
+                'gamma_sum': gamma_sum,
+                'theta': theta_trace,
+                'V_T': V_T,
+                'spike_times': spks,
+                'firing_intensity': lambda_storage,
+            }
+        else:
+            # Return tuple (backwards compatible)
+            return (time, V, eta_sum, V_T, spks)
 
     def fit(self, experiment, DT_beforeSpike=5.0, theta_inf_nbbins=5, theta_tau_all=np.linspace(1.0, 10.0, 5), last_bin_constrained=False, do_plot=False):
         """

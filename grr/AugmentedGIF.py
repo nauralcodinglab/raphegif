@@ -150,10 +150,15 @@ class AugmentedGIF(GIF):
             - `time`
             - `V`
             - `eta_sum` (adaptation current in nA)
+            - `gamma_sum` (threshold movement in mV)
             - `V_T` (voltage threshold in mV)
+            - `firing_intensity` (intensity of spike-generating process in Hz)
             - `spike_times`
             - `Ik1` (inactivating current in nA)
             - `Ik2` (non-inactivating current in nA)
+            - `m` (activation gate of Ik1)
+            - `h` (inactivation gate of Ik1)
+            - `n` (activation gate of Ik2)
 
         """
         # Input variables.
@@ -218,6 +223,8 @@ class AugmentedGIF(GIF):
 
         Ik1_storage = np.zeros_like(V, dtype="double")
         Ik2_storage = np.zeros_like(V, dtype="double")
+
+        lambda_storage = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -319,6 +326,7 @@ class AugmentedGIF(GIF):
 
                     // COMPUTE PROBABILITY OF EMITTING ACTION POTENTIAL
                     lambda = lambda0*exp( (V[t-1]-Vt_star-gamma_sum[t-1])/DeltaV );
+                    lambda_storage[t] = lambda;
                     p_dontspike = exp(-lambda*(dt/1000.0));                                  // since lambda0 is in Hz, dt must also be in Hz (this is why dt/1000.0)
 
 
@@ -357,7 +365,7 @@ class AugmentedGIF(GIF):
                 'p_n_Vhalf', 'p_n_k', 'p_n_A',
                 'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
                 'V', 'm', 'h', 'n', 'Ik1_storage', 'Ik2_storage',
-                'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
+                'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'lambda_storage',
                 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
@@ -365,7 +373,8 @@ class AugmentedGIF(GIF):
         time = np.arange(p_T)*self.dt
 
         eta_sum = eta_sum[:p_T]
-        V_T = gamma_sum[:p_T] + p_Vt_star
+        gamma_sum = gamma_sum[:p_T]
+        V_T = gamma_sum + p_Vt_star
 
         spks = (np.where(spks == 1)[0])*self.dt
 
@@ -374,8 +383,10 @@ class AugmentedGIF(GIF):
                 'time': time,
                 'V': V,
                 'eta_sum': eta_sum,
+                'gamma_sum': gamma_sum,
                 'V_T': V_T,
                 'spike_times': spks,
+                'firing_intensity': lambda_storage,
                 'Ik1': Ik1_storage,
                 'Ik2': Ik2_storage,
                 'm': m,

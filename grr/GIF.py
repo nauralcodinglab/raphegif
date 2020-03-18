@@ -134,31 +134,30 @@ class GIF(ThresholdModel):
             modStim.appendCurrents(I)
             return modStim
 
-    def simulate(self, I, V0):
-        """Simulate the spiking response of the GIF model.
+    def simulate(self, I, V0, return_dict=False):
+        """Simulate the spiking response of the GIF.
 
         Arguments
         ---------
-        I : float 1D array-like or ModelStimulus
-            Model input. If 1D array-like, should be an input current in nA.
-            More complicated inputs that combine multiple currents and/or
-            conductances should be passed as a `ModelStimulus` object.
+        I : 1D float array
+            Input current in nA.
         V0 : float
             Initial voltage (mV).
+        return_dict : bool, default False
+            Whether to return a tuple (for backwards compatibility) or a dict.
 
         Returns
         -------
-        Five tuple of (time, V, eta_sum, V_T, spks).
-        time : float 1D array
-            Time support vector (ms).
-        V : float 1D array
-            Model voltage (mV). Voltage is zero during spikes.
-        eta_sum : float 1D array
-            Adaptation current (nA).
-        V_T : float 1D array
-            Dynamic spike threshold (mV).
-        spks : float list-like
-            List of spike times (ms).
+        If return_dict is False, a tuple of
+        (time, V, eta_sum, V_T, spike_times).
+        Otherwise, a dict containing the following keys:
+            - `time`
+            - `V`
+            - `eta_sum` (adaptation current in nA)
+            - `gamma_sum` (threshold movement in mV)
+            - `V_T` (voltage threshold in mV)
+            - `firing_intensity` (intensity of spike-generating process in Hz)
+            - `spike_times`
 
         """
         # Input variables.
@@ -197,6 +196,8 @@ class GIF(ThresholdModel):
         spks = np.array(np.zeros(p_T), dtype="double")
         eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
         gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+
+        lambda_storage = np.zeros_like(V, dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -246,6 +247,7 @@ class GIF(ThresholdModel):
 
                     // COMPUTE PROBABILITY OF EMITTING ACTION POTENTIAL
                     lambda = lambda0*exp( (V[t+1]-Vt_star-gamma_sum[t])/DeltaV );
+                    lambda_storage[t] = lambda;
                     p_dontspike = exp(-lambda*(dt/1000.0));                                  // since lambda0 is in Hz, dt must also be in Hz (this is why dt/1000.0)
 
 
@@ -279,7 +281,8 @@ class GIF(ThresholdModel):
                 'inputConductanceVector', 'inputConductanceReversals',
                 'p_numberOfInputConductances',
                 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr', 'p_Tref',
-                'p_Vt_star', 'p_DV', 'p_lambda0', 'V', 'p_eta', 'p_eta_l',
+                'p_Vt_star', 'p_DV', 'p_lambda0', 'lambda_storage',
+                'V', 'p_eta', 'p_eta_l',
                 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
 
         v = weave.inline(code, vars)
@@ -287,11 +290,25 @@ class GIF(ThresholdModel):
         time = np.arange(p_T)*self.dt
 
         eta_sum = eta_sum[:p_T]
-        V_T = gamma_sum[:p_T] + p_Vt_star
+        gamma_sum = gamma_sum[:p_T]
+        V_T = gamma_sum + p_Vt_star
 
         spks = (np.where(spks == 1)[0])*self.dt
 
-        return (time, V, eta_sum, V_T, spks)
+        if return_dict:
+            return {
+                'time': time,
+                'V': V,
+                'eta_sum': eta_sum,
+                'gamma_sum': gamma_sum,
+                'V_T': V_T,
+                'spike_times': spks,
+                'firing_intensity': lambda_storage,
+            }
+        else:
+            # Return tuple (backwards compatible)
+            return (time, V, eta_sum, V_T, spks)
+
 
     def simulateDeterministic_forceSpikes(self, I, V0, spks):
         """
