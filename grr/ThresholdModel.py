@@ -180,6 +180,13 @@ def modelToRecord(model):
         for paramname in model.scalarParameters
     }
 
+    try:
+        scalarParams['resting_potential'] = getRestingMembranePotential(
+            model, 1e-6
+        )
+    except:
+        scalarParams['resting_potential'] = np.nan
+
     # Extract filter coefficients.
     filterParams = {}
     for filterName in model.filterParameters:
@@ -196,3 +203,53 @@ def modelToRecord(model):
     record.update(filterParams)
 
     return record
+
+
+def getRestingMembranePotential(model, tol=1e-3):
+    """Estimate resting membrane potential numerically.
+
+    Arguments
+    ---------
+    model: GIF or subclass
+        Model for which to estimate the resting membrane potential.
+    tol: float
+        Numerical tolerance for the resting membrane potential estimate. Try
+        setting this to a larger value of algorithm fails to converge.
+
+    Returns
+    -------
+    Numerically-estimated resting membrane potential in mV.
+
+    """
+    # Implementation note:
+    # Model capacitance changes the integration time constant, but doesn't
+    # affect reversal. We can therefore change capacitance to make the
+    # numerical estimate of resting potential converge faster. The procedure is
+    # therefore to temporarily change model capacitance inside of a `try`
+    # block, let the model run with no input to get resting potential, then
+    # put the original capacitance back.
+    originalCapacitance = model.C
+
+    try:
+        model.C = min(
+            model.gl, model.C
+        )  # Alter C so that time constant becomes very short.
+        effectiveTau = model.C / model.gl  # Effective tau in ms.
+        timesteps = int(effectiveTau * 5.0 / model.dt)
+        inputCurrent = np.zeros(timesteps)
+
+        last_dV = (
+            tol + 1
+        )  # Initialize with nonsense value to make sure "do-while" loop runs at least once.
+        last_V = model.El
+        while np.abs(last_dV) > tol:
+            t, V, _ = model.simulateDeterministic_forceSpikes(
+                inputCurrent, last_V, []
+            )
+            last_V = V[-1]
+            last_dV = V[-1] - V[-2]
+
+    finally:
+        model.C = originalCapacitance
+
+    return last_V
