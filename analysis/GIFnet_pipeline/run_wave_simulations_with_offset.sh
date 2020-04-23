@@ -9,8 +9,8 @@ GABAMODS=../../data/models/GABA/GABA_iGIF_NPs.lmod
 REPEATS=20
 PROCESSES=10
 
-wave_input=../../data/simulations/GIF_network/wave_input/wave_input.dat
-python ../GIF_network/input_generators/wave.py $wave_input -v || exit 999
+wave_input=../../data/simulations/GIF_network/wave_input_baseline_offset/wave_input.dat
+python ../GIF_network/input_generators/wave.py $wave_input -v --baseline 40.0 || exit 999
 
 # DRN WITH GABA
 echo "Starting DRN GABA control simulations."
@@ -19,7 +19,7 @@ for i in $(seq 0 $[$REPEATS - 1]); do
         $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
         ../../data/models/GIF_network/GIFnet_${i}_subsample_base.mod \
         $wave_input \
-        ../../data/simulations/GIF_network/wave_input/DRN_subsample_base/GABA_base/rep${i}.hdf5 \
+        ../../data/simulations/GIF_network/wave_input_baseline_offset/DRN_subsample_base/GABA_base/rep${i}.hdf5 \
         --seed-background ${i} --sigma-background 0.002 &
     if [ $[($i + 1) % $PROCESSES] == 0 ]; then
         wait
@@ -34,7 +34,7 @@ for i in $(seq 0 $[$REPEATS - 1]); do
         $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
         ../../data/models/GIF_network/GIFnet_${i}_subsample_base.mod \
         $wave_input \
-        ../../data/simulations/GIF_network/wave_input/DRN_subsample_base/GABA_KO/rep${i}.hdf5 \
+        ../../data/simulations/GIF_network/wave_input_baseline_offset/DRN_subsample_base/GABA_KO/rep${i}.hdf5 \
         --seed-background ${i} --sigma-background 0.002 \
         --no-gaba &
     if [ $[($i + 1) % $PROCESSES] == 0 ]; then
@@ -50,7 +50,7 @@ for i in $(seq 0 $[$REPEATS - 1]); do
         $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
         ../../data/models/GIF_network/mPFC/GIFnet_${i}_subsample_base.mod \
         $wave_input \
-        ../../data/simulations/GIF_network/wave_input/mPFC_base/GABA_KO/rep${i}.hdf5 \
+        ../../data/simulations/GIF_network/wave_input_baseline_offset/mPFC_base/GABA_KO/rep${i}.hdf5 \
         --seed-background ${i} --sigma-background 0.002 \
         --no-gaba &
     if [ $[($i + 1) % $PROCESSES] == 0 ]; then

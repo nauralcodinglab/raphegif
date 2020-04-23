@@ -16,6 +16,7 @@ parser.add_argument(
 )
 
 parser.add_argument('--dt', type=float, default=0.1, help='Timestep of input.')
+parser.add_argument('--baseline', type=float, default=0.0, help="Baseline (constant) input.")
 parser.add_argument(
     '-v',
     '--verbose',
@@ -64,8 +65,8 @@ full_stimulus = stimtools.concatenate([
 ])
 
 wave_stimulus = {
-    'ser_input': full_stimulus.command[np.newaxis, np.newaxis, :],
-    'gaba_input': full_stimulus.command[np.newaxis, np.newaxis, :],
+    'ser_input': full_stimulus.command[np.newaxis, np.newaxis, :] + args.baseline,
+    'gaba_input': full_stimulus.command[np.newaxis, np.newaxis, :] + args.baseline,
     'metaparams': {}
 }
 
