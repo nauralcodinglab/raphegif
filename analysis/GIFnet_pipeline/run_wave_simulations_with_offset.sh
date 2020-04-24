@@ -10,7 +10,7 @@ REPEATS=20
 PROCESSES=10
 
 wave_input=../../data/simulations/GIF_network/wave_input_baseline_offset/wave_input.dat
-python ../GIF_network/input_generators/wave.py $wave_input -v --baseline 40.0 || exit 999
+python ../GIF_network/input_generators/wave.py $wave_input -v --baseline 0.040 || exit 999
 
 # DRN WITH GABA
 echo "Starting DRN GABA control simulations."
