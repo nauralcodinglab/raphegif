@@ -1,13 +1,13 @@
 # Set environment variables.
-export MKL_NUM_THREADS=2
-export NUMEXPR_NUM_THREADS=2
-export OMP_NUM_THREADS=2
+export MKL_NUM_THREADS=10
+export NUMEXPR_NUM_THREADS=10
+export OMP_NUM_THREADS=10
 
 # Define constants.
 SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
 GABAMODS=../../data/models/GABA/GABA_iGIF_NPs.lmod
 REPEATS=20
-PROCESSES=10
+PROCESSES=3
 
 # DRN WITH GABA
 for baseline_ in "-0.080" "-0.040" "0.000" "0.040" "0.080"; do

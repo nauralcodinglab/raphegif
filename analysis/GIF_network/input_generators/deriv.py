@@ -41,7 +41,7 @@ for duration in stimulus_parameters['ramp_durations']:
         st.concatenate(
             [
                 st.StepStimulus([2e3], [0], args.dt), 
-                np.linspace(0, 100, duration / args.dt), 
+                np.linspace(0, stimulus_parameters['amplitude'], duration / args.dt), 
                 st.StepStimulus([MAX_RAMP_DURATION - duration + 500], [0], args.dt)
             ], 
             args.dt

@@ -2,11 +2,13 @@
 
 from __future__ import division
 from copy import deepcopy
+from itertools import product
 import pickle
 
 import numpy as np
+from tqdm import tqdm, trange
 
-from .Tools import timeToIntVec
+from .Tools import timeToIntVec, timeToIndex
 from .Tools import validate_array_ndim, validate_matching_axis_lengths, raiseExpectedGot
 from .Simulation import GIFnet_Simulation
 from .ModelStimulus import ModelStimulus
@@ -137,7 +139,7 @@ class GIFnet(object):
             gaba_spktimes = self._simulate_gaba(out, gaba_input, verbose)
             if do_feedforward:
                 feedforward_input = self._convolve_feedforward(
-                    out, gaba_spktimes
+                    out, gaba_spktimes, verbose
                 )
             else:
                 feedforward_input = None
@@ -166,19 +168,20 @@ class GIFnet(object):
         # Check input shape.
         self._get_valid_input_dims(ser_input=None, gaba_input=gaba_input)
 
-        gaba_spktimes = []
-        for sweep_no in range(self.__tmp_simulation_sweeps):
-            gaba_spktimes_singlesweep = []
-            for gaba_no in range(self.no_gaba_neurons):
-                if verbose:
-                    print(
-                        'Simulating gaba neurons sweep {} of {} '
-                        '{:.1f}%'.format(
-                            sweep_no, self.__tmp_simulation_sweeps,
-                            100 * (gaba_no + 1) / self.no_gaba_neurons
-                        )
-                    )
+        if verbose:
+            print('Simulating GABA neurons.')
 
+        gaba_spktimes = []
+        for sweep_no in trange(
+                self.__tmp_simulation_sweeps, desc='Sweeps', disable=(not verbose)
+            ):
+            gaba_spktimes_singlesweep = []
+            for gaba_no in trange(
+                    self.no_gaba_neurons, 
+                    desc='GABA neuron', 
+                    leave=False, 
+                    disable=(not verbose)
+                ):
                 # Simulate cell for this sweep.
                 t, V, eta, v_T, spks = self.gaba_mod[gaba_no].simulate(
                     gaba_input[sweep_no, gaba_no, :],
@@ -206,7 +209,7 @@ class GIFnet(object):
 
         return gaba_spktimes
 
-    def _convolve_feedforward(self, out, gaba_spktimes):
+    def _convolve_feedforward(self, out, gaba_spktimes, verbose=False):
         """Convert GABA spks into feedforward input to 5HT cells.
 
         Inputs:
@@ -216,6 +219,8 @@ class GIFnet(object):
             gaba_spktimes (nested list)
                 -- Spiketimes of GABA cells in network.
                 Must be nested list of depth 3 ([sweep][cell][timestep]).
+            verbose (bool)
+                -- Print information about progress.
 
         Returns:
             3D array of shape (no_sweeps, no_ser_neurons, T/dt) with synaptic
@@ -237,16 +242,33 @@ class GIFnet(object):
              self.__tmp_simulation_timesteps),
             dtype=np.float32
         )
-        for sweep_no in range(len(gaba_spktimes)):
-            for gaba_no in range(self.no_gaba_neurons):
-                gaba_conv_spks[sweep_no, gaba_no, :] = np.convolve(
-                    timeToIntVec(
-                        gaba_spktimes[sweep_no][gaba_no], self.__tmp_simulation_duration, self.dt
-                    ),
-                    self.gaba_kernel, 'same'
-                ).astype(np.float32)
+        NO_SWEEPS = len(gaba_spktimes)
+        GABA_KERNEL_F32 = self.gaba_kernel.astype(np.float32)
+        GABA_KERNEL_LEN = len(self.gaba_kernel)
 
-        gaba_conv_spks = self._apply_propagation_delay(gaba_conv_spks)
+        if verbose:
+            print('Convolving feed-forward synaptic input.')
+        for sweep_no, gaba_no in tqdm(
+                product(range(NO_SWEEPS), range(self.no_gaba_neurons)),
+                disable=(not verbose)
+        ):
+            # Apply propagation delay
+            gaba_delayed_spktimes = (
+                np.asarray(gaba_spktimes[sweep_no][gaba_no]) 
+                + self.propagation_delay
+            )
+
+            # Perform sparse convolution of spike times with GABA kernel
+            for spkind in timeToIndex(gaba_delayed_spktimes, self.dt):
+                if spkind < self.__tmp_simulation_timesteps:
+                    gaba_conv_spks[
+                        sweep_no, 
+                        gaba_no, 
+                        spkind:min(spkind + GABA_KERNEL_LEN, self.__tmp_simulation_timesteps)
+                    ] += GABA_KERNEL_F32[
+                        :min(self.__tmp_simulation_timesteps - spkind, GABA_KERNEL_LEN)
+                    ]
+
         feedforward_input = self._project_onto_target_population(gaba_conv_spks)
 
         # Save synaptic input trains in 'out'.
@@ -255,23 +277,6 @@ class GIFnet(object):
         )
 
         return feedforward_input
-
-    def _apply_propagation_delay(self, feedforward_array):
-        """Apply instance propagation delay to array of feed-forward input."""
-        if self.propagation_delay is None:
-            raise ValueError(
-                'Cannot apply `propagation_delay=None`, set '
-                '`propagation_delay=0.` explicitly if that is what you want.'
-            )
-
-        feedforward_array = deepcopy(feedforward_array)
-        feedforward_array = np.roll(
-            feedforward_array, int(self.propagation_delay / self.dt),
-            axis=2
-        )
-        feedforward_array[:, :, :int(self.propagation_delay / self.dt)] = 0
-
-        return feedforward_array
 
     def _project_onto_target_population(self, feedforward_array):
         projection = np.moveaxis(
@@ -307,20 +312,22 @@ class GIFnet(object):
         if feedforward_input is not None:
             self._get_valid_input_dims(ser_input=feedforward_input, gaba_input=None)
 
+        if verbose:
+            print('Simulating 5HT neurons.')
         # Loop over sweeps and cells.
         ser_spktimes = []
-        for sweep_no in range(self.__tmp_simulation_sweeps):
+        for sweep_no in trange(
+            self.__tmp_simulation_sweeps,
+            desc='Sweeps',
+            disable=(not verbose)
+        ):
             ser_spktimes_singlesweep = []
-            for ser_no in range(self.no_ser_neurons):
-                if verbose:
-                    print(
-                        'Simulating 5HT neurons sweep {} of {} '
-                        '{:.1f}%'.format(
-                            sweep_no, self.__tmp_simulation_sweeps,
-                            100 * (ser_no + 1) / self.no_ser_neurons
-                        )
-                    )
-
+            for ser_no in trange(
+                self.no_ser_neurons,
+                desc='5HT neurons',
+                leave=False,
+                disable=(not verbose)
+            ):
                 if feedforward_input is not None:
                     mod_stim = self._assemble_model_stimulus(
                         ser_input[sweep_no, ser_no, :],
