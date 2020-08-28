@@ -10,7 +10,7 @@ REPEATS=20
 PROCESSES=3
 
 # DRN WITH GABA
-for baseline_ in "-0.080" "-0.040" "0.000" "0.040" "0.080"; do
+for baseline_ in "-0.080" "-0.060" "-0.040" "-0.020" "0.000" "0.020" "0.040" "0.060" "0.080"; do
     deriv_input=../../data/simulations/GIF_network/deriv_input/"$baseline_"_baseline/input.dat
     mkdir -p $(dirname "$deriv_input")
     rm -f $(dirname "$deriv_input")/*.hdf5
