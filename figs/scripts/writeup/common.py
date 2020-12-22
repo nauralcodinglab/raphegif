@@ -1,4 +1,5 @@
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 colors = {
     'ser': sns.color_palette()[0],
@@ -28,3 +29,14 @@ sbarlw = 1.5  # Scale bar line width
 insetlw = 0.75  # Line width for dashed border used to mark insets.
 
 fliersize=2
+
+def savefig(fname_without_extension, extensions=['svg', 'png'], **pltargs):
+    for extension in extensions:
+        print('Saving {}'.format(extension))
+        plt.savefig(
+            '.'.join([fname_without_extension, extension]), 
+            bbox_inches='tight',
+            backend='agg',
+            **pltargs
+        )
+    print('Done!')
