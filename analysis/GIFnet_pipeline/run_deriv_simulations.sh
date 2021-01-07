@@ -4,8 +4,6 @@ export NUMEXPR_NUM_THREADS=10
 export OMP_NUM_THREADS=10
 
 # Define constants.
-SERMODS=../../data/models/5HT/5HT_AugmentedGIFs.lmod
-GABAMODS=../../data/models/GABA/GABA_iGIF_NPs.lmod
 REPEATS=20
 PROCESSES=3
 
