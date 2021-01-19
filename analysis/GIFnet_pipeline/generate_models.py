@@ -5,6 +5,7 @@ from __future__ import division
 import pickle
 import argparse
 import json
+from os.path import exists
 
 import numpy as np
 
@@ -39,6 +40,10 @@ parser.add_argument(
 parser.add_argument(
     '--seed', type=int, default=42,
     help='Random seed (default 42).'
+)
+parser.add_argument(
+    '--overwrite', action='store_true',
+    help='Overwrite existing models.'
 )
 parser.add_argument(
     '-v', '--verbose', action='store_true',
@@ -118,6 +123,27 @@ def construct_file_name(number, kind):
     return fname
 
 
+def safe_export(builder, number, model_kind):
+    """Only export if the model doesn't already exist, or overwrite is set.
+    
+    Parameters
+    ----------
+    builder : GIFnetBuilder
+    model_kind : str
+        Used for the file name.
+
+    """
+    file_name = construct_file_name(number, model_kind)
+    if args.overwrite:
+        if exists(file_name):
+            print('Model {} already exists. Overwriting.'.format(file_name))
+        builder.export_to_file(file_name)
+    elif not exists(file_name):
+        builder.export_to_file(file_name)
+    elif args.verbose:
+        print('Model {} already exists. Skipping.'.format(file_name))
+
+
 # GENERATE MODELS
 
 gaba_kernel = BiexponentialSynapticKernel(
@@ -155,6 +181,7 @@ homogenous_builder = gfn.HomogenousGIFnetBuilder(
     'homogenous',
 )
 
+
 for i in range(args.replicates):
     if args.verbose:
         print('Assembling GIFnet model set {} of {}.'.format(
@@ -163,35 +190,39 @@ for i in range(args.replicates):
 
     # Vanilla model.
     subsample_builder.random_build()
-    subsample_builder.export_to_file(construct_file_name(i, 'base'))
+    safe_export(subsample_builder, i, 'base')
 
     # Fixed IA.
     fixedIA_builder = gfn.FixedIAGIFnetBuilder(subsample_builder, opts['dt'], 'fixedIA')
     fixedIA_builder.fix_IA(opts['fixed_IA_conductance'], None)
-    fixedIA_builder.export_to_file(construct_file_name(i, 'fixedIA'))
+    safe_export(fixedIA_builder, i, 'fixedIA')
 
     # IA knockout.
     fixedIA_builder.label = 'noIA'
     fixedIA_builder.fix_IA(0., None)
-    fixedIA_builder.export_to_file(construct_file_name(i, 'noIA'))
+    safe_export(fixedIA_builder, i, 'noIA')
 
-    # Model with swapped adaptation mechanisms.
+    # Model with 5HT adaptation replaced by GABA adaptation.
     swapped_adaptation_builder = gfn.SwappedAdaptationGIFnetBuilder(subsample_builder, opts['dt'], 'adaptation_swap')
+    swapped_adaptation_builder.swap_adaptation(gaba_onto_ser=True, ser_onto_gaba=False)
+    safe_export(swapped_adaptation_builder, i, 'adaptation_swap_ser_only')
+
+    # Model with 5HT adaptation replaced by GABA AND VICE VERSA
     swapped_adaptation_builder.swap_adaptation()
-    swapped_adaptation_builder.export_to_file(construct_file_name(i, 'adaptation_swap'))
+    safe_export(swapped_adaptation_builder, i, 'adaptation_swap')
 
     # Model with homogenous 5HT and GABA.
     homogenous_builder.homogenous_build(homogenous_5HT=True, homogenous_GABA=True)
-    homogenous_builder.export_to_file(construct_file_name(i, 'homogenous'))
+    safe_export(homogenous_builder, i, 'homogenous')
 
     # Model with homogenous 5HT and GABA and swapped adaptation.
     homogenous_swapped_builder = gfn.SwappedAdaptationGIFnetBuilder(homogenous_builder, opts['dt'], 'homogenous_adaptation_swap')
     homogenous_swapped_builder.swap_adaptation()
-    homogenous_builder.export_to_file(construct_file_name(i, 'homogenous_adaptation_swap'))
+    safe_export(homogenous_builder, i, 'homogenous_adaptation_swap')
 
     # Model with homogenous GABA and heterogenous 5HT.
     homogenous_builder.homogenous_build(homogenous_5HT=False, homogenous_GABA=True)
-    homogenous_builder.export_to_file(construct_file_name(i, 'homogenous_GABA_only'))
+    safe_export(homogenous_builder, i, 'homogenous_GABA_only')
 
 
 if args.verbose:

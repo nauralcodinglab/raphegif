@@ -577,8 +577,16 @@ class SwappedAdaptationGIFnetBuilder(GIFnetBuilder):
         self._ser_mod_bank = base_builder._ser_mod_bank
         self._gaba_mod_bank = base_builder._gaba_mod_bank
 
-    def swap_adaptation(self):
-        # Graft GABA adaptation onto 5HT
+    def swap_adaptation(self, gaba_onto_ser=True, ser_onto_gaba=True):
+        """Graft 5HT adaptation onto GABA models and/or vice-versa."""
+        if gaba_onto_ser:
+            self._graft_gaba_onto_ser()
+
+        if ser_onto_gaba:
+            self._graft_ser_onto_gaba()
+
+    def _graft_gaba_onto_ser(self):
+        """Graft GABA adaptation onto 5HT."""
         adaptation_donors = np.random.choice(self._gaba_mod_bank, len(self.gifnet.ser_mod))
         for ind in range(len(self.gifnet.ser_mod)):
             self.gifnet.ser_mod[ind].eta.setFilter_Coefficients(
@@ -588,7 +596,8 @@ class SwappedAdaptationGIFnetBuilder(GIFnetBuilder):
                 adaptation_donors[ind].gamma.getCoefficients()
             )
 
-        # Graft 5HT adaptation onto GABA
+    def _graft_ser_onto_gaba(self):
+        """Graft 5HT adaptation onto GABA."""
         adaptation_donors = np.random.choice(self._ser_mod_bank, len(self.gifnet.gaba_mod))
         for ind in range(len(self.gifnet.gaba_mod)):
             self.gifnet.gaba_mod[ind].eta.setFilter_Coefficients(
