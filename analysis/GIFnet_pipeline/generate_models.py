@@ -192,6 +192,11 @@ for i in range(args.replicates):
     subsample_builder.random_build()
     safe_export(subsample_builder, i, 'base')
 
+    # Model with 5HT DV replaced by GABA value
+    swapped_dv_builder = gfn.SwappedDVGIFnetBuilder(subsample_builder, opts['dt'], 'dv_swap_ser_only')
+    swapped_dv_builder.graft_gaba_dv_onto_ser()
+    safe_export(swapped_dv_builder, i, 'dv_swap_ser_only')
+
     # Fixed IA.
     fixedIA_builder = gfn.FixedIAGIFnetBuilder(subsample_builder, opts['dt'], 'fixedIA')
     fixedIA_builder.fix_IA(opts['fixed_IA_conductance'], None)
@@ -203,9 +208,14 @@ for i in range(args.replicates):
     safe_export(fixedIA_builder, i, 'noIA')
 
     # Model with 5HT adaptation replaced by GABA adaptation.
-    swapped_adaptation_builder = gfn.SwappedAdaptationGIFnetBuilder(subsample_builder, opts['dt'], 'adaptation_swap')
+    swapped_adaptation_builder = gfn.SwappedAdaptationGIFnetBuilder(subsample_builder, opts['dt'], 'adaptation_swap_ser_only')
     swapped_adaptation_builder.swap_adaptation(gaba_onto_ser=True, ser_onto_gaba=False)
     safe_export(swapped_adaptation_builder, i, 'adaptation_swap_ser_only')
+
+    # Model with 5HT adaptation AND DV replaced by GABA values
+    swapped_dv_adaptation_builder = gfn.SwappedDVGIFnetBuilder(swapped_adaptation_builder, opts['dt'], 'dv_adaptation_swap_ser_only')
+    swapped_dv_adaptation_builder.graft_gaba_dv_onto_ser()
+    safe_export(swapped_dv_adaptation_builder, i, 'dv_adaptation_swap_ser_only')
 
     # Model with 5HT adaptation replaced by GABA AND VICE VERSA
     swapped_adaptation_builder.swap_adaptation()

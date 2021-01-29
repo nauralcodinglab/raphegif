@@ -14,10 +14,12 @@
     "fixed_IA_conductance": 0.010,
     "output_model_suffixes": {
         "base": "subsample_base.mod",
+	"dv_swap_ser_only": "subsample_dv_swap_ser_only.mod",
         "noIA": "subsample_noIA.mod",
         "fixedIA": "subsample_fixedIA.mod",
         "adaptation_swap": "subsample_adaptation_swap.mod",
 	"adaptation_swap_ser_only": "subsample_adaptation_swap_ser_only.mod",
+	"dv_adaptation_swap_ser_only": "subsample_dv_adaptation_swap_ser_only.mod",
         "homogenous_adaptation_swap": "homogenous_adaptation_swap.mod",
         "homogenous": "homogenous_base.mod",
         "homogenous_GABA_only": "homogenous_GABA_only.mod"

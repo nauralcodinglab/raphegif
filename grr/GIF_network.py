@@ -568,6 +568,21 @@ class SubsampleGIFnetBuilder(GIFnetBuilder):
         )
 
 
+class SwappedDVGIFnetBuilder(GIFnetBuilder):
+    def __init__(self, base_builder, dt, label):
+        super(SwappedDVGIFnetBuilder, self).__init__(dt, label)
+
+        self.copy_gifnet_from(base_builder)
+        self._ser_mod_bank = base_builder._ser_mod_bank
+        self._gaba_mod_bank = base_builder._gaba_mod_bank
+
+    def graft_gaba_dv_onto_ser(self):
+        """Graft GABA threshold stochasticity factor DV onto 5HT."""
+        dv_donors = np.random.choice(self._gaba_mod_bank, len(self.gifnet.ser_mod))
+        for ind in range(len(self.gifnet.ser_mod)):
+            # Take DV from a randomly selected GABA model and graft it onto 5HT.
+            self.gifnet.ser_mod[ind].DV = dv_donors[ind].DV
+
 class SwappedAdaptationGIFnetBuilder(GIFnetBuilder):
 
     def __init__(self, base_builder, dt, label):
