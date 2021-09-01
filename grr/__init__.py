@@ -6,8 +6,7 @@ from . import Filter, Filter_Rect, Filter_Exps  # Filters
 from . import cell_class, Experiment, pltools, ReadIBW, Simulation, SpikeTrainComparator, Tools, Trace  # Tools
 
 # Models
-from . import AugmentedGIF, CalciumGIF, gGIF, GIF, iGIF, jitterGIF, resGIF, SplineGIF, SpikingModel, ThresholdModel  # Spiking models
-from . import SubthreshGIF  # Subthreshold models
+from . import AugmentedGIF, GIF, iGIF, SpikingModel, ThresholdModel  # Spiking models
 from . import GIF_network  # Network models
 
 
