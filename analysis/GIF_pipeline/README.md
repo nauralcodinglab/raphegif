@@ -1,4 +1,4 @@
-# GIF fitting pipeline
+# Fitting single-cell models to DRN and mPFC neurons
 
 ## Pipeline for single cell models
 ```mermaid
@@ -27,11 +27,11 @@ bench --> r2dV(Var. explained on dV)
 The analysis pipeline ingests raw electrophysiological data in Axon Binary
 Format, uses it to train single cell models from `grr`, and outputs various
 benchmarks computed on held-out data. These three stages are implemented by the
-`AEC_QC.py`, `fit_mods.py`, and `run_benchmarks.py` Python scripts in this
+`AEC_QC.py`, `fit_mods.py`, and `run_all_benchmarks.sh` scripts in this
 directory. The scripts are designed to be run from the command line to process
 experiments/models in batches. Running `make all` from this directory reproduces
 my GIF-based models of DRN neurons and mPFC pyramidal cells along with their
-associated benchmarks.   
+associated benchmarks.
 
 ## Detailed pipeline
 
@@ -47,8 +47,6 @@ rawser[Raw recordings] -- preprocess_experiments.py --> proser[Cleaned recording
 proser --> serGIF[GIF]
 proser --> serKGIF[KGIF]
 proser --> seriGIF[iGIF]
-
-serKGIF --> latency[Spike latency simulations]
 
 end
 
