@@ -7,23 +7,27 @@ alt="Python 2.7"/>
 <img
 src="https://img.shields.io/badge/os-macOS%20|%20linux-informational.svg"
 alt="macOS or Linux"/>
+<a href="LICENSE.txt">
 <img
 src="https://img.shields.io/badge/license-MIT-green.svg"
-href="LICENSE.txt"
 alt="MIT license"/>
+</a>
+<a href="https://black.readthedocs.io/en/stable/">
 <img
 src="https://img.shields.io/badge/codestyle-black-black.svg"
-href="https://black.readthedocs.io/en/stable/"
 alt="Codestyle: Black"/>
+</a>
 <br/>
+<a href="https://doi.org/10.1101/2021.06.25.449907">
 <img
 src="https://img.shields.io/badge/preprint%20doi-10.1101%2F2021.06.25.449907-informational.svg"
-href="https://doi.org/10.1101/2021.06.25.449907"
 alt="Preprint doi: 10.1101/2021.06.25.449907"/>
+</a>
+<a href="https://doi.org/10.5061/dryad.66t1g1k2w">
 <img
 src="https://img.shields.io/badge/data%20doi-10.5061%2Fdryad.66t1g1k2w-informational.svg"
-href="https://doi.org/10.5061/dryad.66t1g1k2w"
 alt="Data doi: 10.5061/dryad.66t1g1k2w"/>
+</a>
 </div>
 
 Code for building experimentally-contstrained spiking neural network models of
@@ -111,7 +115,7 @@ useful, please cite our paper!
             revealed by an experimentally-driven augmented integrate-and-fire
             modeling framework
         },
-        doi = {},
+        doi = {10.1101/2021.06.25.449907},
         journaltitle = {{bioRxiv}},
         author = {
             Harkin, Emerson F and Payeur, Alexandre and Lynn, Michael B
