@@ -84,22 +84,37 @@ class AEC_Badel(AEC):
         """
 
         # Define variables for optimal linear filter K_opt
-        self.K_opt = Filter_Rect_LogSpaced_AEC(length=150.0, binsize_lb=dt, binsize_ub=5.0, slope=10.0, clamp_period=0.5)
-        self.K_opt_all = []                # List of K_opt, used to store bootstrap repetitions
+        self.K_opt = Filter_Rect_LogSpaced_AEC(
+            length=150.0,
+            binsize_lb=dt,
+            binsize_ub=5.0,
+            slope=10.0,
+            clamp_period=0.5,
+        )
+        self.K_opt_all = (
+            []
+        )  # List of K_opt, used to store bootstrap repetitions
 
         # Define variables for electrode filter
         self.K_e = Filter_Rect_LinSpaced()
-        self.K_e_all = []                # List of K_e, used to store bootstrap repetitions
+        self.K_e_all = []  # List of K_e, used to store bootstrap repetitions
 
         # Meta parameters used in AEC-Step 1 (compute optimal linear filter K_opt)
-        self.p_nbRep = 15             # nb of times the filtres are estimated by resampling from available data
-        self.p_pctPoints = 0.8            # between 0 and 1, fraction of datapoints in subthreshold recording used for each bootstrap repetition
+        self.p_nbRep = 15  # nb of times the filtres are estimated by resampling from available data
+        self.p_pctPoints = 0.8  # between 0 and 1, fraction of datapoints in subthreshold recording used for each bootstrap repetition
 
         # Meta parameters used in AEC - Step 2 (estimation of K_e given K_opt)
-        self.p_Ke_l = 7.0            # ms, length of the electrode filter K_e
-        self.p_b0 = [10.0]         # MOhm/ms, initial condition for exponential fit on the tail of K_opt (amplitude)
-        self.p_tau0 = [20.0]         # ms, initial condition for exponential fit on the tail of K_opt (time scale)
-        self.p_expFitRange = [3.0, 50.0]    # ms, range where to perform exponential fit on the tail of K_opt (first milliseconds)
+        self.p_Ke_l = 7.0  # ms, length of the electrode filter K_e
+        self.p_b0 = [
+            10.0
+        ]  # MOhm/ms, initial condition for exponential fit on the tail of K_opt (amplitude)
+        self.p_tau0 = [
+            20.0
+        ]  # ms, initial condition for exponential fit on the tail of K_opt (time scale)
+        self.p_expFitRange = [
+            3.0,
+            50.0,
+        ]  # ms, range where to perform exponential fit on the tail of K_opt (first milliseconds)
 
         self.p_derivative_flag = False
 
@@ -137,8 +152,8 @@ class AEC_Badel(AEC):
         if self.p_derivative_flag:
 
             # Compute temporal derivative of the signal
-            V_dot = np.diff(expr.AEC_trace.V_rec)/dt
-            I_dot = np.diff(expr.AEC_trace.I)/dt
+            V_dot = np.diff(expr.AEC_trace.V_rec) / dt
+            I_dot = np.diff(expr.AEC_trace.I) / dt
 
         # estimate optimal linear filter on I - V
         else:
@@ -148,7 +163,9 @@ class AEC_Badel(AEC):
             I_dot = expr.AEC_trace.I - np.mean(expr.AEC_trace.I)
 
         # Get ROI indices for AEC data used to estimate AEC filters
-        ROI_selection = expr.AEC_trace.getROI_cutInitialSegments(self.K_opt.getLength())
+        ROI_selection = expr.AEC_trace.getROI_cutInitialSegments(
+            self.K_opt.getLength()
+        )
         ROI_selection = ROI_selection[:-1]
         ROI_selection_l = len(ROI_selection)
 
@@ -158,7 +175,7 @@ class AEC_Badel(AEC):
         # Build full X matrix
         X = self.K_opt.convolution_ContinuousSignal_basisfunctions(I_dot, dt)
 
-        nbPoints = int(self.p_pctPoints*ROI_selection_l)
+        nbPoints = int(self.p_pctPoints * ROI_selection_l)
 
         # Estimate electrode filter on multiple repetitions by bootstrapping
         for rep in np.arange(self.p_nbRep):
@@ -177,7 +194,9 @@ class AEC_Badel(AEC):
             XTX_inv = inv(XTX)
             XTY = np.dot(np.transpose(X_tmp), Y)
             K_opt_coeff = np.dot(XTX_inv, XTY)
-            K_opt_coeff = K_opt_coeff.flatten()     # coefficent of basis functions defining K_opt on bootstrap repetition rep
+            K_opt_coeff = (
+                K_opt_coeff.flatten()
+            )  # coefficent of basis functions defining K_opt on bootstrap repetition rep
 
             ############################################
             # ESTIMATE ELECTRODE FILETR K_e
@@ -192,19 +211,38 @@ class AEC_Badel(AEC):
 
             # Fit exponential function on tail of K_opt
             (t, K_opt_tmp_interpol) = K_opt_tmp.getInterpolatedFilter(dt)
-            (K_opt_tmp_expfit_t, K_opt_tmp_expfit) = K_opt_tmp.fitSumOfExponentials(len(self.p_b0), self.p_b0, self.p_tau0, ROI=self.p_expFitRange, dt=dt)
+            (
+                K_opt_tmp_expfit_t,
+                K_opt_tmp_expfit,
+            ) = K_opt_tmp.fitSumOfExponentials(
+                len(self.p_b0),
+                self.p_b0,
+                self.p_tau0,
+                ROI=self.p_expFitRange,
+                dt=dt,
+            )
 
             # Compute electrode filter K_e for bootstrap repetition
-            Ke_coeff_tmp = (K_opt_tmp_interpol - K_opt_tmp_expfit)[: int(self.p_Ke_l/dt)]
-            Ke_tmp = Filter_Rect_LinSpaced(length=self.p_Ke_l, nbBins=len(Ke_coeff_tmp))
-            Ke_tmp.setFilter_Coefficients(Ke_coeff_tmp)         # note that this filter is not defined using basis function expantion
+            Ke_coeff_tmp = (K_opt_tmp_interpol - K_opt_tmp_expfit)[
+                : int(self.p_Ke_l / dt)
+            ]
+            Ke_tmp = Filter_Rect_LinSpaced(
+                length=self.p_Ke_l, nbBins=len(Ke_coeff_tmp)
+            )
+            Ke_tmp.setFilter_Coefficients(
+                Ke_coeff_tmp
+            )  # note that this filter is not defined using basis function expantion
 
             # Fit exponential function on K_e to quantify electrode properties (these values are not used to compensate the recordings)
-            (Ke_tmp_expfit_t, Ke_tmp_expfit) = Ke_tmp.fitSumOfExponentials(1, [60.0], [0.5], ROI=[0.0, 7.0], dt=dt)
+            (Ke_tmp_expfit_t, Ke_tmp_expfit) = Ke_tmp.fitSumOfExponentials(
+                1, [60.0], [0.5], ROI=[0.0, 7.0], dt=dt
+            )
 
             # Store the bootstrap repetition
             self.K_e_all.append(Ke_tmp)
-            print "Repetition ", (rep+1), " R_e (MOhm) = %0.2f" % (Ke_tmp.computeIntegral(dt))
+            print "Repetition ", (rep + 1), " R_e (MOhm) = %0.2f" % (
+                Ke_tmp.computeIntegral(dt)
+            )
 
         # Compute final filter by averaging the filters obtained via bootstrap
         self.K_opt = Filter.averageFilters(self.K_opt_all)
@@ -259,10 +297,21 @@ class AEC_Badel(AEC):
         """
 
         # Plot optimal linear filter K_opt
-        Filter.plotAverageFilter(self.K_opt_all, 0.05, loglog=False, label_x='Time (ms)', label_y='Optimal linear filter (MOhm/ms)')
+        Filter.plotAverageFilter(
+            self.K_opt_all,
+            0.05,
+            loglog=False,
+            label_x='Time (ms)',
+            label_y='Optimal linear filter (MOhm/ms)',
+        )
 
         # Plot optimal linear filter K_e
-        Filter.plotAverageFilter(self.K_e_all, 0.05, label_x='Time (ms)', label_y='Electrode filter (MOhm/ms)')
+        Filter.plotAverageFilter(
+            self.K_e_all,
+            0.05,
+            label_x='Time (ms)',
+            label_y='Electrode filter (MOhm/ms)',
+        )
 
         plt.show()
 
@@ -272,7 +321,13 @@ class AEC_Badel(AEC):
         """
 
         # Plot optimal linear filter K_opt
-        Filter.plotAverageFilter(self.K_opt_all, 0.05, loglog=False, label_x='Time (ms)', label_y='Optimal linear filter (MOhm/ms)')
+        Filter.plotAverageFilter(
+            self.K_opt_all,
+            0.05,
+            loglog=False,
+            label_x='Time (ms)',
+            label_y='Optimal linear filter (MOhm/ms)',
+        )
 
         plt.show()
 
@@ -282,6 +337,12 @@ class AEC_Badel(AEC):
         """
 
         # Plot optimal linear filter K_e
-        Filter.plotAverageFilter(self.K_e_all, 0.05, label_x='Time (ms)', label_y='Electrode filter (MOhm/ms)', plot_expfit=False)
+        Filter.plotAverageFilter(
+            self.K_e_all,
+            0.05,
+            label_x='Time (ms)',
+            label_y='Electrode filter (MOhm/ms)',
+            plot_expfit=False,
+        )
 
         plt.show()

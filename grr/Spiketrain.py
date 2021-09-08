@@ -3,18 +3,21 @@ import weave
 
 from .Trace import getRisingEdges
 
-def getIndicesFarFromSpikes(T, spikes_i, dt_before, dt_after, initial_cutoff, dt):
 
-    T_i = int(T/dt)
+def getIndicesFarFromSpikes(
+    T, spikes_i, dt_before, dt_after, initial_cutoff, dt
+):
+
+    T_i = int(T / dt)
     flag = np.zeros(T_i)
-    flag[:int(initial_cutoff/dt)] = 1
+    flag[: int(initial_cutoff / dt)] = 1
     flag[-1] = 1
 
-    dt_before_i = int(dt_before/dt)
-    dt_after_i = int(dt_after/dt)
+    dt_before_i = int(dt_before / dt)
+    dt_after_i = int(dt_after / dt)
 
     for s in spikes_i:
-        flag[max(s-dt_before_i, 0): min(s+dt_after_i, T_i)] = 1
+        flag[max(s - dt_before_i, 0) : min(s + dt_after_i, T_i)] = 1
 
     selection = np.where(flag == 0)[0]
 
@@ -23,15 +26,15 @@ def getIndicesFarFromSpikes(T, spikes_i, dt_before, dt_after, initial_cutoff, dt
 
 def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt):
 
-    T_i = int(T/dt)
+    T_i = int(T / dt)
     flag = np.zeros(T_i)
-    flag[:int(initial_cutoff/dt)] = 1
+    flag[: int(initial_cutoff / dt)] = 1
     flag[-1] = 1
 
-    dt_after_i = int(dt_after/dt)
+    dt_after_i = int(dt_after / dt)
 
     for s in spikes_i:
-        flag[max(s, 0): min(s+dt_after_i, T_i)] = 1
+        flag[max(s, 0) : min(s + dt_after_i, T_i)] = 1
 
     selection = np.where(flag > 0.1)[0]
 
@@ -53,6 +56,7 @@ def PSTH(spktrain, window_width, no_neurons, dt=0.1):
     else:
         # Use dense method if spktrain is <= 65% zeros.
         return _dense_PSTH(spktrain, window_width, no_neurons, dt=dt)
+
 
 def _dense_PSTH(spktrain, window_width, no_neurons, dt=0.1):
     """Obtain the population firing rate with a resolution of 
@@ -106,20 +110,31 @@ def _sparse_PSTH(spktrain, window_width, no_neurons, dt=0.1):
     }
     """
 
-    vars = ['p_kernel_length', 'p_kernel_weight', 'psth', 'spktrain', 'p_num_spktrain_timesteps']
+    vars = [
+        'p_kernel_length',
+        'p_kernel_weight',
+        'psth',
+        'spktrain',
+        'p_num_spktrain_timesteps',
+    ]
 
     v = weave.inline(code, vars)
 
     # Select part of PSTH to return that will match results
-    # of np.convolve(mode='same'). Very weird, but necessary 
+    # of np.convolve(mode='same'). Very weird, but necessary
     # to get same results.
     half_kernel_timesteps = p_kernel_length // 2
     other_half_kernel_timesteps = p_kernel_length - half_kernel_timesteps
-    return psth[max(0, other_half_kernel_timesteps - 1):(len(psth) - half_kernel_timesteps - 1)]
+    return psth[
+        max(0, other_half_kernel_timesteps - 1) : (
+            len(psth) - half_kernel_timesteps - 1
+        )
+    ]
 
 
-
-def getSpikeLatency(voltage, start_time, threshold=0., refractory_period=3., dt=0.1):
+def getSpikeLatency(
+    voltage, start_time, threshold=0.0, refractory_period=3.0, dt=0.1
+):
     """Get the time to the first spike after start_time.
 
     Returns NaN if there are no spikes after start_time, or if there are any

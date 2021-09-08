@@ -32,21 +32,29 @@ class Filter:
 
     def __init__(self):
 
-        self.filter_coeff = []              # Values of coefficients b_j which define the amplitude of each basis function f_j.
+        self.filter_coeff = (
+            []
+        )  # Values of coefficients b_j which define the amplitude of each basis function f_j.
 
-        self.filter_coeffNb = 0               # Nb of basis functions used to define the filter
+        self.filter_coeffNb = (
+            0  # Nb of basis functions used to define the filter
+        )
 
-        self.filter = 0               # array, interpolated filter
+        self.filter = 0  # array, interpolated filter
 
-        self.filtersupport = 0               # array, support of interpolated filter (ie, time vector)
+        self.filtersupport = (
+            0  # array, support of interpolated filter (ie, time vector)
+        )
 
         # Results of multiexponantial fit (these parameters are used to approximate the filter as a sum of exponentials)
 
-        self.expfit_falg = False           # True if the exponential fit has been performed
+        self.expfit_falg = (
+            False  # True if the exponential fit has been performed
+        )
 
-        self.b0 = []              # list, Amplitudes of exponential functions
+        self.b0 = []  # list, Amplitudes of exponential functions
 
-        self.tau0 = []              # list, Timescales of exponential functions
+        self.tau0 = []  # list, Timescales of exponential functions
 
     #####################################################################
     # METHODS
@@ -114,7 +122,7 @@ class Filter:
 
         if self.expfit_falg:
 
-            t = np.arange(int(self.getLength()/dt))*dt
+            t = np.arange(int(self.getLength() / dt)) * dt
             F_exp = Filter.multiExpEval(t, self.b0, self.tau0)
 
             return (t, F_exp)
@@ -128,7 +136,7 @@ class Filter:
         """
 
         (t, F) = self.getInterpolatedFilter(dt)
-        return sum(F)*dt
+        return sum(F) * dt
 
     def convolution_ContinuousSignal(self, I, dt):
         """
@@ -139,7 +147,7 @@ class Filter:
 
         # Compute filtered input
         I_tmp = np.array(I, dtype='float64')
-        F_star_I = fftconvolve(F, I_tmp, mode='full')*dt
+        F_star_I = fftconvolve(F, I_tmp, mode='full') * dt
         F_star_I = F_star_I[: int(len(I))]
 
         F_star_I = F_star_I.astype("double")
@@ -158,12 +166,12 @@ class Filter:
         (t, F) = self.getInterpolatedFilter(dt)
         F_length = len(F)
 
-        filtered_spks = np.zeros(int(T/dt) + 5*F_length)
+        filtered_spks = np.zeros(int(T / dt) + 5 * F_length)
 
         for s in spks_i:
-            filtered_spks[s: s + F_length] += F
+            filtered_spks[s : s + F_length] += F
 
-        return filtered_spks[:int(T/dt)]
+        return filtered_spks[: int(T / dt)]
 
     def fitSumOfExponentials(self, dim, bs, taus, ROI=None, dt=0.1):
         """
@@ -182,15 +190,21 @@ class Filter:
             F_fit = F
 
         else:
-            lb = int(ROI[0]/dt)
-            ub = int(ROI[1]/dt)
+            lb = int(ROI[0] / dt)
+            ub = int(ROI[1] / dt)
 
-            t_fit = t[lb: ub]
-            F_fit = F[lb: ub]
+            t_fit = t[lb:ub]
+            F_fit = F[lb:ub]
 
         p0 = np.concatenate((bs, taus))
 
-        plsq = leastsq(Filter.multiExpResiduals, p0, args=(t_fit, F_fit, dim), maxfev=100000, ftol=0.00000001)
+        plsq = leastsq(
+            Filter.multiExpResiduals,
+            p0,
+            args=(t_fit, F_fit, dim),
+            maxfev=100000,
+            ftol=0.00000001,
+        )
 
         p_opt = plsq[0]
         bs_opt = p_opt[:dim]
@@ -295,7 +309,15 @@ class Filter:
         return F_avg
 
     @classmethod
-    def plotAverageFilter(cls, Fs, dt=0.05, loglog=False, label_x="Time (ms)", label_y="Filter", plot_expfit=True):
+    def plotAverageFilter(
+        cls,
+        Fs,
+        dt=0.05,
+        loglog=False,
+        label_x="Time (ms)",
+        label_y="Filter",
+        plot_expfit=True,
+    ):
         """
         Class method to average and plot a list of filters Fs.
         """
@@ -344,9 +366,9 @@ class Filter:
     @classmethod
     def multiExpResiduals(cls, p, x, y, d):
         bs = p[0:d]
-        taus = p[d:2*d]
+        taus = p[d : 2 * d]
 
-        return (y - Filter.multiExpEval(x, bs, taus))
+        return y - Filter.multiExpEval(x, bs, taus)
 
     @classmethod
     def multiExpEval(cls, x, bs, taus):
@@ -355,7 +377,7 @@ class Filter:
         L = len(bs)
 
         for i in range(L):
-            result = result + bs[i] * np.exp(-x/taus[i])
+            result = result + bs[i] * np.exp(-x / taus[i])
 
         return result
 
@@ -366,9 +388,7 @@ def constructMedianFilter(filterType, filters):
         if not isinstance(filt, filterType):
             raise TypeError(
                 'All filters must be of type {}; got instance of '
-                'type {}'.format(
-                    filterType, type(filt)
-                )
+                'type {}'.format(filterType, type(filt))
             )
 
     medianFilter = copy.deepcopy(filters[0])
@@ -387,4 +407,3 @@ def constructMedianFilter(filterType, filters):
     medianFilter.filter_coeff = np.median(filterCoeffs, axis=0)
 
     return medianFilter
-

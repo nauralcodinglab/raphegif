@@ -24,7 +24,9 @@ class Filter_Exps(Filter):
 
         # Auxiliary variables that can be computed using the parameters above
 
-        self.taus = []       # ms, vector defining the timescales {tau_j} used to describe the filter f(t)
+        self.taus = (
+            []
+        )  # ms, vector defining the timescales {tau_j} used to describe the filter f(t)
 
         self.length_coeff = 10  # the filter length is computed by multiplying the slowest timescale in taus by this coefficient
 
@@ -50,7 +52,7 @@ class Filter_Exps(Filter):
         Return the duration (in ms) of the filter.
         """
 
-        return self.length_coeff*max(self.taus)
+        return self.length_coeff * max(self.taus)
 
     def computeInterpolatedFilter(self, dt):
         """
@@ -59,13 +61,15 @@ class Filter_Exps(Filter):
 
         if self.filter_coeffNb == len(self.filter_coeff):
 
-            filter_interpol_support = np.arange(self.getLength()/dt)*dt
+            filter_interpol_support = np.arange(self.getLength() / dt) * dt
 
             filter_interpol = np.zeros(len(filter_interpol_support))
 
             for i in np.arange(self.filter_coeffNb):
 
-                filter_interpol += self.filter_coeff[i] * np.exp(-filter_interpol_support/self.taus[i])
+                filter_interpol += self.filter_coeff[i] * np.exp(
+                    -filter_interpol_support / self.taus[i]
+                )
 
             self.filtersupport = filter_interpol_support
             self.filter = filter_interpol
@@ -149,7 +153,7 @@ class Filter_Exps(Filter):
         R = int(self.filter_coeffNb)
 
         # Number of time steps
-        p_T = int(T/dt)
+        p_T = int(T / dt)
         p_dt = dt
 
         # Timescales
@@ -157,7 +161,7 @@ class Filter_Exps(Filter):
         p_taus = p_taus.astype("double")
 
         # Spike train
-        p_spks_i = Tools.timeToIndex(spks, dt)        # spike times (in time indices)
+        p_spks_i = Tools.timeToIndex(spks, dt)  # spike times (in time indices)
         p_spks_i = p_spks_i.astype("double")
         p_spks_L = len(p_spks_i)
 

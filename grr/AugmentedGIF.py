@@ -14,50 +14,72 @@ from . import Tools
 from .Tools import reprint
 
 
-#%% DEFINE AUGMENTED GIF CLASS
+# DEFINE AUGMENTED GIF CLASS
+
 
 class AugmentedGIF(GIF):
 
     scalarParameters = (
-        'dt', 'gl', 'C', 'El', 'Vr', 'Tref', 'Vt_star', 'DV', 'lambda0',
-        'm_Vhalf', 'm_k', 'm_A',
-        'h_Vhalf', 'h_k', 'h_A', 'h_tau',
-        'n_Vhalf', 'n_k', 'n_A',
-        'E_K', 'gbar_K1', 'gbar_K2'
+        'dt',
+        'gl',
+        'C',
+        'El',
+        'Vr',
+        'Tref',
+        'Vt_star',
+        'DV',
+        'lambda0',
+        'm_Vhalf',
+        'm_k',
+        'm_A',
+        'h_Vhalf',
+        'h_k',
+        'h_A',
+        'h_tau',
+        'n_Vhalf',
+        'n_k',
+        'n_A',
+        'E_K',
+        'gbar_K1',
+        'gbar_K2',
     )
     filterParameters = ('eta', 'gamma')
 
     def __init__(self, dt=0.1):
 
-        self.dt = dt                    # dt used in simulations (eta and gamma are interpolated according to this value)
+        self.dt = dt  # dt used in simulations (eta and gamma are interpolated according to this value)
 
         # Define model parameters
 
-        self.gl = 0.001        # nS, leak conductance
-        self.C = 0.1     # nF, capacitance
-        self.El = -65.0            # mV, reversal potential
+        self.gl = 0.001  # nS, leak conductance
+        self.C = 0.1  # nF, capacitance
+        self.El = -65.0  # mV, reversal potential
 
-        self.Vr = -50.0            # mV, voltage reset
-        self.Tref = 4.0              # ms, absolute refractory period
+        self.Vr = -50.0  # mV, voltage reset
+        self.Tref = 4.0  # ms, absolute refractory period
 
-        self.Vt_star = -48.0            # mV, steady state voltage threshold VT*
-        self.DV = 0.5              # mV, threshold sharpness
-        self.lambda0 = 1.0              # by default this parameter is always set to 1.0 Hz
+        self.Vt_star = -48.0  # mV, steady state voltage threshold VT*
+        self.DV = 0.5  # mV, threshold sharpness
+        self.lambda0 = 1.0  # by default this parameter is always set to 1.0 Hz
 
-        self.eta = Filter_Rect_LogSpaced()    # nA, spike-triggered current (must be instance of class Filter)
-        self.gamma = Filter_Rect_LogSpaced()    # mV, spike-triggered movement of the firing threshold (must be instance of class Filter)
+        self.eta = (
+            Filter_Rect_LogSpaced()
+        )  # nA, spike-triggered current (must be instance of class Filter)
+        self.gamma = (
+            Filter_Rect_LogSpaced()
+        )  # mV, spike-triggered movement of the firing threshold (must be instance of class Filter)
 
         # Initialize the spike-triggered current eta with an exponential function
 
         def expfunction_eta(x):
-            return 0.2*np.exp(-x/100.0)
+            return 0.2 * np.exp(-x / 100.0)
 
         self.eta.setFilter_Function(expfunction_eta)
 
         # Initialize the spike-triggered current gamma with an exponential function
 
         def expfunction_gamma(x):
-            return 0.01*np.exp(-x/100.0)
+            return 0.01 * np.exp(-x / 100.0)
 
         self.gamma.setFilter_Function(expfunction_gamma)
 
@@ -90,17 +112,17 @@ class AugmentedGIF(GIF):
     def mInf(self, V):
         """Compute the equilibrium activation gate state of the potassium conductance.
         """
-        return self.m_A/(1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
+        return self.m_A / (1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
 
     def hInf(self, V):
         """Compute the equilibrium state of the inactivation gate of the potassium conductance.
         """
-        return self.h_A/(1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
+        return self.h_A / (1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
 
     def nInf(self, V):
         """Compute the equilibrium state of the non-inactivating conductance.
         """
-        return self.n_A/(1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
+        return self.n_A / (1 + np.exp(-self.n_k * (V - self.n_Vhalf)))
 
     def computeGating(self, V, inf_vec, tau):
         """
@@ -111,7 +133,9 @@ class AugmentedGIF(GIF):
         return self._computeGatingInternal(V, inf_vec, tau, self.dt)
 
     @staticmethod
-    @nb.jit(nb.float64[:](nb.float64[:], nb.float64[:], nb.float64, nb.float64))
+    @nb.jit(
+        nb.float64[:](nb.float64[:], nb.float64[:], nb.float64, nb.float64)
+    )
     def _computeGatingInternal(V, inf_vec, tau, dt):
         """
         Internal method called by computeGating.
@@ -120,7 +144,9 @@ class AugmentedGIF(GIF):
         output[0] = inf_vec[0]
 
         for i in range(1, len(V)):
-            output[i] = output[i - 1] + (inf_vec[i - 1] - output[i - 1])/tau * dt
+            output[i] = (
+                output[i - 1] + (inf_vec[i - 1] - output[i - 1]) / tau * dt
+            )
 
         return output
 
@@ -165,8 +191,12 @@ class AugmentedGIF(GIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
-        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(
+            dtype='double'
+        )
+        inputConductanceReversals = modStim.getConductanceReversals(
+            dtype='double'
+        )
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
@@ -214,8 +244,8 @@ class AugmentedGIF(GIF):
         # Define arrays
         V = np.array(np.zeros(p_T), dtype="double")
         spks = np.array(np.zeros(p_T), dtype="double")
-        eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
-        gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+        eta_sum = np.array(np.zeros(p_T + 2 * p_eta_l), dtype="double")
+        gamma_sum = np.array(np.zeros(p_T + 2 * p_gamma_l), dtype="double")
 
         m = np.zeros_like(V, dtype="double")
         h = np.zeros_like(V, dtype="double")
@@ -356,27 +386,60 @@ class AugmentedGIF(GIF):
 
                 """
 
-        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceVector', 'inputConductanceReversals',
-                'p_numberOfInputConductances',
-                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
-                'p_m_Vhalf', 'p_m_k', 'p_m_A',
-                'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
-                'p_n_Vhalf', 'p_n_k', 'p_n_A',
-                'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V', 'm', 'h', 'n', 'Ik1_storage', 'Ik2_storage',
-                'p_Vr', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'lambda_storage',
-                'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = [
+            'netInputCurrent',
+            'p_numberOfInputCurrents',
+            'inputConductanceVector',
+            'inputConductanceReversals',
+            'p_numberOfInputConductances',
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_m_Vhalf',
+            'p_m_k',
+            'p_m_A',
+            'p_h_Vhalf',
+            'p_h_k',
+            'p_h_tau',
+            'p_h_A',
+            'p_n_Vhalf',
+            'p_n_k',
+            'p_n_A',
+            'p_E_K',
+            'p_gbar_K1',
+            'p_gbar_K2',
+            'V',
+            'm',
+            'h',
+            'n',
+            'Ik1_storage',
+            'Ik2_storage',
+            'p_Vr',
+            'p_Tref',
+            'p_Vt_star',
+            'p_DV',
+            'p_lambda0',
+            'lambda_storage',
+            'p_eta',
+            'p_eta_l',
+            'eta_sum',
+            'p_gamma',
+            'gamma_sum',
+            'p_gamma_l',
+            'spks',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
 
         eta_sum = eta_sum[:p_T]
         gamma_sum = gamma_sum[:p_T]
         V_T = gamma_sum + p_Vt_star
 
-        spks = (np.where(spks == 1)[0])*self.dt
+        spks = (np.where(spks == 1)[0]) * self.dt
 
         if return_dict:
             return {
@@ -391,7 +454,7 @@ class AugmentedGIF(GIF):
                 'Ik2': Ik2_storage,
                 'm': m,
                 'h': h,
-                'n': n
+                'n': n,
             }
         else:
             # Return tuple (backwards compatible with other GIF classes)
@@ -412,8 +475,12 @@ class AugmentedGIF(GIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
-        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(
+            dtype='double'
+        )
+        inputConductanceReversals = modStim.getConductanceReversals(
+            dtype='double'
+        )
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
@@ -445,7 +512,7 @@ class AugmentedGIF(GIF):
 
         p_Vr = self.Vr
         p_Tref = self.Tref
-        p_Tref_i = int(self.Tref/self.dt)
+        p_Tref_i = int(self.Tref / self.dt)
 
         # Model kernels
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
@@ -464,11 +531,11 @@ class AugmentedGIF(GIF):
 
         # Compute adaptation current (sum of eta triggered at spike times in spks)
         eta_sum = np.array(
-                np.zeros(p_T + int(1.1*p_eta_l) + p_Tref_i),
-                dtype="double")
+            np.zeros(p_T + int(1.1 * p_eta_l) + p_Tref_i), dtype="double"
+        )
 
         for s in spks_i:
-            eta_sum[s + 1 + p_Tref_i: s + 1 + p_Tref_i + p_eta_l] += p_eta
+            eta_sum[s + 1 + p_Tref_i : s + 1 + p_Tref_i + p_eta_l] += p_eta
 
         eta_sum = eta_sum[:p_T]
 
@@ -579,21 +646,46 @@ class AugmentedGIF(GIF):
 
                 """
 
-        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceVector', 'inputConductanceReversals',
-                'p_numberOfInputConductances',
-                'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El',
-                'p_m_Vhalf', 'p_m_k', 'p_m_A',
-                'p_h_Vhalf', 'p_h_k', 'p_h_tau', 'p_h_A',
-                'p_n_Vhalf', 'p_n_k', 'p_n_A',
-                'p_E_K', 'p_gbar_K1', 'p_gbar_K2',
-                'V', 'I', 'm', 'h', 'n',
-                'p_Vr', 'p_Tref',
-                'eta_sum', 'spks', 'spks_i', 'p_no_spikes']
+        vars = [
+            'netInputCurrent',
+            'p_numberOfInputCurrents',
+            'inputConductanceVector',
+            'inputConductanceReversals',
+            'p_numberOfInputConductances',
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_m_Vhalf',
+            'p_m_k',
+            'p_m_A',
+            'p_h_Vhalf',
+            'p_h_k',
+            'p_h_tau',
+            'p_h_A',
+            'p_n_Vhalf',
+            'p_n_k',
+            'p_n_A',
+            'p_E_K',
+            'p_gbar_K1',
+            'p_gbar_K2',
+            'V',
+            'I',
+            'm',
+            'h',
+            'n',
+            'p_Vr',
+            'p_Tref',
+            'eta_sum',
+            'spks',
+            'spks_i',
+            'p_no_spikes',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
         eta_sum = eta_sum[:p_T]
 
         return (time, V, eta_sum)
@@ -632,7 +724,9 @@ class AugmentedGIF(GIF):
         self.fitStaticThreshold(experiment)
         self.fitThresholdDynamics(experiment)
 
-    def fitSubthresholdDynamics(self, experiment, h_tau_candidates, DT_beforeSpike=5.0):
+    def fitSubthresholdDynamics(
+        self, experiment, h_tau_candidates, DT_beforeSpike=5.0
+    ):
         """
         Implement Step 2 of the fitting procedure introduced in Pozzorini et al. PLOS Comb. Biol. 2015
         The voltage reset is estimated by computing the spike-triggered average of the voltage.
@@ -676,7 +770,12 @@ class AugmentedGIF(GIF):
                         reprint("Compute X matrix for repetition %d" % (cnt))
 
                         # Compute the the X matrix and Y=\dot_V_data vector used to perform the multilinear linear regression (see Eq. 17.18 in Pozzorini et al. PLOS Comp. Biol. 2015)
-                        (X_tmp, Y_tmp) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(tr, DT_beforeSpike=DT_beforeSpike)
+                        (
+                            X_tmp,
+                            Y_tmp,
+                        ) = self.fitSubthresholdDynamics_Build_Xmatrix_Yvector(
+                            tr, DT_beforeSpike=DT_beforeSpike
+                        )
                         X.append(X_tmp)
                         Y.append(Y_tmp)
 
@@ -695,24 +794,29 @@ class AugmentedGIF(GIF):
 
                 # Run bounded linear regression.
                 betas = optimize.lsq_linear(
-                    X, Y,
-                    bounds = (
-                        np.concatenate([
-                            [-np.inf, 0, -np.inf, 0, 0],
-                            np.full(X.shape[1] - 5, -np.inf)
-                        ]),
-                        np.concatenate([
-                            [0, np.inf, np.inf, np.inf, np.inf],
-                            np.full(X.shape[1] - 5, np.inf)
-                        ])
-                    )
+                    X,
+                    Y,
+                    bounds=(
+                        np.concatenate(
+                            [
+                                [-np.inf, 0, -np.inf, 0, 0],
+                                np.full(X.shape[1] - 5, -np.inf),
+                            ]
+                        ),
+                        np.concatenate(
+                            [
+                                [0, np.inf, np.inf, np.inf, np.inf],
+                                np.full(X.shape[1] - 5, np.inf),
+                            ]
+                        ),
+                    ),
                 )['x'].tolist()
                 coeffs.append(betas)
 
                 # Compute variance explained.
                 Yhat = np.dot(X, betas)
-                MSE = np.mean((Y - Yhat)**2)
-                var_explained.append(1. - MSE/np.var(Y))
+                MSE = np.mean((Y - Yhat) ** 2)
+                var_explained.append(1.0 - MSE / np.var(Y))
 
         finally:
             self.h_tau = old_h_tau
@@ -720,7 +824,7 @@ class AugmentedGIF(GIF):
         # Assign model parameters based on best regression result.
         best_coeffs = np.array(coeffs[np.argmax(var_explained)])
 
-        self.C = 1./best_coeffs[1]
+        self.C = 1.0 / best_coeffs[1]
         self.gl = -best_coeffs[0] * self.C
         self.El = best_coeffs[2] * self.C / self.gl
 
@@ -732,34 +836,46 @@ class AugmentedGIF(GIF):
 
         self.hyperparameter_search = {
             'h_tau': h_tau_candidates,
-            'var_explained': var_explained
+            'var_explained': var_explained,
         }
 
         self.printParameters()
 
         self.var_explained_dV = np.max(var_explained)
-        print "Percentage of variance explained (on dV/dt): %0.2f" % (self.var_explained_dV*100.0)
+        print "Percentage of variance explained (on dV/dt): %0.2f" % (
+            self.var_explained_dV * 100.0
+        )
 
         # Compute percentage of variance explained on V (see Eq. 26 in Pozzorini et al. PLOS Comp. Biol. 2105)
         ####################################################################################################
 
-        SSE = 0     # sum of squared errors
-        VAR = 0     # variance of data
+        SSE = 0  # sum of squared errors
+        VAR = 0  # variance of data
         for tr in experiment.trainingset_traces:
             if tr.useTrace:
                 # Simulate subthreshold dynamics
-                (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                (
+                    time,
+                    V_est,
+                    eta_sum_est,
+                ) = self.simulateDeterministic_forceSpikes(
+                    tr.I, tr.V[0], tr.getSpikeTimes()
+                )
 
                 indices_tmp = tr.getROI_FarFromSpikes(0.0, self.Tref)
-                SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp])**2)
-                VAR += len(indices_tmp)*np.var(tr.V[indices_tmp])
+                SSE += sum((V_est[indices_tmp] - tr.V[indices_tmp]) ** 2)
+                VAR += len(indices_tmp) * np.var(tr.V[indices_tmp])
 
         var_explained_V = 1.0 - SSE / VAR
 
         self.var_explained_V = var_explained_V
-        print "Percentage of variance explained (on V): %0.2f" % (var_explained_V*100.0)
+        print "Percentage of variance explained (on V): %0.2f" % (
+            var_explained_V * 100.0
+        )
 
-    def fitSubthresholdDynamics_Build_Xmatrix_Yvector(self, trace, DT_beforeSpike=5.0):
+    def fitSubthresholdDynamics_Build_Xmatrix_Yvector(
+        self, trace, DT_beforeSpike=5.0
+    ):
         """
         Compute the X matrix and the Y vector (i.e. \dot_V_data) used to perfomr the linear regression
         defined in Eq. 17-18 of Pozzorini et al. 2015 for an individual experimental trace provided as parameter.
@@ -767,7 +883,7 @@ class AugmentedGIF(GIF):
         """
 
         # Length of the voltage trace
-        Tref_ind = int(self.Tref/trace.dt)
+        Tref_ind = int(self.Tref / trace.dt)
 
         # Select region where to perform linear regression (specified in the ROI of individual taces)
         ####################################################################################################
@@ -778,7 +894,6 @@ class AugmentedGIF(GIF):
         ####################################################################################################
         X = np.zeros((selection_l, 5))
 
-
         voltage_far_from_spikes = trace.V[selection]
 
         # Compute equilibrium state of each gate
@@ -788,7 +903,9 @@ class AugmentedGIF(GIF):
 
         # Compute time-dependent state of each gate over whole trace
         m_vec = m_inf_vec
-        h_vec = self.computeGating(voltage_far_from_spikes, h_inf_vec, self.h_tau)
+        h_vec = self.computeGating(
+            voltage_far_from_spikes, h_inf_vec, self.h_tau
+        )
         n_vec = n_inf_vec
 
         # Compute gating state of each conductance over whole trace
@@ -808,12 +925,14 @@ class AugmentedGIF(GIF):
         X[:, 4] = -(gating_vec_2 * DF_K)
 
         # Compute and fill the remaining columns associated with the spike-triggered current eta
-        X_eta = self.eta.convolution_Spiketrain_basisfunctions(trace.getSpikeTimes() + self.Tref, trace.T, trace.dt)
+        X_eta = self.eta.convolution_Spiketrain_basisfunctions(
+            trace.getSpikeTimes() + self.Tref, trace.T, trace.dt
+        )
         X = np.concatenate((X, X_eta[selection, :]), axis=1)
 
         # Build Y vector (voltage derivative \dot_V_data)
         ####################################################################################################
-        Y = (np.gradient(trace.V)/trace.dt)[selection]
+        Y = (np.gradient(trace.V) / trace.dt)[selection]
 
         return (X, Y)
 
@@ -825,8 +944,8 @@ class AugmentedGIF(GIF):
         print "\n-------------------------"
         print "AugmentedGIF model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
-        print "R (MOhm):\t%0.3f" % (1.0/self.gl)
+        print "tau_m (ms):\t%0.3f" % (self.C / self.gl)
+        print "R (MOhm):\t%0.3f" % (1.0 / self.gl)
         print "C (nF):\t\t%0.3f" % (self.C)
         print "gl (nS):\t%0.6f" % (self.gl)
         print "El (mV):\t%0.3f" % (self.El)

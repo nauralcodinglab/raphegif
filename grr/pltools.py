@@ -1,17 +1,31 @@
-#%% IMPORT MODULES
+# IMPORT MODULES
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-#%% DEFINE HANDY TOOLS
+# DEFINE HANDY TOOLS
 
 # Function to make a set of scalebars for a mpl plot
 
 
-def add_scalebar(x_units=None, y_units=None, anchor=(0.98, 0.02),
-x_size=None, y_size=None, y_label_space=0.02, x_label_space=-0.02,
-bar_space=0.06, x_on_left=True, linewidth=3, remove_frame=True,
-omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
+def add_scalebar(
+    x_units=None,
+    y_units=None,
+    anchor=(0.98, 0.02),
+    x_size=None,
+    y_size=None,
+    y_label_space=0.02,
+    x_label_space=-0.02,
+    bar_space=0.06,
+    x_on_left=True,
+    linewidth=3,
+    remove_frame=True,
+    omit_x=False,
+    omit_y=False,
+    round=True,
+    usetex=True,
+    ax=None,
+):
     """
     Automagically add a set of x and y scalebars to a matplotlib plot
 
@@ -68,10 +82,14 @@ omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
         if y_size is None:
             y_span = ax.get_yticks()[:2]
             y_length = y_span[1] - y_span[0]
-            y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[:, 1]
+            y_span_ax = ax.transLimits.transform(np.array([[0, 0], y_span]).T)[
+                :, 1
+            ]
         else:
             y_length = y_size
-            y_span_ax = ax.transLimits.transform(np.array([[0, 0], [0, y_size]]))[:, 1]
+            y_span_ax = ax.transLimits.transform(
+                np.array([[0, 0], [0, y_size]])
+            )[:, 1]
         y_length_ax = y_span_ax[1] - y_span_ax[0]
 
         if round:
@@ -90,18 +108,23 @@ omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
             y_label_text = '{}{}'.format(y_length, y_units)
 
         ax.text(
-        anchor[0] - y_label_space, anchor[1] + y_length_ax / 2 + bar_space,
-        y_label_text,
-        verticalalignment='center', horizontalalignment=horizontalalignment,
-        size='small', transform=ax.transAxes
+            anchor[0] - y_label_space,
+            anchor[1] + y_length_ax / 2 + bar_space,
+            y_label_text,
+            verticalalignment='center',
+            horizontalalignment=horizontalalignment,
+            size='small',
+            transform=ax.transAxes,
         )
 
         # y scalebar
         ax.plot(
-        [anchor[0], anchor[0]],
-        [anchor[1] + bar_space, anchor[1] + y_length_ax + bar_space],
-        'k-', linewidth=linewidth,
-        clip_on=False, transform=ax.transAxes
+            [anchor[0], anchor[0]],
+            [anchor[1] + bar_space, anchor[1] + y_length_ax + bar_space],
+            'k-',
+            linewidth=linewidth,
+            clip_on=False,
+            transform=ax.transAxes,
         )
 
     # Do x scalebar.
@@ -110,10 +133,14 @@ omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
         if x_size is None:
             x_span = ax.get_xticks()[:2]
             x_length = x_span[1] - x_span[0]
-            x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[:, 0]
+            x_span_ax = ax.transLimits.transform(np.array([x_span, [0, 0]]).T)[
+                :, 0
+            ]
         else:
             x_length = x_size
-            x_span_ax = ax.transLimits.transform(np.array([[0, 0], [x_size, 0]]))[:, 0]
+            x_span_ax = ax.transLimits.transform(
+                np.array([[0, 0], [x_size, 0]])
+            )[:, 0]
         x_length_ax = x_span_ax[1] - x_span_ax[0]
 
         if round:
@@ -127,10 +154,16 @@ omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
 
         if x_on_left:
             Xx_text_coord = anchor[0] - x_length_ax / 2 - bar_space
-            Xx_bar_coords = [anchor[0] - x_length_ax - bar_space, anchor[0] - bar_space]
+            Xx_bar_coords = [
+                anchor[0] - x_length_ax - bar_space,
+                anchor[0] - bar_space,
+            ]
         else:
             Xx_text_coord = anchor[0] + x_length_ax / 2 + bar_space
-            Xx_bar_coords = [anchor[0] + x_length_ax + bar_space, anchor[0] + bar_space]
+            Xx_bar_coords = [
+                anchor[0] + x_length_ax + bar_space,
+                anchor[0] + bar_space,
+            ]
 
         if usetex:
             x_label_text = '${}${}'.format(x_length, x_units)
@@ -138,18 +171,23 @@ omit_x=False, omit_y=False, round=True, usetex=True, ax=None):
             x_label_text = '{}{}'.format(x_length, x_units)
 
         ax.text(
-        Xx_text_coord, anchor[1] + x_label_space,
-        x_label_text,
-        verticalalignment=verticalalignment, horizontalalignment='center',
-        size='small', transform=ax.transAxes
+            Xx_text_coord,
+            anchor[1] + x_label_space,
+            x_label_text,
+            verticalalignment=verticalalignment,
+            horizontalalignment='center',
+            size='small',
+            transform=ax.transAxes,
         )
 
         # x scalebar
         ax.plot(
-        Xx_bar_coords,
-        [anchor[1], anchor[1]],
-        'k-', linewidth=linewidth,
-        clip_on=False, transform=ax.transAxes
+            Xx_bar_coords,
+            [anchor[1], anchor[1]],
+            'k-',
+            linewidth=linewidth,
+            clip_on=False,
+            transform=ax.transAxes,
         )
 
     if remove_frame:
@@ -175,7 +213,9 @@ def hide_border(sides='a', ax=None):
 
     # Check for correct input
     if not any([letter in sides for letter in 'arltb']):
-        raise ValueError('sides should be passed a string with `a` for all sides, or r/l/t/b as-needed for other sides.')
+        raise ValueError(
+            'sides should be passed a string with `a` for all sides, or r/l/t/b as-needed for other sides.'
+        )
 
     if ax is None:
         ax = plt.gca()
@@ -183,12 +223,7 @@ def hide_border(sides='a', ax=None):
     if sides == 'a':
         sides = 'rltb'
 
-    sidekeys = {
-    'r': 'right',
-    'l': 'left',
-    't': 'top',
-    'b': 'bottom'
-    }
+    sidekeys = {'r': 'right', 'l': 'left', 't': 'top', 'b': 'bottom'}
 
     for key, side in sidekeys.iteritems():
 
@@ -219,7 +254,9 @@ def p_to_string(p):
     return p_str
 
 
-def subplots_in_grid(shape, loc, ratio=2, colspan=1, top_bigger=True, fig=None):
+def subplots_in_grid(
+    shape, loc, ratio=2, colspan=1, top_bigger=True, fig=None
+):
     """
     Generates a set of two vertically-stacked subplots with a given size ratio.
 
@@ -268,11 +305,24 @@ def subplots_in_grid(shape, loc, ratio=2, colspan=1, top_bigger=True, fig=None):
     new_loc = (loc[0] * (ratio + 1), loc[1])
 
     if top_bigger:
-        top_ax = plt.subplot2grid(new_shape, new_loc, rowspan=ratio, colspan=colspan, fig=fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + ratio, new_loc[1]), colspan=colspan, fig=fig)
+        top_ax = plt.subplot2grid(
+            new_shape, new_loc, rowspan=ratio, colspan=colspan, fig=fig
+        )
+        bottom_ax = plt.subplot2grid(
+            new_shape,
+            (new_loc[0] + ratio, new_loc[1]),
+            colspan=colspan,
+            fig=fig,
+        )
     else:
         top_ax = plt.subplot2grid(new_shape, new_loc, colspan=colspan, fig=fig)
-        bottom_ax = plt.subplot2grid(new_shape, (new_loc[0] + 1, new_loc[1]), rowspan=ratio, colspan=colspan, fig=fig)
+        bottom_ax = plt.subplot2grid(
+            new_shape,
+            (new_loc[0] + 1, new_loc[1]),
+            rowspan=ratio,
+            colspan=colspan,
+            fig=fig,
+        )
 
     return top_ax, bottom_ax
 

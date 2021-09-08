@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
 
-from .cell_class import max_normalize_channel
 from .Tools import raiseExpectedGot
 
 
@@ -129,4 +128,3 @@ def plot_linear_fit(x, y, ax=None, **pltargs):
     y_fitted = np.poly1d(np.polyfit(x, y, 1))(x_unique)
 
     ax.plot(x_unique, y_fitted, **pltargs)
-

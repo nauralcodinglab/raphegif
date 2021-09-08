@@ -77,7 +77,13 @@ class iGIF(GIF):
         (eta_support, eta) = self.eta.getInterpolatedFilter(self.dt)
 
         plt.plot(eta_support, eta, color='red', lw=2)
-        plt.plot([eta_support[0], eta_support[-1]], [0, 0], ls=':', color='black', lw=2)
+        plt.plot(
+            [eta_support[0], eta_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+        )
 
         plt.xlim([eta_support[0], eta_support[-1]])
         plt.xlabel("Time (ms)")
@@ -91,7 +97,13 @@ class iGIF(GIF):
         (gamma_support, gamma) = self.gamma.getInterpolatedFilter(self.dt)
 
         plt.plot(gamma_support, gamma, color='red', lw=2)
-        plt.plot([gamma_support[0], gamma_support[-1]], [0, 0], ls=':', color='black', lw=2)
+        plt.plot(
+            [gamma_support[0], gamma_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+        )
 
         plt.xlim([gamma_support[0], gamma_support[-1]])
         plt.xlabel("Time (ms)")
@@ -106,14 +118,29 @@ class iGIF(GIF):
 
         plt.plot(support, support, '--', color='black')
         plt.plot(support, theta_inf, 'red', lw=2)
-        plt.plot([self.Vr], [self.Vt_star], 'o', mew=2, mec='black',  mfc='white', ms=8)
+        plt.plot(
+            [self.Vr],
+            [self.Vt_star],
+            'o',
+            mew=2,
+            mec='black',
+            mfc='white',
+            ms=8,
+        )
 
-        plt.ylim([self.Vt_star-10.0, -20.0])
+        plt.ylim([self.Vt_star - 10.0, -20.0])
 
         plt.xlabel("Membrane potential (mV)")
         plt.ylabel("Theta (mV)")
 
-        plt.subplots_adjust(left=0.08, bottom=0.10, right=0.95, top=0.93, wspace=0.25, hspace=0.25)
+        plt.subplots_adjust(
+            left=0.08,
+            bottom=0.10,
+            right=0.95,
+            top=0.93,
+            wspace=0.25,
+            hspace=0.25,
+        )
 
     @classmethod
     def compareModels(cls, iGIFs, labels=None):
@@ -157,11 +184,18 @@ class iGIF(GIF):
                 label_tmp = labels[cnt]
 
             K_support = np.linspace(0, 150.0, 1500)
-            K = 1./iGIF.C*np.exp(-K_support/(iGIF.C/iGIF.gl))
+            K = 1.0 / iGIF.C * np.exp(-K_support / (iGIF.C / iGIF.gl))
             plt.plot(K_support, K, color=colors[cnt], lw=2, label=label_tmp)
             cnt += 1
 
-        plt.plot([K_support[0], K_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot(
+            [K_support[0], K_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+            zorder=-1,
+        )
 
         if labels is not None:
             plt.legend()
@@ -182,10 +216,17 @@ class iGIF(GIF):
             plt.plot(eta_support, eta, color=colors[cnt], lw=2)
             cnt += 1
 
-        plt.plot([eta_support[0], eta_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot(
+            [eta_support[0], eta_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+            zorder=-1,
+        )
 
-        #plt.xscale('log', nonposx='clip')
-        #plt.yscale('log', nonposy='clip')
+        # plt.xscale('log', nonposx='clip')
+        # plt.yscale('log', nonposy='clip')
         plt.xlim([eta_support[0], eta_support[-1]])
         plt.xlabel('Time (ms)')
         plt.ylabel('Eta (ms)')
@@ -198,12 +239,23 @@ class iGIF(GIF):
         cnt = 0
         for iGIF in iGIFs:
 
-            V_support = np.linspace(iGIF.Vt_star-5*iGIF.DV, iGIF.Vt_star+10*iGIF.DV, 1000)
-            escape_rate = iGIF.lambda0*np.exp((V_support-iGIF.Vt_star)/iGIF.DV)
+            V_support = np.linspace(
+                iGIF.Vt_star - 5 * iGIF.DV, iGIF.Vt_star + 10 * iGIF.DV, 1000
+            )
+            escape_rate = iGIF.lambda0 * np.exp(
+                (V_support - iGIF.Vt_star) / iGIF.DV
+            )
             plt.plot(V_support, escape_rate, color=colors[cnt], lw=2)
             cnt += 1
 
-        plt.plot([V_support[0], V_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot(
+            [V_support[0], V_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+            zorder=-1,
+        )
 
         plt.ylim([0, 100])
         plt.xlim([V_support[0], V_support[-1]])
@@ -223,11 +275,18 @@ class iGIF(GIF):
 
             cnt += 1
 
-        plt.plot([gamma_support[0], gamma_support[-1]], [0, 0], ls=':', color='black', lw=2, zorder=-1)
+        plt.plot(
+            [gamma_support[0], gamma_support[-1]],
+            [0, 0],
+            ls=':',
+            color='black',
+            lw=2,
+            zorder=-1,
+        )
 
-        #plt.xscale('log', nonposx='clip')
-        #plt.yscale('log', nonposy='clip')
-        plt.xlim([gamma_support[0]+0.1, gamma_support[-1]])
+        # plt.xscale('log', nonposx='clip')
+        # plt.yscale('log', nonposy='clip')
+        plt.xlim([gamma_support[0] + 0.1, gamma_support[-1]])
         plt.xlabel('Time (ms)')
         plt.ylabel('Gamma (mV)')
 
@@ -240,7 +299,15 @@ class iGIF(GIF):
         for iGIF in iGIFs:
             (V, theta) = iGIF.getNonlinearCoupling()
             plt.plot(V, theta, color=colors[cnt], lw=2)
-            plt.plot([iGIF.Vr], [iGIF.Vt_star], 'o', mew=2, mec=colors[cnt],  mfc=colors[cnt], ms=8)
+            plt.plot(
+                [iGIF.Vr],
+                [iGIF.Vt_star],
+                'o',
+                mew=2,
+                mec=colors[cnt],
+                mfc=colors[cnt],
+                ms=8,
+            )
             cnt += 1
 
         plt.plot(V, V, color='black', lw=2, ls='--')
@@ -250,7 +317,14 @@ class iGIF(GIF):
         plt.xlabel('Membrane potential (mV)')
         plt.ylabel('Threshold theta (mV)')
 
-        plt.subplots_adjust(left=0.08, bottom=0.10, right=0.95, top=0.93, wspace=0.25, hspace=0.25)
+        plt.subplots_adjust(
+            left=0.08,
+            bottom=0.10,
+            right=0.95,
+            top=0.93,
+            wspace=0.25,
+            hspace=0.25,
+        )
 
         plt.show()
 
@@ -268,7 +342,9 @@ class iGIF(GIF):
 
         K_all = []
 
-        plt.plot([-80, -20], [-80, -20], ls='--', color='black', lw=2, zorder=100)
+        plt.plot(
+            [-80, -20], [-80, -20], ls='--', color='black', lw=2, zorder=100
+        )
 
         for iGIF in iGIFs:
 
@@ -281,8 +357,16 @@ class iGIF(GIF):
         K_mean = np.mean(K_all, axis=0)
         K_std = np.std(K_all, axis=0)
 
-        plt.fill_between(K_support, K_mean+K_std, y2=K_mean-K_std, color='gray', zorder=0)
-        plt.plot(K_support, np.mean(K_all, axis=0), color='red', lw=2, zorder=10)
+        plt.fill_between(
+            K_support,
+            K_mean + K_std,
+            y2=K_mean - K_std,
+            color='gray',
+            zorder=0,
+        )
+        plt.plot(
+            K_support, np.mean(K_all, axis=0), color='red', lw=2, zorder=10
+        )
 
         plt.xlim([-80, -20])
         plt.ylim([-65, -20])
@@ -292,7 +376,7 @@ class iGIF(GIF):
 
         # tau_theta
         #######################################################################################################
-        plt.subplot(4, 6, 12+4)
+        plt.subplot(4, 6, 12 + 4)
 
         p_all = []
         for iGIF in iGIFs:
@@ -337,21 +421,23 @@ class iGIF_Na(iGIF):
 
         # Initialize parametres for nonlinear coupling
 
-        self.theta_tau = 5.0                   # ms, timescale of threshold-voltage coupling
+        self.theta_tau = 5.0  # ms, timescale of threshold-voltage coupling
 
-        self.theta_ka = 2.5                   # mV, slope of Na channel activation
+        self.theta_ka = 2.5  # mV, slope of Na channel activation
 
-        self.theta_ki = 3.0                   # mV, absolute value of the slope of Na channel inactivation
+        self.theta_ki = (
+            3.0  # mV, absolute value of the slope of Na channel inactivation
+        )
 
-        self.theta_Vi = -55.0                 # mV, half-inactivation voltage for Na channels
+        self.theta_Vi = -55.0  # mV, half-inactivation voltage for Na channels
 
         # Store parameters related to parameters extraction
 
-        self.fit_all_ki = 0                     # mV, list containing all the values tested during the fit for ki
+        self.fit_all_ki = 0  # mV, list containing all the values tested during the fit for ki
 
-        self.fit_all_Vi = 0                     # mV, list containing all the values tested during the fit for Vi
+        self.fit_all_Vi = 0  # mV, list containing all the values tested during the fit for Vi
 
-        self.fit_all_likelihood = 0             # 2D matrix containing all the log-likelihood obtained with different (ki, Vi)
+        self.fit_all_likelihood = 0  # 2D matrix containing all the log-likelihood obtained with different (ki, Vi)
 
     def getNonlinearCoupling(self):
         """
@@ -363,7 +449,9 @@ class iGIF_Na(iGIF):
 
         support = np.linspace(-100, -20.0, 200)
 
-        theta_inf = self.Vt_star + self.theta_ka*np.log(1 + np.exp((support - self.theta_Vi)/self.theta_ki))
+        theta_inf = self.Vt_star + self.theta_ka * np.log(
+            1 + np.exp((support - self.theta_Vi) / self.theta_ki)
+        )
 
         return (support, theta_inf)
 
@@ -411,8 +499,12 @@ class iGIF_Na(iGIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
-        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(
+            dtype='double'
+        )
+        inputConductanceReversals = modStim.getConductanceReversals(
+            dtype='double'
+        )
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
@@ -448,8 +540,8 @@ class iGIF_Na(iGIF):
         V = np.array(np.zeros(p_T), dtype="double")
         theta = np.array(np.zeros(p_T), dtype="double")
         spks = np.array(np.zeros(p_T), dtype="double")
-        eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
-        gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+        eta_sum = np.array(np.zeros(p_T + 2 * p_eta_l), dtype="double")
+        gamma_sum = np.array(np.zeros(p_T + 2 * p_gamma_l), dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -535,24 +627,46 @@ class iGIF_Na(iGIF):
 
                 """
 
-        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceVector', 'inputConductanceReversals',
-                'p_numberOfInputConductances',
-                'theta', 'p_theta_ka', 'p_theta_ki', 'p_theta_Vi',
-                'p_theta_tau', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
-                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'V',
-                'p_eta', 'p_eta_l', 'eta_sum',
-                'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = [
+            'netInputCurrent',
+            'p_numberOfInputCurrents',
+            'inputConductanceVector',
+            'inputConductanceReversals',
+            'p_numberOfInputConductances',
+            'theta',
+            'p_theta_ka',
+            'p_theta_ki',
+            'p_theta_Vi',
+            'p_theta_tau',
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_Vr',
+            'p_Tref',
+            'p_Vt_star',
+            'p_DV',
+            'p_lambda0',
+            'V',
+            'p_eta',
+            'p_eta_l',
+            'eta_sum',
+            'p_gamma',
+            'gamma_sum',
+            'p_gamma_l',
+            'spks',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
 
         eta_sum = eta_sum[:p_T]
         gamma_sum = gamma_sum[:p_T]
         V_T = gamma_sum + p_Vt_star + theta[:p_T]
 
-        spks = (np.where(spks == 1)[0])*self.dt
+        spks = (np.where(spks == 1)[0]) * self.dt
 
         return (time, V, eta_sum, V_T, spks)
 
@@ -560,7 +674,15 @@ class iGIF_Na(iGIF):
     # FUNCTIONS TO FIT DYNAMIC THRESHOLD BY BRUTE FORCE
     ######################################################################################################################
 
-    def fit(self, experiment, theta_tau, ki_all, Vi_all, DT_beforeSpike=5.0, do_plot=False):
+    def fit(
+        self,
+        experiment,
+        theta_tau,
+        ki_all,
+        Vi_all,
+        DT_beforeSpike=5.0,
+        do_plot=False,
+    ):
         """
         Fit the model to the training set data in experiment.
 
@@ -588,22 +710,33 @@ class iGIF_Na(iGIF):
 
         self.fitStaticThreshold(experiment)
 
-        self.fitThresholdDynamics_bruteforce(experiment, ki_all, Vi_all, do_plot=do_plot)
+        self.fitThresholdDynamics_bruteforce(
+            experiment, ki_all, Vi_all, do_plot=do_plot
+        )
 
-        #self.fit_bruteforce_flag = True
-        #self.fit_binary_flag     = False
+        # self.fit_bruteforce_flag = True
+        # self.fit_binary_flag     = False
 
-    def fitThresholdDynamics_bruteforce(self, experiment, ki_all, Vi_all, do_plot=False):
+    def fitThresholdDynamics_bruteforce(
+        self, experiment, ki_all, Vi_all, do_plot=False
+    ):
 
         # Fit a dynamic threshold using a initial condition the result obtained by fitting a static threshold
 
         print "Fit dynamic threshold..."
 
-        #beta0_dynamicThreshold = np.concatenate( ( [1/self.DV], [-self.Vt_star/self.DV], [0], self.gamma.getCoefficients()/self.DV))
-        beta0_dynamicThreshold = np.concatenate(([1/self.DV], [-self.Vt_star/self.DV], [0], np.zeros(self.gamma.getNbOfBasisFunctions())))
+        # beta0_dynamicThreshold = np.concatenate( ( [1/self.DV], [-self.Vt_star/self.DV], [0], self.gamma.getCoefficients()/self.DV))
+        beta0_dynamicThreshold = np.concatenate(
+            (
+                [1 / self.DV],
+                [-self.Vt_star / self.DV],
+                [0],
+                np.zeros(self.gamma.getNbOfBasisFunctions()),
+            )
+        )
 
         all_L = np.zeros((len(ki_all), len(Vi_all)))
-        L_opt = -10**20
+        L_opt = -(10 ** 20)
         beta_opt = 0
         ki_opt = 0
         Vi_opt = 0
@@ -615,16 +748,23 @@ class iGIF_Na(iGIF):
                 ki = ki_all[ki_i]
                 Vi = Vi_all[Vi_i]
 
-                print "\nTest parameters: ki = %0.2f mV, Vi = %0.2f mV" % (ki, Vi)
+                print "\nTest parameters: ki = %0.2f mV, Vi = %0.2f mV" % (
+                    ki,
+                    Vi,
+                )
 
                 # Perform fit
-                (beta_tmp, L_tmp) = self.maximizeLikelihood_dynamicThreshold(experiment, ki, Vi, beta0_dynamicThreshold)
+                (beta_tmp, L_tmp) = self.maximizeLikelihood_dynamicThreshold(
+                    experiment, ki, Vi, beta0_dynamicThreshold
+                )
 
                 all_L[ki_i, Vi_i] = L_tmp
 
                 if L_tmp > L_opt:
 
-                    print "NEW OPTIMAL SOLUTION: LL = %0.5f (bit/spike)" % (L_tmp)
+                    print "NEW OPTIMAL SOLUTION: LL = %0.5f (bit/spike)" % (
+                        L_tmp
+                    )
 
                     L_opt = L_tmp
                     beta_opt = beta_tmp
@@ -633,10 +773,10 @@ class iGIF_Na(iGIF):
 
         # Store result
 
-        self.DV = 1.0/beta_opt[0]
-        self.Vt_star = -beta_opt[1]*self.DV
-        self.theta_ka = -beta_opt[2]*self.DV
-        self.gamma.setFilter_Coefficients(-beta_opt[3:]*self.DV)
+        self.DV = 1.0 / beta_opt[0]
+        self.Vt_star = -beta_opt[1] * self.DV
+        self.theta_ka = -beta_opt[2] * self.DV
+        self.gamma.setFilter_Coefficients(-beta_opt[3:] * self.DV)
         self.theta_Vi = Vi_opt
         self.theta_ki = ki_opt
 
@@ -666,7 +806,9 @@ class iGIF_Na(iGIF):
             plt.ylim([Vi_all[0], Vi_all[-1]])
             plt.show()
 
-    def maximizeLikelihood_dynamicThreshold(self, experiment, ki, Vi, beta0, maxIter=10**3, stopCond=10**-6):
+    def maximizeLikelihood_dynamicThreshold(
+        self, experiment, ki, Vi, beta0, maxIter=10 ** 3, stopCond=10 ** -6
+    ):
 
         all_X = []
         all_X_spikes = []
@@ -684,10 +826,22 @@ class iGIF_Na(iGIF):
                 traces_nb += 1
 
                 # Simulate subthreshold dynamics
-                (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                (
+                    time,
+                    V_est,
+                    eta_sum_est,
+                ) = self.simulateDeterministic_forceSpikes(
+                    tr.I, tr.V[0], tr.getSpikeTimes()
+                )
 
                 # Precomputes matrices to perform gradient ascent on log-likelihood
-                (X_tmp, X_spikes_tmp, sum_X_spikes_tmp, N_spikes, T) = self.buildXmatrix_dynamicThreshold(tr, V_est, ki, Vi)
+                (
+                    X_tmp,
+                    X_spikes_tmp,
+                    sum_X_spikes_tmp,
+                    N_spikes,
+                    T,
+                ) = self.buildXmatrix_dynamicThreshold(tr, V_est, ki, Vi)
 
                 T_tot += T
                 N_spikes_tot += N_spikes
@@ -696,7 +850,7 @@ class iGIF_Na(iGIF):
                 all_X_spikes.append(X_spikes_tmp)
                 all_sum_X_spikes.append(sum_X_spikes_tmp)
 
-        logL_poisson = N_spikes_tot*(np.log(N_spikes_tot/T_tot)-1)
+        logL_poisson = N_spikes_tot * (np.log(N_spikes_tot / T_tot) - 1)
 
         # Perform gradient ascent
 
@@ -709,30 +863,41 @@ class iGIF_Na(iGIF):
 
             learning_rate = 1.0
 
-            if i <= 10:                      # be careful in the first iterations (using a small learning rate in the first step makes the fit more stable)
+            if (
+                i <= 10
+            ):  # be careful in the first iterations (using a small learning rate in the first step makes the fit more stable)
                 learning_rate = 0.1
 
-            L = 0; G = 0; H = 0;
+            L = 0
+            G = 0
+            H = 0
 
             for trace_i in np.arange(traces_nb):
-                (L_tmp, G_tmp, H_tmp) = self.computeLikelihoodGradientHessian(beta, all_X[trace_i], all_X_spikes[trace_i], all_sum_X_spikes[trace_i])
-                L += L_tmp; G += G_tmp; H += H_tmp;
+                (L_tmp, G_tmp, H_tmp) = self.computeLikelihoodGradientHessian(
+                    beta,
+                    all_X[trace_i],
+                    all_X_spikes[trace_i],
+                    all_sum_X_spikes[trace_i],
+                )
+                L += L_tmp
+                G += G_tmp
+                H += H_tmp
 
-            beta = beta - learning_rate*np.dot(inv(H), G)
+            beta = beta - learning_rate * np.dot(inv(H), G)
 
-            if (i > 0 and abs((L-old_L)/old_L) < stopCond):              # If converged
+            if i > 0 and abs((L - old_L) / old_L) < stopCond:  # If converged
 
-                print "\nConverged after %d iterations!\n" % (i+1)
+                print "\nConverged after %d iterations!\n" % (i + 1)
                 break
 
             old_L = L
 
             # Compute normalized likelihood (for print)
             # The likelihood is normalized with respect to a poisson process and units are in bit/spks
-            L_norm = (L-logL_poisson)/np.log(2)/N_spikes_tot
+            L_norm = (L - logL_poisson) / np.log(2) / N_spikes_tot
             reprint(L_norm)
 
-        if (i == maxIter - 1):                                           # If too many iterations
+        if i == maxIter - 1:  # If too many iterations
             print "\nNot converged after %d iterations.\n" % (maxIter)
 
         return (beta, L_norm)
@@ -752,26 +917,34 @@ class iGIF_Na(iGIF):
         spks_i_afterselection = np.where(spk_train[selection] == 1)[0]
 
         # Compute average firing rate used in the fit
-        T_l = T_l_selection*tr.dt/1000.0                # Total duration of trace used for fit (in s)
-        N_spikes = len(spks_i_afterselection)           # Nb of spikes in the trace used for fit
+        T_l = (
+            T_l_selection * tr.dt / 1000.0
+        )  # Total duration of trace used for fit (in s)
+        N_spikes = len(
+            spks_i_afterselection
+        )  # Nb of spikes in the trace used for fit
 
         # Define X matrix
         X = np.zeros((T_l_selection, 3))
         X[:, 0] = V_est[selection]
         X[:, 1] = np.ones(T_l_selection)
 
-        X_theta = self.exponentialFiltering_Brette_ref(V_est, tr.getSpikeIndices(), ki, Vi)
+        X_theta = self.exponentialFiltering_Brette_ref(
+            V_est, tr.getSpikeIndices(), ki, Vi
+        )
         X[:, 2] = X_theta[selection]
 
         # Compute and fill the remaining columns associated with the spike-triggered current gamma
-        X_gamma = self.gamma.convolution_Spiketrain_basisfunctions(tr.getSpikeTimes() + self.Tref, tr.T, tr.dt)
+        X_gamma = self.gamma.convolution_Spiketrain_basisfunctions(
+            tr.getSpikeTimes() + self.Tref, tr.T, tr.dt
+        )
         X = np.concatenate((X, X_gamma[selection, :]), axis=1)
 
         # Precompute other quantities
         X_spikes = X[spks_i_afterselection, :]
         sum_X_spikes = np.sum(X_spikes, axis=0)
 
-        return (X, X_spikes, sum_X_spikes,  N_spikes, T_l)
+        return (X, X_spikes, sum_X_spikes, N_spikes, T_l)
 
     def exponentialFiltering_Brette_ref(self, V, spks_ind, ki, Vi):
         """
@@ -861,7 +1034,18 @@ class iGIF_Na(iGIF):
 
                 """
 
-        vars = ['spks', 'p_spks_L', 'theta', 'p_theta_ki', 'p_theta_Vi', 'p_theta_tau', 'p_T', 'p_dt', 'p_Tref', 'V']
+        vars = [
+            'spks',
+            'p_spks_L',
+            'theta',
+            'p_theta_ki',
+            'p_theta_Vi',
+            'p_theta_tau',
+            'p_T',
+            'p_dt',
+            'p_Tref',
+            'V',
+        ]
 
         v = weave.inline(code, vars)
 
@@ -876,8 +1060,8 @@ class iGIF_Na(iGIF):
         print "\n-------------------------"
         print "iGIF_Na model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
-        print "R (MOhm):\t%0.3f" % (1.0/self.gl)
+        print "tau_m (ms):\t%0.3f" % (self.C / self.gl)
+        print "R (MOhm):\t%0.3f" % (1.0 / self.gl)
         print "C (nF):\t\t%0.3f" % (self.C)
         print "gl (nS):\t%0.3f" % (self.gl)
         print "El (mV):\t%0.3f" % (self.El)
@@ -889,7 +1073,7 @@ class iGIF_Na(iGIF):
         print "ka (mV):\t%0.3f" % (self.theta_ka)
         print "ki (mV):\t%0.3f" % (self.theta_ki)
         print "Vi (mV):\t%0.3f" % (self.theta_Vi)
-        print "ka/ki (mV):\t%0.3f" % (self.theta_ka/self.theta_ki)
+        print "ka/ki (mV):\t%0.3f" % (self.theta_ka / self.theta_ki)
         print "-------------------------\n"
 
     def plotParameters(self):
@@ -901,7 +1085,9 @@ class iGIF_Na(iGIF):
         (ki_plot, Vi_plot) = np.meshgrid(self.fit_all_Vi, self.fit_all_ki)
 
         plt.pcolor(Vi_plot, ki_plot, self.fit_all_likelihood)
-        plt.plot(self.theta_ki, self.theta_Vi, 'o', mfc='white', mec='black', ms=10)
+        plt.plot(
+            self.theta_ki, self.theta_Vi, 'o', mfc='white', mec='black', ms=10
+        )
 
         plt.xlim([self.fit_all_ki[0], self.fit_all_ki[-1]])
         plt.ylim([self.fit_all_Vi[0], self.fit_all_Vi[-1]])
@@ -922,7 +1108,7 @@ class iGIF_Na(iGIF):
 
         # ki
         #######################################################################################################
-        plt.subplot(4, 6, 12+5)
+        plt.subplot(4, 6, 12 + 5)
 
         p_all = []
         for myiGIF in iGIFs:
@@ -937,7 +1123,7 @@ class iGIF_Na(iGIF):
 
         # ki
         #######################################################################################################
-        plt.subplot(4, 6, 18+5)
+        plt.subplot(4, 6, 18 + 5)
 
         p_all = []
         for myiGIF in iGIFs:
@@ -952,7 +1138,7 @@ class iGIF_Na(iGIF):
 
         # Vi
         #######################################################################################################
-        plt.subplot(4, 6, 12+6)
+        plt.subplot(4, 6, 12 + 6)
 
         p_all = []
         for myiGIF in iGIFs:
@@ -989,18 +1175,22 @@ class iGIF_NP(iGIF):
 
         # Initialize threshold-voltage coupling
 
-        self.theta_tau = 5.0                          # ms, timescale of threshold-voltage coupling
+        self.theta_tau = 5.0  # ms, timescale of threshold-voltage coupling
 
-        self.theta_bins = np.linspace(-50, -10, 11)    # mV, nodes of rectangular basis functions g_j(V) used to define f(V)
+        self.theta_bins = np.linspace(
+            -50, -10, 11
+        )  # mV, nodes of rectangular basis functions g_j(V) used to define f(V)
 
-        self.theta_i = np.linspace(0, 30.0, 10)   # mV, coefficients b_j associated with the rectangular basis functions above (these parameters define the functional shape of the threshodl-voltage coupling )
+        self.theta_i = np.linspace(
+            0, 30.0, 10
+        )  # mV, coefficients b_j associated with the rectangular basis functions above (these parameters define the functional shape of the threshodl-voltage coupling )
 
         self.fit_flag = False
 
-        self.fit_all_tau_theta = 0                     # list containing all the tau_theta (i.e. the timescale of the threshold-voltage coupling) tested during the fit
+        self.fit_all_tau_theta = 0  # list containing all the tau_theta (i.e. the timescale of the threshold-voltage coupling) tested during the fit
 
-        self.fit_all_likelihood = 0                    # list containing all the log-likelihoods obtained with different tau_theta
-                                                       # (the optimal timescale tau_theta is the one that maximize the model likelihood)
+        self.fit_all_likelihood = 0  # list containing all the log-likelihoods obtained with different tau_theta
+        # (the optimal timescale tau_theta is the one that maximize the model likelihood)
 
     def getNonlinearCoupling(self):
         """
@@ -1008,14 +1198,14 @@ class iGIF_NP(iGIF):
         """
 
         support = np.linspace(-100, 0.0, 1000)
-        dV = support[1]-support[0]
+        dV = support[1] - support[0]
 
-        theta_inf = np.ones(len(support))*self.Vt_star
+        theta_inf = np.ones(len(support)) * self.Vt_star
 
-        for i in np.arange(len(self.theta_i)-1):
+        for i in np.arange(len(self.theta_i) - 1):
 
             lb_i = np.where(support >= self.theta_bins[i])[0][0]
-            ub_i = np.where(support >= self.theta_bins[i+1])[0][0]
+            ub_i = np.where(support >= self.theta_bins[i + 1])[0][0]
 
             theta_inf[lb_i:ub_i] = self.theta_i[i] + self.Vt_star
 
@@ -1082,8 +1272,12 @@ class iGIF_NP(iGIF):
         modStim = deepcopy(self._coerceInputToModelStimulus(I))
         netInputCurrent = modStim.getNetCurrentVector(dtype='double')
         p_numberOfInputCurrents = modStim.numberOfCurrents
-        inputConductanceVector = modStim.getConductanceMajorFlattening(dtype='double')
-        inputConductanceReversals = modStim.getConductanceReversals(dtype='double')
+        inputConductanceVector = modStim.getConductanceMajorFlattening(
+            dtype='double'
+        )
+        inputConductanceReversals = modStim.getConductanceReversals(
+            dtype='double'
+        )
         p_numberOfInputConductances = np.int32(modStim.numberOfConductances)
 
         # Input parameters
@@ -1120,13 +1314,13 @@ class iGIF_NP(iGIF):
         V = np.array(np.zeros(p_T), dtype="double")
 
         theta_trace = np.array(np.zeros(p_T), dtype="double")
-        R = len(self.theta_bins)-1                 # subthreshold coupling theta
+        R = len(self.theta_bins) - 1  # subthreshold coupling theta
         theta = np.zeros((p_T, R))
         theta = theta.astype("double")
 
         spks = np.array(np.zeros(p_T), dtype="double")
-        eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
-        gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+        eta_sum = np.array(np.zeros(p_T + 2 * p_eta_l), dtype="double")
+        gamma_sum = np.array(np.zeros(p_T + 2 * p_gamma_l), dtype="double")
 
         lambda_storage = np.zeros_like(V, dtype="double")
 
@@ -1232,22 +1426,46 @@ class iGIF_NP(iGIF):
 
                 """
 
-        vars = ['netInputCurrent', 'p_numberOfInputCurrents',
-                'inputConductanceVector', 'inputConductanceReversals',
-                'p_numberOfInputConductances',
-                'theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins',
-                'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr',
-                'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0', 'lambda_storage', 'V',
-                'p_eta', 'p_eta_l', 'eta_sum',
-                'p_gamma', 'gamma_sum', 'p_gamma_l', 'spks']
+        vars = [
+            'netInputCurrent',
+            'p_numberOfInputCurrents',
+            'inputConductanceVector',
+            'inputConductanceReversals',
+            'p_numberOfInputConductances',
+            'theta_trace',
+            'theta',
+            'R',
+            'p_theta_tau',
+            'p_theta_bins',
+            'p_theta_i',
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_Vr',
+            'p_Tref',
+            'p_Vt_star',
+            'p_DV',
+            'p_lambda0',
+            'lambda_storage',
+            'V',
+            'p_eta',
+            'p_eta_l',
+            'eta_sum',
+            'p_gamma',
+            'gamma_sum',
+            'p_gamma_l',
+            'spks',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
         eta_sum = eta_sum[:p_T]
         gamma_sum = gamma_sum[:p_T]
         V_T = gamma_sum + p_Vt_star + theta_trace[:p_T]
-        spks = (np.where(spks == 1)[0])*self.dt
+        spks = (np.where(spks == 1)[0]) * self.dt
 
         if return_dict:
             return {
@@ -1264,7 +1482,15 @@ class iGIF_NP(iGIF):
             # Return tuple (backwards compatible)
             return (time, V, eta_sum, V_T, spks)
 
-    def fit(self, experiment, DT_beforeSpike=5.0, theta_inf_nbbins=5, theta_tau_all=np.linspace(1.0, 10.0, 5), last_bin_constrained=False, do_plot=False):
+    def fit(
+        self,
+        experiment,
+        DT_beforeSpike=5.0,
+        theta_inf_nbbins=5,
+        theta_tau_all=np.linspace(1.0, 10.0, 5),
+        last_bin_constrained=False,
+        do_plot=False,
+    ):
         """
         Fit the iGIF_NP model on experimental data (details of the mehtod can be found in Mensi et al. 2016).
         The experimental data are stored in the object experiment (the fit is performed on the training set traces).
@@ -1298,7 +1524,11 @@ class iGIF_NP(iGIF):
 
         self.fitSubthresholdDynamics(experiment, DT_beforeSpike=DT_beforeSpike)
 
-        self.defineBinningForThetaInf(experiment, theta_inf_nbbins, last_bin_constrained=last_bin_constrained)
+        self.defineBinningForThetaInf(
+            experiment,
+            theta_inf_nbbins,
+            last_bin_constrained=last_bin_constrained,
+        )
 
         self.fitStaticThreshold(experiment)
 
@@ -1309,7 +1539,9 @@ class iGIF_NP(iGIF):
     ########################################################################################################
     # FUNCTIONS RELATED TO FIT FIRING THRESHOLD PARAMETERS (step 3)
     ########################################################################################################
-    def defineBinningForThetaInf(self, experiment, theta_inf_nbbins, last_bin_constrained=True):
+    def defineBinningForThetaInf(
+        self, experiment, theta_inf_nbbins, last_bin_constrained=True
+    ):
         """
         Simulate by forcing spikes, and based on voltage distribution, define binning to extract nonlinear coupling.
         """
@@ -1323,7 +1555,13 @@ class iGIF_NP(iGIF):
             if tr.useTrace:
 
                 # Simulate subthreshold dynamics
-                (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                (
+                    time,
+                    V_est,
+                    eta_sum_est,
+                ) = self.simulateDeterministic_forceSpikes(
+                    tr.I, tr.V[0], tr.getSpikeTimes()
+                )
 
                 all_V_spikes.append(V_est[tr.getSpikeIndices()])
 
@@ -1341,7 +1579,7 @@ class iGIF_NP(iGIF):
         print "\nDefine binning to extract theta_inf (V)..."
         print "Interval: %0.1f - %0.1f " % (V_min, V_max)
 
-        self.theta_bins = np.linspace(V_min, V_max, theta_inf_nbbins+1)
+        self.theta_bins = np.linspace(V_min, V_max, theta_inf_nbbins + 1)
         self.theta_bins[-1] += 100.0
         self.theta_i = np.zeros(theta_inf_nbbins)
 
@@ -1360,19 +1598,40 @@ class iGIF_NP(iGIF):
         print "Fit dynamic threshold..."
 
         # Perform fit
-        beta0_dynamicThreshold = np.concatenate(([1/self.DV], [-self.Vt_star/self.DV], self.gamma.getCoefficients()/self.DV, self.theta_i))
-        (beta_opt, theta_tau_opt) = self.maximizeLikelihood_dynamicThreshold(experiment, beta0_dynamicThreshold, theta_tau_all, do_plot=do_plot)
+        beta0_dynamicThreshold = np.concatenate(
+            (
+                [1 / self.DV],
+                [-self.Vt_star / self.DV],
+                self.gamma.getCoefficients() / self.DV,
+                self.theta_i,
+            )
+        )
+        (beta_opt, theta_tau_opt) = self.maximizeLikelihood_dynamicThreshold(
+            experiment, beta0_dynamicThreshold, theta_tau_all, do_plot=do_plot
+        )
 
         # Store result
-        self.DV = 1.0/beta_opt[0]
-        self.Vt_star = -beta_opt[1]*self.DV
-        self.gamma.setFilter_Coefficients(-beta_opt[2:2+self.gamma.getNbOfBasisFunctions()]*self.DV)
-        self.theta_i = -beta_opt[2+self.gamma.getNbOfBasisFunctions():]*self.DV
+        self.DV = 1.0 / beta_opt[0]
+        self.Vt_star = -beta_opt[1] * self.DV
+        self.gamma.setFilter_Coefficients(
+            -beta_opt[2 : 2 + self.gamma.getNbOfBasisFunctions()] * self.DV
+        )
+        self.theta_i = (
+            -beta_opt[2 + self.gamma.getNbOfBasisFunctions() :] * self.DV
+        )
         self.theta_tau = theta_tau_opt
 
         self.printParameters()
 
-    def maximizeLikelihood_dynamicThreshold(self, experiment, beta0, theta_tau_all, maxIter=10**3, stopCond=10**-6, do_plot=False):
+    def maximizeLikelihood_dynamicThreshold(
+        self,
+        experiment,
+        beta0,
+        theta_tau_all,
+        maxIter=10 ** 3,
+        stopCond=10 ** -6,
+        do_plot=False,
+    ):
 
         beta_all = []
         L_all = []
@@ -1399,10 +1658,24 @@ class iGIF_NP(iGIF):
                     traces_nb += 1
 
                     # Simulate subthreshold dynamics
-                    (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                    (
+                        time,
+                        V_est,
+                        eta_sum_est,
+                    ) = self.simulateDeterministic_forceSpikes(
+                        tr.I, tr.V[0], tr.getSpikeTimes()
+                    )
 
                     # Precomputes matrices to perform gradient ascent on log-likelihood
-                    (X_tmp, X_spikes_tmp, sum_X_spikes_tmp, N_spikes, T) = self.buildXmatrix_dynamicThreshold(tr, V_est, theta_tau)
+                    (
+                        X_tmp,
+                        X_spikes_tmp,
+                        sum_X_spikes_tmp,
+                        N_spikes,
+                        T,
+                    ) = self.buildXmatrix_dynamicThreshold(
+                        tr, V_est, theta_tau
+                    )
 
                     T_tot += T
                     N_spikes_tot += N_spikes
@@ -1411,7 +1684,7 @@ class iGIF_NP(iGIF):
                     all_X_spikes.append(X_spikes_tmp)
                     all_sum_X_spikes.append(sum_X_spikes_tmp)
 
-            logL_poisson = N_spikes_tot*(np.log(N_spikes_tot/T_tot)-1)
+            logL_poisson = N_spikes_tot * (np.log(N_spikes_tot / T_tot) - 1)
 
             # Perform gradient ascent
 
@@ -1424,29 +1697,46 @@ class iGIF_NP(iGIF):
 
                 learning_rate = 1.0
 
-                if i <= 10:                      # be careful in the first iterations (using a small learning rate in the first step makes the fit more stable)
+                if (
+                    i <= 10
+                ):  # be careful in the first iterations (using a small learning rate in the first step makes the fit more stable)
                     learning_rate = 0.1
 
-                L = 0; G = 0; H = 0;
+                L = 0
+                G = 0
+                H = 0
 
                 for trace_i in np.arange(traces_nb):
-                    (L_tmp, G_tmp, H_tmp) = self.computeLikelihoodGradientHessian(beta, all_X[trace_i], all_X_spikes[trace_i], all_sum_X_spikes[trace_i])
-                    L += L_tmp; G += G_tmp; H += H_tmp;
+                    (
+                        L_tmp,
+                        G_tmp,
+                        H_tmp,
+                    ) = self.computeLikelihoodGradientHessian(
+                        beta,
+                        all_X[trace_i],
+                        all_X_spikes[trace_i],
+                        all_sum_X_spikes[trace_i],
+                    )
+                    L += L_tmp
+                    G += G_tmp
+                    H += H_tmp
 
-                beta = beta - learning_rate*np.dot(inv(H), G)
+                beta = beta - learning_rate * np.dot(inv(H), G)
 
-                if (i > 0 and abs((L-old_L)/old_L) < stopCond):              # If converged
-                    print "\nConverged after %d iterations!\n" % (i+1)
+                if (
+                    i > 0 and abs((L - old_L) / old_L) < stopCond
+                ):  # If converged
+                    print "\nConverged after %d iterations!\n" % (i + 1)
                     break
 
                 old_L = L
 
                 # Compute normalized likelihood (for print)
                 # The likelihood is normalized with respect to a poisson process and units are in bit/spks
-                L_norm = (L-logL_poisson)/np.log(2)/N_spikes_tot
+                L_norm = (L - logL_poisson) / np.log(2) / N_spikes_tot
                 reprint(L_norm)
 
-            if (i == maxIter - 1):                                           # If too many iterations
+            if i == maxIter - 1:  # If too many iterations
                 print "\nNot converged after %d iterations.\n" % (maxIter)
 
             L_all.append(L_norm)
@@ -1490,8 +1780,12 @@ class iGIF_NP(iGIF):
         spks_i_afterselection = np.where(spk_train[selection] == 1)[0]
 
         # Compute average firing rate used in the fit
-        T_l = T_l_selection*tr.dt/1000.0                # Total duration of trace used for fit (in s)
-        N_spikes = len(spks_i_afterselection)           # Nb of spikes in the trace used for fit
+        T_l = (
+            T_l_selection * tr.dt / 1000.0
+        )  # Total duration of trace used for fit (in s)
+        N_spikes = len(
+            spks_i_afterselection
+        )  # Nb of spikes in the trace used for fit
 
         # Define X matrix
         X = np.zeros((T_l_selection, 2))
@@ -1499,18 +1793,22 @@ class iGIF_NP(iGIF):
         X[:, 1] = np.ones(T_l_selection)
 
         # Compute and fill the remaining columns associated with the spike-triggered current gamma
-        X_gamma = self.gamma.convolution_Spiketrain_basisfunctions(tr.getSpikeTimes() + self.Tref, tr.T, tr.dt)
+        X_gamma = self.gamma.convolution_Spiketrain_basisfunctions(
+            tr.getSpikeTimes() + self.Tref, tr.T, tr.dt
+        )
         X = np.concatenate((X, X_gamma[selection, :]), axis=1)
 
         # Fill columns related with nonlinera coupling
-        X_theta = self.exponentialFiltering_ref(V_est, tr.getSpikeIndices(), theta_tau)
+        X_theta = self.exponentialFiltering_ref(
+            V_est, tr.getSpikeIndices(), theta_tau
+        )
         X = np.concatenate((X, X_theta[selection, :]), axis=1)
 
         # Precompute other quantities
         X_spikes = X[spks_i_afterselection, :]
         sum_X_spikes = np.sum(X_spikes, axis=0)
 
-        return (X, X_spikes, sum_X_spikes,  N_spikes, T_l)
+        return (X, X_spikes, sum_X_spikes, N_spikes, T_l)
 
     def exponentialFiltering_ref(self, V, spks_ind, theta_tau):
         """
@@ -1544,7 +1842,7 @@ class iGIF_NP(iGIF):
         # Define arrays
         V = np.array(V, dtype="double")
 
-        R = len(self.theta_bins)-1                 # subthreshold coupling theta
+        R = len(self.theta_bins) - 1  # subthreshold coupling theta
         theta = np.zeros((p_T, R))
         theta = theta.astype("double")
 
@@ -1606,7 +1904,18 @@ class iGIF_NP(iGIF):
 
                 """
 
-        vars = ['spks', 'p_spks_L', 'theta', 'R', 'p_theta_tau', 'p_theta_bins', 'p_T', 'p_dt', 'p_Tref', 'V']
+        vars = [
+            'spks',
+            'p_spks_L',
+            'theta',
+            'R',
+            'p_theta_tau',
+            'p_theta_bins',
+            'p_T',
+            'p_dt',
+            'p_Tref',
+            'V',
+        ]
 
         v = weave.inline(code, vars, type_converters=converters.blitz)
 
@@ -1621,8 +1930,8 @@ class iGIF_NP(iGIF):
         print "\n-------------------------"
         print "iGIF_NP model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t%0.3f" % (self.C/self.gl)
-        print "R (MOhm):\t%0.6f" % (1.0/self.gl)
+        print "tau_m (ms):\t%0.3f" % (self.C / self.gl)
+        print "R (MOhm):\t%0.6f" % (1.0 / self.gl)
         print "C (nF):\t\t%0.3f" % (self.C)
         print "gl (nS):\t%0.3f" % (self.gl)
         print "El (mV):\t%0.3f" % (self.El)
@@ -1640,12 +1949,29 @@ class iGIF_NP(iGIF):
         if self.fit_flag:
 
             plt.subplot(1, 4, 4)
-            plt.plot(self.fit_all_tau_theta, self.fit_all_likelihood, '.-', color='black')
-            plt.plot([self.theta_tau], [np.max(self.fit_all_likelihood)], '.', color='red')
+            plt.plot(
+                self.fit_all_tau_theta,
+                self.fit_all_likelihood,
+                '.-',
+                color='black',
+            )
+            plt.plot(
+                [self.theta_tau],
+                [np.max(self.fit_all_likelihood)],
+                '.',
+                color='red',
+            )
             plt.xlabel('Threshold coupling timescale (ms)')
             plt.ylabel('Max log-likelihood (bit/spike)')
 
-        plt.subplots_adjust(left=0.07, bottom=0.2, right=0.98, top=0.90, wspace=0.35, hspace=0.10)
+        plt.subplots_adjust(
+            left=0.07,
+            bottom=0.2,
+            right=0.98,
+            top=0.90,
+            wspace=0.35,
+            hspace=0.10,
+        )
 
         plt.show()
 
@@ -1662,11 +1988,18 @@ class iGIF_VR(iGIF_NP):
         # Initialize attributes for variable reset rule.
         self.Vr_intercept = self.Vr
         del self.Vr
-        self.Vr_slope = 0.
+        self.Vr_slope = 0.0
 
     ### Fitting methods.
 
-    def fit(self, experiment, DT_beforeSpike=5.0, theta_inf_nbbins=5, theta_tau_all=np.linspace(1.0, 10.0, 5), do_plot=False):
+    def fit(
+        self,
+        experiment,
+        DT_beforeSpike=5.0,
+        theta_inf_nbbins=5,
+        theta_tau_all=np.linspace(1.0, 10.0, 5),
+        do_plot=False,
+    ):
         """
         Fit the iGIF_NP model on experimental data (details of the mehtod can be found in Mensi et al. 2016).
         The experimental data are stored in the object experiment (the fit is performed on the training set traces).
@@ -1694,7 +2027,12 @@ class iGIF_VR(iGIF_NP):
         print "# Fit iGIF_NP"
         print "################################\n"
 
-        self.fitVoltageReset(experiment, Tref=self.Tref, DT_beforeSpike=DT_beforeSpike, do_plot=False)
+        self.fitVoltageReset(
+            experiment,
+            Tref=self.Tref,
+            DT_beforeSpike=DT_beforeSpike,
+            do_plot=False,
+        )
         self.fitSubthresholdDynamics(experiment, DT_beforeSpike=DT_beforeSpike)
         self.defineBinningForThetaInf(experiment, theta_inf_nbbins)
         self.fitStaticThreshold(experiment)
@@ -1729,7 +2067,10 @@ class iGIF_VR(iGIF_NP):
         for tr in experiment.trainingset_traces:
             if tr.useTrace and len(tr.spks) > 0:
                 for spkind in tr.spks:
-                    if spkind - DT_beforespike_ind > 0 and spkind + Tref_ind < len(tr.V):
+                    if (
+                        spkind - DT_beforespike_ind > 0
+                        and spkind + Tref_ind < len(tr.V)
+                    ):
                         V_before.append(tr.V[spkind - DT_beforespike_ind])
                         V_after.append(tr.V[spkind + Tref_ind])
                     else:
@@ -1740,7 +2081,9 @@ class iGIF_VR(iGIF_NP):
         V_before = np.array(V_before)
         V_after = np.array(V_after)
 
-        assert len(V_before) == len(V_after), 'Number of voltage points before and after spikes do not match.'
+        assert len(V_before) == len(
+            V_after
+        ), 'Number of voltage points before and after spikes do not match.'
         all_spike_nb = len(V_before)
 
         # Estimate voltage reset
@@ -1759,7 +2102,11 @@ class iGIF_VR(iGIF_NP):
         if do_plot:
             self.plotVoltageReset()
 
-        print "Done! Vr_intercept = %0.2f mV, Vr_slope = %0.2f (computed on %d spikes)" % (self.Vr_intercept, self.Vr_slope, all_spike_nb)
+        print "Done! Vr_intercept = %0.2f mV, Vr_slope = %0.2f (computed on %d spikes)" % (
+            self.Vr_intercept,
+            self.Vr_slope,
+            all_spike_nb,
+        )
 
     def defineBinningForThetaInf(self, experiment, theta_inf_nbbins):
         """
@@ -1777,7 +2124,13 @@ class iGIF_VR(iGIF_NP):
             if tr.useTrace:
 
                 # Simulate subthreshold dynamics
-                (time, V_est, eta_sum_est) = self.simulateDeterministic_forceSpikes(tr.I, tr.V[0], tr.getSpikeTimes())
+                (
+                    time,
+                    V_est,
+                    eta_sum_est,
+                ) = self.simulateDeterministic_forceSpikes(
+                    tr.I, tr.V[0], tr.getSpikeTimes()
+                )
 
                 all_V_spikes.append(V_est[tr.getSpikeIndices()])
 
@@ -1789,7 +2142,7 @@ class iGIF_VR(iGIF_NP):
         print "\nDefine binning to extract theta_inf (V)..."
         print "Interval: %0.1f - %0.1f " % (V_min, V_max)
 
-        self.theta_bins = np.linspace(V_min, V_max, theta_inf_nbbins+1)
+        self.theta_bins = np.linspace(V_min, V_max, theta_inf_nbbins + 1)
         self.theta_bins[-1] += 100.0
         self.theta_i = np.zeros(theta_inf_nbbins)
 
@@ -1848,13 +2201,13 @@ class iGIF_VR(iGIF_NP):
         I = np.array(I, dtype="double")
 
         theta_trace = np.array(np.zeros(p_T), dtype="double")
-        R = len(self.theta_bins)-1                 # subthreshold coupling theta
+        R = len(self.theta_bins) - 1  # subthreshold coupling theta
         theta = np.zeros((p_T, R))
         theta = theta.astype("double")
 
         spks = np.array(np.zeros(p_T), dtype="double")
-        eta_sum = np.array(np.zeros(p_T + 2*p_eta_l), dtype="double")
-        gamma_sum = np.array(np.zeros(p_T + 2*p_gamma_l), dtype="double")
+        eta_sum = np.array(np.zeros(p_T + 2 * p_eta_l), dtype="double")
+        gamma_sum = np.array(np.zeros(p_T + 2 * p_gamma_l), dtype="double")
 
         # Set initial condition
         V[0] = V0
@@ -1949,18 +2302,41 @@ class iGIF_VR(iGIF_NP):
 
                 """
 
-        vars = ['theta_trace', 'theta', 'R', 'p_theta_tau', 'p_theta_bins',
-                'p_theta_i', 'p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr_slope',
-                'p_Vr_intercept', 'p_Tref', 'p_Vt_star', 'p_DV', 'p_lambda0',
-                'V', 'I', 'p_eta', 'p_eta_l', 'eta_sum', 'p_gamma', 'gamma_sum',
-                'p_gamma_l', 'spks']
+        vars = [
+            'theta_trace',
+            'theta',
+            'R',
+            'p_theta_tau',
+            'p_theta_bins',
+            'p_theta_i',
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_Vr_slope',
+            'p_Vr_intercept',
+            'p_Tref',
+            'p_Vt_star',
+            'p_DV',
+            'p_lambda0',
+            'V',
+            'I',
+            'p_eta',
+            'p_eta_l',
+            'eta_sum',
+            'p_gamma',
+            'gamma_sum',
+            'p_gamma_l',
+            'spks',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
         eta_sum = eta_sum[:p_T]
         V_T = gamma_sum[:p_T] + p_Vt_star + theta_trace[:p_T]
-        spks = (np.where(spks == 1)[0])*self.dt
+        spks = (np.where(spks == 1)[0]) * self.dt
 
         return (time, V, eta_sum, V_T, spks)
 
@@ -1989,7 +2365,7 @@ class iGIF_VR(iGIF_NP):
         p_Vr_slope = self.Vr_slope
         p_Vr_intercept = self.Vr_intercept
         p_Tref = self.Tref
-        p_Tref_i = int(self.Tref/self.dt)
+        p_Tref_i = int(self.Tref / self.dt)
 
         # Model kernel
         (p_eta_support, p_eta) = self.eta.getInterpolatedFilter(self.dt)
@@ -2004,11 +2380,11 @@ class iGIF_VR(iGIF_NP):
 
         # Compute adaptation current (sum of eta triggered at spike times in spks)
         eta_sum = np.array(
-                np.zeros(p_T + int(1.1*p_eta_l) + p_Tref_i),
-                dtype="double")
+            np.zeros(p_T + int(1.1 * p_eta_l) + p_Tref_i), dtype="double"
+        )
 
         for s in spks_i:
-            eta_sum[s + 1 + p_Tref_i: s + 1 + p_Tref_i + p_eta_l] += p_eta
+            eta_sum[s + 1 + p_Tref_i : s + 1 + p_Tref_i + p_eta_l] += p_eta
 
         eta_sum = eta_sum[:p_T]
 
@@ -2052,12 +2428,24 @@ class iGIF_VR(iGIF_NP):
 
                 """
 
-        vars = ['p_T', 'p_dt', 'p_gl', 'p_C', 'p_El', 'p_Vr_slope', 'p_Vr_intercept',
-                'p_Tref', 'V', 'I', 'eta_sum', 'spks_i']
+        vars = [
+            'p_T',
+            'p_dt',
+            'p_gl',
+            'p_C',
+            'p_El',
+            'p_Vr_slope',
+            'p_Vr_intercept',
+            'p_Tref',
+            'V',
+            'I',
+            'eta_sum',
+            'spks_i',
+        ]
 
         v = weave.inline(code, vars)
 
-        time = np.arange(p_T)*self.dt
+        time = np.arange(p_T) * self.dt
         eta_sum = eta_sum[:p_T]
 
         return (time, V, eta_sum)
@@ -2069,8 +2457,8 @@ class iGIF_VR(iGIF_NP):
         print "\n-------------------------"
         print "iGIF_NP model parameters:"
         print "-------------------------"
-        print "tau_m (ms):\t\t%0.3f" % (self.C/self.gl)
-        print "R (MOhm):\t\t%0.6f" % (1.0/self.gl)
+        print "tau_m (ms):\t\t%0.3f" % (self.C / self.gl)
+        print "R (MOhm):\t\t%0.6f" % (1.0 / self.gl)
         print "C (nF):\t\t\t\t%0.3f" % (self.C)
         print "gl (nS):\t\t%0.3f" % (self.gl)
         print "El (mV):\t\t%0.3f" % (self.El)
@@ -2090,22 +2478,28 @@ class iGIF_VR(iGIF_NP):
         plt.plot(
             self._Vreset_data['V_before_spk'],
             self._Vreset_data['V_after_spk'],
-            'ko', alpha=0.7
+            'ko',
+            alpha=0.7,
         )
         x_tmp = np.array(
-            [np.min(self._Vreset_data['V_before_spk']),
-            np.max(self._Vreset_data['V_before_spk'])]
+            [
+                np.min(self._Vreset_data['V_before_spk']),
+                np.max(self._Vreset_data['V_before_spk']),
+            ]
         )
         plt.plot(
-            x_tmp, x_tmp * self.Vr_slope + self.Vr_intercept,
-            'r-', label='Fitted reset rule'
+            x_tmp,
+            x_tmp * self.Vr_slope + self.Vr_intercept,
+            'r-',
+            label='Fitted reset rule',
         )
         plt.xlabel('V before spike (mV)')
         plt.ylabel('V after spike (mV)')
         plt.legend()
         plt.show()
 
-#%% SIMPLE TESTS
+
+# SIMPLE TESTS
 
 
 if __name__ == '__main__':
@@ -2121,7 +2515,8 @@ if __name__ == '__main__':
     tstexpt.addTrainingSetTrace(
         FILETYPE='Axon',
         fname=os.path.join('data', 'gif_test', 'DRN656_train.abf'),
-        V_channel=0, I_channel=1
+        V_channel=0,
+        I_channel=1,
     )
 
     for tr in tstexpt.trainingset_traces:

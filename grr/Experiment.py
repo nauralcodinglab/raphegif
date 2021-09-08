@@ -32,25 +32,33 @@ class Experiment:
 
         print "Create a new Experiment"
 
-        self.name = name          # Experiment name
+        self.name = name  # Experiment name
 
-        self.dt = dt            # ms, experimental time step (all traces in same experiment must have the same sampling frequency)
+        self.dt = dt  # ms, experimental time step (all traces in same experiment must have the same sampling frequency)
 
         # Voltage traces
 
-        self.AEC_trace = 0             # Trace object containing voltage and input current used for AEC
+        self.AEC_trace = (
+            0  # Trace object containing voltage and input current used for AEC
+        )
 
-        self.trainingset_traces = []            # List of traces for training set data
+        self.trainingset_traces = []  # List of traces for training set data
 
-        self.testset_traces = []            # List of traces of test set data (typically multiple experiments conducted with frozen noise)
+        self.testset_traces = (
+            []
+        )  # List of traces of test set data (typically multiple experiments conducted with frozen noise)
 
         # AEC object
 
-        self.AEC = AEC_Dummy()   # Object that performs AEC on experimental voltage traces
+        self.AEC = (
+            AEC_Dummy()
+        )  # Object that performs AEC on experimental voltage traces
 
         # Parameters used to define spike times
 
-        self.spikeDetection_threshold = 0.0  # mV, voltage threshold used to detect spikes
+        self.spikeDetection_threshold = (
+            0.0  # mV, voltage threshold used to detect spikes
+        )
 
         self.spikeDetection_ref = 3.0  # ms, absolute refractory period used for spike detection to avoid double counting of spikes
 
@@ -75,10 +83,12 @@ class Experiment:
         """
 
         V_rec = ReadIBW.read(V)
-        V_rec = np.array(V_rec[:int(T/dt)])*V_units/10**-3  # Convert to mV
+        V_rec = (
+            np.array(V_rec[: int(T / dt)]) * V_units / 10 ** -3
+        )  # Convert to mV
 
         I = ReadIBW.read(I)
-        I = np.array(I[:int(T/dt)])*I_units/10**-9  # Convert to nA
+        I = np.array(I[: int(T / dt)]) * I_units / 10 ** -9  # Convert to nA
 
         return [Trace(V_rec, I, T, dt)]
 
@@ -105,22 +115,28 @@ class Experiment:
         units = [base_units(chan) for chan in sweeps[0].analogsignals]
 
         if units[V_channel] != pq.V.simplified.dimensionality:
-            raise RuntimeError('V_channel ({}) unit dimensionality must be V;'
-                               ' got {} instead.'.format(
-                                       V_channel, units[V_channel]))
+            raise RuntimeError(
+                'V_channel ({}) unit dimensionality must be V;'
+                ' got {} instead.'.format(V_channel, units[V_channel])
+            )
         if units[I_channel] != pq.A.simplified.dimensionality:
-            raise RuntimeError('I_channel ({}) unit dimensionality must be A;'
-                               ' got {} instead.'.format(
-                                       I_channel, units[I_channel]))
+            raise RuntimeError(
+                'I_channel ({}) unit dimensionality must be A;'
+                ' got {} instead.'.format(I_channel, units[I_channel])
+            )
 
         # Extract sampling rate from first sweep of V_channel
-        dt_tmp = 1./sweeps[0].analogsignals[V_channel].sampling_rate.rescale(pq.Hz)
-        dt_tmp = 1000. * float(dt_tmp)  # Convert to ms
+        dt_tmp = 1.0 / sweeps[0].analogsignals[
+            V_channel
+        ].sampling_rate.rescale(pq.Hz)
+        dt_tmp = 1000.0 * float(dt_tmp)  # Convert to ms
 
         # Verify that dt of recording is same as value passed to method
         if dt_tmp != dt:
-            raise RuntimeError('Got unexpected dt = {}ms from file during ABF'
-                               ' import! (Expected {}ms.)'.format(dt_tmp, dt))
+            raise RuntimeError(
+                'Got unexpected dt = {}ms from file during ABF'
+                ' import! (Expected {}ms.)'.format(dt_tmp, dt)
+            )
 
         # Initialize list to hold Trace objects
         tr_list = []
@@ -135,7 +151,9 @@ class Experiment:
             # Strip units from Trace inputs
             V_tmp = V_tmp.magnitude.flatten()
             I_tmp = I_tmp.magnitude.flatten()
-            T_tmp = float(sweep.analogsignals[V_channel].duration.rescale(pq.ms))
+            T_tmp = float(
+                sweep.analogsignals[V_channel].duration.rescale(pq.ms)
+            )
 
             # Add Trace to list
             tr_list.append(Trace(V_tmp, I_tmp, T_tmp, dt_tmp))
@@ -159,8 +177,10 @@ class Experiment:
         (A list is returned for consistency with Experiment._readABF.)
         """
 
-        V_rec = np.array(V[:int(T/dt)])*V_units/10**-3  # Convert to mV
-        I = np.array(I[:int(T/dt)])*I_units/10**-9  # Convert to nA
+        V_rec = (
+            np.array(V[: int(T / dt)]) * V_units / 10 ** -3
+        )  # Convert to mV
+        I = np.array(I[: int(T / dt)]) * I_units / 10 ** -9  # Convert to nA
 
         return [Trace(V_rec, I, T, dt)]
 
@@ -178,23 +198,31 @@ class Experiment:
             # Check for required arguments
             required_kwargs = ['fname', 'V_channel', 'I_channel']
             if not all([kw in kwargs.keys() for kw in required_kwargs]):
-                raise TypeError(', '.join(required_kwargs) + ' must be'
-                                ' supplied as kwargs for Axon FILETYPE.')
+                raise TypeError(
+                    ', '.join(required_kwargs) + ' must be'
+                    ' supplied as kwargs for Axon FILETYPE.'
+                )
 
             # Warn user about unused arguments
             unused_kwargs = [
-                    kw for kw in kwargs.keys() if kw not in required_kwargs]
+                kw for kw in kwargs.keys() if kw not in required_kwargs
+            ]
             if len(unused_kwargs) > 0:
-                warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
-                                    ' required for Axon FILETYPE and will not'
-                                    ' be used.'))
+                warn(
+                    RuntimeWarning(
+                        ', '.join(unused_kwargs) + ' kwargs are not'
+                        ' required for Axon FILETYPE and will not'
+                        ' be used.'
+                    )
+                )
 
             # Read in file using protected static method
             tr_list_tmp = self._readABF(
-                    kwargs['fname'],
-                    kwargs['V_channel'],
-                    kwargs['I_channel'],
-                    self.dt)
+                kwargs['fname'],
+                kwargs['V_channel'],
+                kwargs['I_channel'],
+                self.dt,
+            )
 
             return tr_list_tmp
 
@@ -203,24 +231,32 @@ class Experiment:
             # Check for required arguments
             required_kwargs = ['V', 'V_units', 'I', 'I_units', 'T']
             if not all([kw in kwargs.keys() for kw in required_kwargs]):
-                raise TypeError(', '.join(required_kwargs) + 'must be supplied'
-                                ' as kwargs for Igor FILETYPE.')
+                raise TypeError(
+                    ', '.join(required_kwargs) + 'must be supplied'
+                    ' as kwargs for Igor FILETYPE.'
+                )
 
             # Warn user about unused arguments
             unused_kwargs = [
-                    kw for kw in kwargs.keys() if kw not in required_kwargs]
+                kw for kw in kwargs.keys() if kw not in required_kwargs
+            ]
             if len(unused_kwargs) > 0:
-                warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
-                                    ' required for Igor FILETYPE and will not'
-                                    ' be used.'))
+                warn(
+                    RuntimeWarning(
+                        ', '.join(unused_kwargs) + ' kwargs are not'
+                        ' required for Igor FILETYPE and will not'
+                        ' be used.'
+                    )
+                )
 
             tr_list_tmp = self._readIgor(
-                    kwargs['V'],
-                    kwargs['V_units'],
-                    kwargs['I'],
-                    kwargs['I_units'],
-                    kwargs['T'],
-                    self.dt)
+                kwargs['V'],
+                kwargs['V_units'],
+                kwargs['I'],
+                kwargs['I_units'],
+                kwargs['T'],
+                self.dt,
+            )
 
             return tr_list_tmp
 
@@ -229,30 +265,40 @@ class Experiment:
             # Check for required arguments
             required_kwargs = ['V', 'V_units', 'I', 'I_units', 'T', 'dt']
             if not all([kw in kwargs.keys() for kw in required_kwargs]):
-                raise TypeError(', '.join(required_kwargs) + 'must be supplied'
-                                'as kwargs for Array FILETYPE.')
+                raise TypeError(
+                    ', '.join(required_kwargs) + 'must be supplied'
+                    'as kwargs for Array FILETYPE.'
+                )
 
             # Warn user about unused kwargs
             unused_kwargs = [
-                    kw for kw in kwargs.keys() if kw not in required_kwargs]
+                kw for kw in kwargs.keys() if kw not in required_kwargs
+            ]
             if len(unused_kwargs) > 0:
-                warn(RuntimeWarning(', '.join(unused_kwargs) + ' kwargs are not'
-                                    ' required for Array FILETYPE and will not'
-                                    ' be used.'))
+                warn(
+                    RuntimeWarning(
+                        ', '.join(unused_kwargs) + ' kwargs are not'
+                        ' required for Array FILETYPE and will not'
+                        ' be used.'
+                    )
+                )
 
             tr_list_tmp = self._readArray(
-                    kwargs['V'],
-                    kwargs['V_units'],
-                    kwargs['I'],
-                    kwargs['I_units'],
-                    kwargs['T'],
-                    self.dt)
+                kwargs['V'],
+                kwargs['V_units'],
+                kwargs['I'],
+                kwargs['I_units'],
+                kwargs['T'],
+                self.dt,
+            )
 
             return tr_list_tmp
 
         else:
-            raise ValueError('Expected one of Axon, Igor, or Array for'
-                             ' FILETYPE. Got {} instead.'.format(FILETYPE))
+            raise ValueError(
+                'Expected one of Axon, Igor, or Array for'
+                ' FILETYPE. Got {} instead.'.format(FILETYPE)
+            )
 
     def setAECTrace(self, FILETYPE='Axon', **kwargs):
         """
@@ -268,8 +314,12 @@ class Experiment:
         tr_list_tmp = self._createTraces(FILETYPE, **kwargs)
 
         if len(tr_list_tmp) > 1:
-            warn(RuntimeWarning('More than one sweep found in AEC file!'
-                                'Proceeding using only first sweep.'))
+            warn(
+                RuntimeWarning(
+                    'More than one sweep found in AEC file!'
+                    'Proceeding using only first sweep.'
+                )
+            )
 
         self.AEC_trace = tr_list_tmp[0]
 
@@ -368,7 +418,9 @@ class Experiment:
         self._assertAllTraceROIsAreSame(self.testset_traces)
         testset_ROI = self.testset_traces[0].ROI
         assert len(testset_ROI) == 1
-        testset_ROI = testset_ROI[0]  # ROIs are stored as a list [[ROI_1_start, ROI_1_stop], ...]
+        testset_ROI = testset_ROI[
+            0
+        ]  # ROIs are stored as a list [[ROI_1_start, ROI_1_stop], ...]
 
         self._assertAllTraceDurationsAreSame(self.testset_traces)
         testset_duration = self.testset_traces[0].T
@@ -381,10 +433,12 @@ class Experiment:
                 all_spks_times_testset.append(spks_times)
 
         print "Predict spike times..."
-        I_test = self.testset_traces[0].I       # test set current used in experimetns
+        I_test = self.testset_traces[
+            0
+        ].I  # test set current used in experimetns
         all_spks_times_prediction = []
         for rep in np.arange(nb_rep):
-            print "Progress: %2.1f %% \r" % (100*(rep+1)/nb_rep),
+            print "Progress: %2.1f %% \r" % (100 * (rep + 1) / nb_rep),
             spks_times = spiking_model.simulateSpikingResponse(I_test, self.dt)
             all_spks_times_prediction.append(
                 filterTimesByROI(spks_times, testset_ROI)
@@ -392,9 +446,7 @@ class Experiment:
 
         # Create SpikeTrainComparator object containing experimental and predicted spike times
         prediction = SpikeTrainComparator(
-            testset_duration,
-            all_spks_times_testset,
-            all_spks_times_prediction
+            testset_duration, all_spks_times_testset, all_spks_times_prediction
         )
 
         return prediction
@@ -408,13 +460,12 @@ class Experiment:
                 raiseExpectedGot(
                     'identical extent',
                     'all trace ROIs',
-                    [tr.ROI for tr in traces]
+                    [tr.ROI for tr in traces],
                 )
 
     @staticmethod
     def _assertAllTraceDurationsAreSame(traces):
         assertAllAlmostSame([tr.T for tr in traces])
-
 
     ############################################################################################
     # AUXILIARY FUNCTIONS
@@ -431,13 +482,19 @@ class Experiment:
         self.spikeDetection_ref = ref
 
         if self.AEC_trace != 0:
-            self.AEC_trace.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
+            self.AEC_trace.detectSpikes(
+                self.spikeDetection_threshold, self.spikeDetection_ref
+            )
 
         for tr in self.trainingset_traces:
-            tr.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
+            tr.detectSpikes(
+                self.spikeDetection_threshold, self.spikeDetection_ref
+            )
 
         for tr in self.testset_traces:
-            tr.detectSpikes(self.spikeDetection_threshold, self.spikeDetection_ref)
+            tr.detectSpikes(
+                self.spikeDetection_threshold, self.spikeDetection_ref
+            )
 
         print "Done!"
 
@@ -468,7 +525,7 @@ class Experiment:
             'traceDuration': self._getDatasetDuration(dataset),
             'traceDurationInROI': self._getDatasetDurationInROI(dataset),
             'nbOfTraces': self._getDatasetNbOfTraces(dataset),
-            'nbOfTracesInROI': self._getDatasetNbOfTracesInROI(dataset)
+            'nbOfTracesInROI': self._getDatasetNbOfTracesInROI(dataset),
         }
         return dsetSummary
 
@@ -532,47 +589,67 @@ class Experiment:
         for tr in self.trainingset_traces:
 
             # Plot input current
-            plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, cnt*2+1)
+            plt.subplot(
+                2 * self.getTrainingSummary()['nbOfTraces'], 1, cnt * 2 + 1
+            )
             plt.plot(tr.getTime(), tr.I, 'gray')
 
             # Plot ROI
-            ROI_vector = -10.0*np.ones(int(tr.T/tr.dt))
+            ROI_vector = -10.0 * np.ones(int(tr.T / tr.dt))
             if tr.useTrace:
                 ROI_vector[tr.getROI()] = 10.0
 
             plt.fill_between(tr.getTime(), ROI_vector, 10.0, color='0.2')
 
-            plt.ylim([min(tr.I)-0.5, max(tr.I)+0.5])
+            plt.ylim([min(tr.I) - 0.5, max(tr.I) + 0.5])
             plt.ylabel("I (nA)")
             plt.xticks([])
 
             # Plot membrane potential
-            plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, cnt*2+2)
+            plt.subplot(
+                2 * self.getTrainingSummary()['nbOfTraces'], 1, cnt * 2 + 2
+            )
             plt.plot(tr.getTime(), tr.V_rec, 'black')
 
             if tr.AEC_flag:
                 plt.plot(tr.getTime(), tr.V, 'blue')
 
             if tr.spks_flag:
-                plt.plot(tr.getSpikeTimes(), np.zeros(tr.getSpikeNb()), '.', color='red')
+                plt.plot(
+                    tr.getSpikeTimes(),
+                    np.zeros(tr.getSpikeNb()),
+                    '.',
+                    color='red',
+                )
 
             # Plot ROI
-            ROI_vector = -100.0*np.ones(int(tr.T/tr.dt))
+            ROI_vector = -100.0 * np.ones(int(tr.T / tr.dt))
             if tr.useTrace:
                 ROI_vector[tr.getROI()] = 100.0
 
             plt.fill_between(tr.getTime(), ROI_vector, 100.0, color='0.2')
 
-            plt.ylim([min(tr.V)-5.0, max(tr.V)+5.0])
+            plt.ylim([min(tr.V) - 5.0, max(tr.V) + 5.0])
             plt.ylabel("Voltage (mV)")
 
             cnt += 1
 
         plt.xlabel("Time (ms)")
 
-        plt.subplot(2*self.getTrainingSummary()['nbOfTraces'], 1, 1)
-        plt.title('Experiment ' + self.name + " - Training Set (dark region not selected)")
-        plt.subplots_adjust(left=0.10, bottom=0.07, right=0.95, top=0.92, wspace=0.25, hspace=0.25)
+        plt.subplot(2 * self.getTrainingSummary()['nbOfTraces'], 1, 1)
+        plt.title(
+            'Experiment '
+            + self.name
+            + " - Training Set (dark region not selected)"
+        )
+        plt.subplots_adjust(
+            left=0.10,
+            bottom=0.07,
+            right=0.95,
+            top=0.92,
+            wspace=0.25,
+            hspace=0.25,
+        )
 
         plt.show()
 
@@ -600,12 +677,26 @@ class Experiment:
         for tr in self.testset_traces:
             cnt += 1
             if tr.spks_flag:
-                plt.plot(tr.getSpikeTimes(), cnt*np.ones(tr.getSpikeNb()), '|', color='black', ms=5, mew=2)
+                plt.plot(
+                    tr.getSpikeTimes(),
+                    cnt * np.ones(tr.getSpikeNb()),
+                    '|',
+                    color='black',
+                    ms=5,
+                    mew=2,
+                )
 
         plt.yticks([])
-        plt.ylim([0, cnt+1])
+        plt.ylim([0, cnt + 1])
         plt.xlabel("Time (ms)")
 
-        plt.subplots_adjust(left=0.10, bottom=0.07, right=0.95, top=0.92, wspace=0.25, hspace=0.25)
+        plt.subplots_adjust(
+            left=0.10,
+            bottom=0.07,
+            right=0.95,
+            top=0.92,
+            wspace=0.25,
+            hspace=0.25,
+        )
 
         plt.show()

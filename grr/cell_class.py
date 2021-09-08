@@ -10,7 +10,7 @@ plotting and test-pulse extraction.
 Compatible with python 2 and 3 as of Feb. 5, 2018.
 """
 
-#%% IMPORT MODULES
+# IMPORT MODULES
 
 from __future__ import division
 from warnings import warn
@@ -22,7 +22,7 @@ from scipy import optimize
 from neo.io import AxonIO
 
 
-#%% DEFINE CELL CLASS
+# DEFINE CELL CLASS
 
 """
 Defines a class to load and store multiple ABF recordings associated with a
@@ -61,11 +61,11 @@ class Cell(object):
         recnames = '\n'.join(self.rec_names)
 
         representation = (
-                cellname
-                + ' with recordings:\n\n'
-                + recnames
-                + '\n\nLocated at {}.'.format(hex(id(self)))
-                )
+            cellname
+            + ' with recordings:\n\n'
+            + recnames
+            + '\n\nLocated at {}.'.format(hex(id(self)))
+        )
 
         return representation
 
@@ -95,8 +95,9 @@ class Cell(object):
             try:
                 sweeps = AxonIO(fname).read()[0].segments
             except FileNotFoundError:
-                warn('{} file {} not found. Skipping.'.format(
-                        self.name, fname))
+                warn(
+                    '{} file {} not found. Skipping.'.format(self.name, fname)
+                )
                 continue
 
             # Allocate np.array to hold recording.
@@ -104,9 +105,11 @@ class Cell(object):
             no_samples = len(sweeps[0].analogsignals[0])
             no_sweeps = len(sweeps)
 
-            sweeps_arr = Recording(np.empty(
-                    (no_channels, no_samples, no_sweeps),
-                    dtype=np.float64))
+            sweeps_arr = Recording(
+                np.empty(
+                    (no_channels, no_samples, no_sweeps), dtype=np.float64
+                )
+            )
 
             # Fill the array one sweep at a time.
             for sweep_ind in range(no_sweeps):
@@ -116,9 +119,11 @@ class Cell(object):
                     signal = sweeps[sweep_ind].analogsignals[chan_ind]
                     signal = np.squeeze(signal)
 
-                    assert len(signal) == sweeps_arr.shape[1], ('Not all '
-                    'channels in {} are sampled at the same '
-                    'rate.'.format(fname))
+                    assert len(signal) == sweeps_arr.shape[1], (
+                        'Not all '
+                        'channels in {} are sampled at the same '
+                        'rate.'.format(fname)
+                    )
 
                     sweeps_arr[chan_ind, :, sweep_ind] = signal
 
@@ -149,8 +154,9 @@ class Recording(np.ndarray):
 
         # Check that newly-created recording has correct ndim.
         if obj.ndim != 3:
-            raise ValueError('Recording dimensionality must be '
-                             '[channel, time, sweep].')
+            raise ValueError(
+                'Recording dimensionality must be ' '[channel, time, sweep].'
+            )
 
         return obj
 
@@ -162,7 +168,9 @@ class Recording(np.ndarray):
         shape = list(self.shape)
         shape[1] = 1
 
-        t_vec = np.arange(0, (self.shape[1] - 0.5) * self.dt, self.dt)[np.newaxis, :, np.newaxis]
+        t_vec = np.arange(0, (self.shape[1] - 0.5) * self.dt, self.dt)[
+            np.newaxis, :, np.newaxis
+        ]
 
         return np.tile(t_vec, shape)
 
@@ -195,7 +203,9 @@ class Recording(np.ndarray):
             plotting_data = self[:, :, 0][:, :, np.newaxis]
 
         ### Make plot ###
-        x_vector = np.arange(0, self.shape[1], downsample)  # Preserves indexes.
+        x_vector = np.arange(
+            0, self.shape[1], downsample
+        )  # Preserves indexes.
         plt.figure(figsize=(10, 7))
 
         for i in range(self.shape[0]):
@@ -207,9 +217,12 @@ class Recording(np.ndarray):
                 plt.subplot(self.shape[0], 1, i + 1, sharex=ax0)
 
             plt.title('Channel {}'.format(i))
-            plt.plot(x_vector, plotting_data[i, ::downsample, :],
-                     'k-',
-                     linewidth=0.5)
+            plt.plot(
+                x_vector,
+                plotting_data[i, ::downsample, :],
+                'k-',
+                linewidth=0.5,
+            )
             plt.xlabel('Time (timesteps)')
 
         plt.tight_layout()
@@ -241,40 +254,58 @@ class Recording(np.ndarray):
 
         # Check for correct inputs.
         if type(baseline) is not tuple:
-            raise TypeError('Expected type tuple for `baseline`; got {} '
-                            'instead.'.format(type(baseline)))
+            raise TypeError(
+                'Expected type tuple for `baseline`; got {} '
+                'instead.'.format(type(baseline))
+            )
         elif any([type(entry) != int for entry in baseline]):
             raise TypeError('Expected tuple of ints for `baseline`.')
         elif len(baseline) != 2:
-            raise TypeError('Expected tuple of len 2 specifying start and '
-                             'stop positions for `baseline`.')
+            raise TypeError(
+                'Expected tuple of len 2 specifying start and '
+                'stop positions for `baseline`.'
+            )
         elif any([entry > self.shape[1] for entry in baseline]):
-            raise ValueError('`baseline` selection out of bounds for channel '
-                             'of length {}.'.format(self.shape[1]))
+            raise ValueError(
+                '`baseline` selection out of bounds for channel '
+                'of length {}.'.format(self.shape[1])
+            )
 
         if type(steady_state) is not tuple:
-            raise TypeError('Expected type tuple for `steady_state`; got {} '
-                            'instead.'.format(type(steady_state)))
+            raise TypeError(
+                'Expected type tuple for `steady_state`; got {} '
+                'instead.'.format(type(steady_state))
+            )
         elif any([type(entry) != int for entry in steady_state]):
             raise TypeError('Expected tuple of ints for `steady_state`.')
         elif len(steady_state) != 2:
-            raise TypeError('Expected tuple of len 2 specifying start and '
-                             'stop positions for `steady_state`.')
+            raise TypeError(
+                'Expected tuple of len 2 specifying start and '
+                'stop positions for `steady_state`.'
+            )
         elif any([entry > self.shape[1] for entry in steady_state]):
-            raise ValueError('`steady_state` selection out of bounds for '
-                             'channel of length {}.'.format(self.shape[1]))
+            raise ValueError(
+                '`steady_state` selection out of bounds for '
+                'channel of length {}.'.format(self.shape[1])
+            )
 
         if steady_state[0] < baseline[1]:
-            raise ValueError('Steady state measurement must be taken after '
-                             ' end of baseline.')
+            raise ValueError(
+                'Steady state measurement must be taken after '
+                ' end of baseline.'
+            )
 
         if type(kwargs['V_clamp']) is not bool:
-            raise TypeError('Expected `V_clamp` to be type bool; got {} '
-                            'instead.'.format(type(kwargs['V_clamp'])))
+            raise TypeError(
+                'Expected `V_clamp` to be type bool; got {} '
+                'instead.'.format(type(kwargs['V_clamp']))
+            )
 
         if type(kwargs['verbose']) is not bool:
-            raise TypeError('Expected `verbose` to be type bool; got {} '
-                            'instead.'.format(type(kwargs['verbose'])))
+            raise TypeError(
+                'Expected `verbose` to be type bool; got {} '
+                'instead.'.format(type(kwargs['verbose']))
+            )
 
         ### Main ###
 
@@ -297,13 +328,13 @@ class Recording(np.ndarray):
         if kwargs['V_clamp']:
 
             if delta_V_ss.mean() < 0:
-                I_peak = self[kwargs['I_chan'],
-                              slice(baseline[1], steady_state[0]),
-                              :].min(axis=0)
+                I_peak = self[
+                    kwargs['I_chan'], slice(baseline[1], steady_state[0]), :
+                ].min(axis=0)
             else:
-                I_peak = self[kwargs['I_chan'],
-                              slice(baseline[1], steady_state[0]),
-                              :].max(axis=0)
+                I_peak = self[
+                    kwargs['I_chan'], slice(baseline[1], steady_state[0]), :
+                ].max(axis=0)
 
             R_a = 1000 * delta_V_ss / (I_peak - I_baseline)
             output['R_a'] = R_a
@@ -322,36 +353,56 @@ class Recording(np.ndarray):
                 pulse_start = kwargs['tau'][0]
                 fitting_range = kwargs['tau'][-2:]
 
-                p0 = [V_copy[slice(*baseline)].mean(), V_copy[slice(*steady_state)].mean(), 10]
-                p, fitted_pts = self._exponential_optimizer_wrapper(V_copy[slice(*fitting_range)], p0, self.dt)
+                p0 = [
+                    V_copy[slice(*baseline)].mean(),
+                    V_copy[slice(*steady_state)].mean(),
+                    10,
+                ]
+                p, fitted_pts = self._exponential_optimizer_wrapper(
+                    V_copy[slice(*fitting_range)], p0, self.dt
+                )
 
                 output['tau'] = p[2]
 
                 if kwargs['plot_tau']:
                     plt.figure()
                     plt.plot(
-                        np.arange(0, (len(V_copy) - 0.5) * self.dt, self.dt), V_copy,
-                        'k-', lw=0.5
+                        np.arange(0, (len(V_copy) - 0.5) * self.dt, self.dt),
+                        V_copy,
+                        'k-',
+                        lw=0.5,
                     )
                     plt.plot(
-                        np.linspace(fitting_range[0] * self.dt, fitting_range[1] * self.dt, fitted_pts.shape[1]),
+                        np.linspace(
+                            fitting_range[0] * self.dt,
+                            fitting_range[1] * self.dt,
+                            fitted_pts.shape[1],
+                        ),
                         fitted_pts[0, :],
-                        'b--'
+                        'b--',
                     )
                     plt.show()
 
             else:
-                raise NotImplementedError('Tau fitting for V-clamp is not implemented.')
+                raise NotImplementedError(
+                    'Tau fitting for V-clamp is not implemented.'
+                )
 
         # Optionally, print results.
         if kwargs['verbose']:
             print('\n\n### Test-pulse results ###')
-            print('R_in: {} +/- {} MOhm'.format(round(R_input.mean(), 1),
-                  round(R_input.std())))
+            print(
+                'R_in: {} +/- {} MOhm'.format(
+                    round(R_input.mean(), 1), round(R_input.std())
+                )
+            )
 
             if kwargs['V_clamp']:
-                print('R_a: {} +/- {} MOhm'.format(round(R_a.mean()),
-                      round(R_a.std())))
+                print(
+                    'R_a: {} +/- {} MOhm'.format(
+                        round(R_a.mean()), round(R_a.std())
+                    )
+                )
 
         return output
 
@@ -367,7 +418,7 @@ class Recording(np.ndarray):
         C = p[1]
         tau = p[2]
 
-        return (A + C) * np.exp(-t/tau) + C
+        return (A + C) * np.exp(-t / tau) + C
 
     def _compute_residuals(self, p, func, Y, X):
         """Compute residuals of a fitted curve.
@@ -391,13 +442,13 @@ class Recording(np.ndarray):
 
     def _exponential_optimizer_wrapper(self, I, p0, dt=0.1):
 
-        t = np.arange(0, len(I) * dt, dt)[:len(I)]
+        t = np.arange(0, len(I) * dt, dt)[: len(I)]
 
-        p = optimize.least_squares(self._compute_residuals, p0, kwargs={
-        'func': self._exponential_curve,
-        'X': t,
-        'Y': I
-        })['x']
+        p = optimize.least_squares(
+            self._compute_residuals,
+            p0,
+            kwargs={'func': self._exponential_curve, 'X': t, 'Y': I},
+        )['x']
 
         no_pts = 500
 
@@ -409,6 +460,7 @@ class Recording(np.ndarray):
 
 
 # UTILITY FUNCTIONS
+
 
 def max_normalize_channel(cell_channel):
     return cell_channel / cell_channel.max(axis=0)
@@ -435,7 +487,7 @@ def subtract_baseline(cell, baseline_range, channel):
     """
     cell = cell.copy()
 
-    cell[channel, :, :] -= cell[channel, baseline_range, :].mean(axis = 0)
+    cell[channel, :, :] -= cell[channel, baseline_range, :].mean(axis=0)
 
     return cell
 
@@ -481,4 +533,3 @@ def subtract_leak(cell, baseline_range, test_range, V_channel=1, I_channel=0):
     leak_subtracted[I_channel, :, :] -= I_leak
 
     return leak_subtracted
-

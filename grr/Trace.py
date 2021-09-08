@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numba as nb
 from scipy import signal
-import weave
 
 from .Tools import timeToIndex
+
 
 class Trace:
 
@@ -25,30 +25,39 @@ class Trace:
 
         # Perform input checks
         if len(V) != len(I):
-            raise ValueError('Could not create Trace using V and I with non-'
-                             'identical lengths {} and {}.'.format(
-                                     len(V), len(I)))
+            raise ValueError(
+                'Could not create Trace using V and I with non-'
+                'identical lengths {} and {}.'.format(len(V), len(I))
+            )
         if len(V) != int(np.round(T / dt)):
-            warn(RuntimeWarning('V array is not of length T/dt; expected {}, '
-                                'got {}.'.format(int(np.round(T/dt)), len(V))))
+            warn(
+                RuntimeWarning(
+                    'V array is not of length T/dt; expected {}, '
+                    'got {}.'.format(int(np.round(T / dt)), len(V))
+                )
+            )
 
         # Initialize main attributes related to recording
-        self.V_rec = np.array(V, dtype='double')                         # mV, recorded voltage (before AEC)
-        self.V = self.V_rec                                            # mV, voltage (after AEC)
-        self.I = np.array(I, dtype='double')                         # nA, injected current
-        self.T = T                                                     # ms, duration of the recording
-        self.dt = dt                                                    # ms, timestep
+        self.V_rec = np.array(
+            V, dtype='double'
+        )  # mV, recorded voltage (before AEC)
+        self.V = self.V_rec  # mV, voltage (after AEC)
+        self.I = np.array(I, dtype='double')  # nA, injected current
+        self.T = T  # ms, duration of the recording
+        self.dt = dt  # ms, timestep
 
         # Initialize flags
-        self.AEC_flag = False                                           # Has the trace been preprocessed with AEC?
+        self.AEC_flag = False  # Has the trace been preprocessed with AEC?
 
         self.filter_flag = False
 
-        self.spks_flag = False               # Do spikes have been detected?
-        self.spks = 0                   # spike indices stored in indices (and not in ms!)
+        self.spks_flag = False  # Do spikes have been detected?
+        self.spks = 0  # spike indices stored in indices (and not in ms!)
 
-        self.useTrace = True                # if false this trace will be neglected while fitting spiking models to data
-        self.ROI = [[0, len(self.V_rec)*self.dt]]  # List of intervals to be used for fitting; includes the whole trace by default
+        self.useTrace = True  # if false this trace will be neglected while fitting spiking models to data
+        self.ROI = [
+            [0, len(self.V_rec) * self.dt]
+        ]  # List of intervals to be used for fitting; includes the whole trace by default
 
     #################################################################################################
     # FUNCTIONS ASSOCIATED WITH FILTERING
@@ -72,8 +81,8 @@ class Trace:
             raise RuntimeError('Trace already filtered!')
 
         # Convert frequencies to radians.
-        cutoff *= 2. * np.pi
-        sampling_rate = 2. * np.pi / (self.dt / 1000.)
+        cutoff *= 2.0 * np.pi
+        sampling_rate = 2.0 * np.pi / (self.dt / 1000.0)
 
         # Define cutoff frequency.
         nyq = 0.5 * sampling_rate
@@ -99,7 +108,7 @@ class Trace:
         """
 
         self.useTrace = True
-        self.ROI = [[0, len(self.V_rec)*self.dt]]
+        self.ROI = [[0, len(self.V_rec) * self.dt]]
 
     def disable(self):
         """
@@ -122,7 +131,9 @@ class Trace:
         prev_ROI_vec = np.zeros_like(self.V, dtype=np.bool)
         prev_ROI_vec[self.getROI()] = True
 
-        assert prev_ROI_vec.shape == vector.shape, 'ROI vectors do not have same shape.'
+        assert (
+            prev_ROI_vec.shape == vector.shape
+        ), 'ROI vectors do not have same shape.'
 
         new_ROI_vec = np.logical_and(prev_ROI_vec, vector)
 
@@ -131,10 +142,10 @@ class Trace:
         ROI_intervals = []
 
         if rising_edges[0] > falling_edges[0]:
-            rising_edges = np.concatenate(([0.], rising_edges))
+            rising_edges = np.concatenate(([0.0], rising_edges))
 
         for i in range(min((len(rising_edges), len(falling_edges)))):
-                ROI_intervals.append([rising_edges[i], falling_edges[i]])
+            ROI_intervals.append([rising_edges[i], falling_edges[i]])
 
         self.ROI = ROI_intervals
 
@@ -145,10 +156,10 @@ class Trace:
         Get timestamps of rising/falling edges of boolean vector.
         """
 
-        rising_edges = np.zeros(len(vector)/2, dtype=np.float64)
+        rising_edges = np.zeros(len(vector) / 2, dtype=np.float64)
         re_cnt = 0
 
-        falling_edges = np.zeros(len(vector)/2, dtype=np.float64)
+        falling_edges = np.zeros(len(vector) / 2, dtype=np.float64)
         fe_cnt = 0
 
         for t_step in range(1, len(vector)):
@@ -174,15 +185,17 @@ class Trace:
         Return indices of the trace which are in ROI
         """
 
-        ROI_region = np.zeros(int(self.T/self.dt), dtype=np.bool)
+        ROI_region = np.zeros(int(self.T / self.dt), dtype=np.bool)
 
         for ROI_interval in self.ROI:
-            ROI_region[int(ROI_interval[0]/self.dt): int(ROI_interval[1]/self.dt)] = True
+            ROI_region[
+                int(ROI_interval[0] / self.dt) : int(ROI_interval[1] / self.dt)
+            ] = True
 
         ROI_ind = np.where(ROI_region)[0]
 
         # Make sure indices are ok
-        ROI_ind = ROI_ind[np.where(ROI_ind < int(self.T/self.dt))[0]]
+        ROI_ind = ROI_ind[np.where(ROI_ind < int(self.T / self.dt))[0]]
 
         return ROI_ind
 
@@ -206,15 +219,15 @@ class Trace:
         if len(self.spks) >= 1:
 
             # Remove region around spikes
-            DT_before_i = int(DT_before/self.dt)
-            DT_after_i = int(DT_after/self.dt)
+            DT_before_i = int(DT_before / self.dt)
+            DT_after_i = int(DT_after / self.dt)
 
             for s in self.spks:
 
                 lb = max(0, s - DT_before_i)
                 ub = min(L, s + DT_after_i)
 
-                LR_flag[lb: ub] = True
+                LR_flag[lb:ub] = True
 
         indices = np.where(~LR_flag)[0]
 
@@ -226,13 +239,13 @@ class Trace:
         DT_initialcutoff: ms, width of region to cut at the beginning of each ROI section.
         """
 
-        DT_initialcutoff_i = int(DT_initialcutoff/self.dt)
-        ROI_region = np.zeros(int(self.T/self.dt), dtype=np.bool)
+        DT_initialcutoff_i = int(DT_initialcutoff / self.dt)
+        ROI_region = np.zeros(int(self.T / self.dt), dtype=np.bool)
 
         for ROI_interval in self.ROI:
 
-            lb = int(ROI_interval[0]/self.dt) + DT_initialcutoff_i
-            ub = int(ROI_interval[1]/self.dt)
+            lb = int(ROI_interval[0] / self.dt) + DT_initialcutoff_i
+            ub = int(ROI_interval[1] / self.dt)
 
             if lb < ub:
                 ROI_region[lb:ub] = True
@@ -240,7 +253,7 @@ class Trace:
         ROI_ind = np.where(ROI_region)[0]
 
         # Make sure indices are ok
-        ROI_ind = ROI_ind[np.where(ROI_ind < int(self.T/self.dt))[0]]
+        ROI_ind = ROI_ind[np.where(ROI_ind < int(self.T / self.dt))[0]]
 
         return ROI_ind
 
@@ -253,7 +266,7 @@ class Trace:
         Detect action potentials by threshold crossing (parameter threshold, mV) from below (i.e. with dV/dt>0).
         To avoid multiple detection of same spike due to noise, use an 'absolute refractory period' ref, in ms.
         """
-        ref_ind = int(np.round(ref/self.dt))
+        ref_ind = int(np.round(ref / self.dt))
         spk_inds = getRisingEdges(self.V, threshold, ref_ind)
 
         self.spks = spk_inds
@@ -269,8 +282,8 @@ class Trace:
         DT_before = 10.0
         DT_after = 20.0
 
-        DT_before_i = int(DT_before/self.dt)
-        DT_after_i = int(DT_after/self.dt)
+        DT_before_i = int(DT_before / self.dt)
+        DT_after_i = int(DT_after / self.dt)
 
         if not self.spks_flag:
             self.detectSpikes()
@@ -285,8 +298,8 @@ class Trace:
             if s in ROI_ind:
 
                 # Avoid using spikes close to boundaries to avoid errors
-                if s > DT_before_i  and s < (len(self.V) - DT_after_i):
-                    all_spikes.append(self.V[s - DT_before_i: s + DT_after_i])
+                if s > DT_before_i and s < (len(self.V) - DT_after_i):
+                    all_spikes.append(self.V[s - DT_before_i : s + DT_after_i])
 
         spike_avg = np.mean(all_spikes, axis=0)
 
@@ -300,7 +313,7 @@ class Trace:
         Return spike train defined as a vector of 0s and 1s. Each bin represent self.dt
         """
 
-        spike_train = np.zeros(int(self.T/self.dt))
+        spike_train = np.zeros(int(self.T / self.dt))
 
         if len(self.spks) > 0:
 
@@ -313,7 +326,7 @@ class Trace:
         Return spike times in units of ms.
         """
 
-        return self.spks*self.dt
+        return self.spks * self.dt
 
     def getSpikeTimesInROI(self):
         return self.getSpikeIndicesInROI() * self.dt
@@ -353,11 +366,13 @@ class Trace:
         Returns tuple of vectors: frequency (Hz) and corresponding power spectrum density.
         """
 
-        f_V, PSD_V = signal.welch(self.V, 1000. / self.dt, window='hanning',
-                       nperseg=100000)
+        f_V, PSD_V = signal.welch(
+            self.V, 1000.0 / self.dt, window='hanning', nperseg=100000
+        )
 
-        f_I, PSD_I = signal.welch(self.I, 1000. / self.dt, window='hanning',
-                       nperseg=100000)
+        f_I, PSD_I = signal.welch(
+            self.I, 1000.0 / self.dt, window='hanning', nperseg=100000
+        )
 
         if do_plot:
 
@@ -376,7 +391,9 @@ class Trace:
             ax2 = plt.subplot(212, sharex=ax)
             ax2.set_xscale('log')
 
-            ax2.plot(f_V, PSD_V/PSD_I, 'k-', linewidth=0.5, label='V (norm.)')
+            ax2.plot(
+                f_V, PSD_V / PSD_I, 'k-', linewidth=0.5, label='V (norm.)'
+            )
 
             ax2.legend()
             ax2.set_xlabel('Frequency (Hz)')
@@ -412,14 +429,14 @@ class Trace:
         """
         ROI_ind = self.getROI()
 
-        return (len(ROI_ind)*self.dt)
+        return len(ROI_ind) * self.dt
 
     def getFiringRate_inROI(self):
         """
         Return the average firing rate (in Hz) in ROI.
         """
 
-        return 1000.0 * self.getSpikeNb_inROI()/self.getTraceLength_inROI()
+        return 1000.0 * self.getSpikeNb_inROI() / self.getTraceLength_inROI()
 
     #################################################################################################
     # GET TIME
@@ -430,7 +447,7 @@ class Trace:
         Get time vector (i.e., the temporal support of the arrays: I, V, etc)
         """
 
-        return np.arange(int(self.T/self.dt))*self.dt
+        return np.arange(int(self.T / self.dt)) * self.dt
 
     #################################################################################################
     # FUNCTIONS ASSOCIATED WITH PLOTTING
@@ -456,14 +473,19 @@ class Trace:
             plt.plot(time, self.V, 'red')
 
         if self.spks_flag:
-            plt.plot(self.getSpikeTimes(), np.zeros(len(self.spks)), '.', color='blue')
+            plt.plot(
+                self.getSpikeTimes(),
+                np.zeros(len(self.spks)),
+                '.',
+                color='blue',
+            )
 
         # Plot ROI (region selected for performing operations)
-        ROI_vector = 100.0*np.ones(len(self.V))
+        ROI_vector = 100.0 * np.ones(len(self.V))
         ROI_vector[self.getROI()] = -100.0
         plt.fill_between(self.getTime(), ROI_vector, -100.0, color='0.2')
 
-        plt.ylim([min(self.V)-5.0, max(self.V)+5.0])
+        plt.ylim([min(self.V) - 5.0, max(self.V) + 5.0])
         plt.ylabel('V rec (mV)')
         plt.xlabel('Time (ms)')
         plt.show()

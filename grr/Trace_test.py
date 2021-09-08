@@ -46,27 +46,38 @@ class TestGetRisingEdges(unittest.TestCase):
 
 class TestDetectSpikes(unittest.TestCase):
     def testRowsAsTimeAxis(self):
-        x = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]]).T
+        x = np.array(
+            [
+                [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+            ]
+        ).T
         expected = [[0.3, 0.5], [0.3, 0.6]]
-        actual = Trace.detectSpikes(x, 0.5, 0., 0, 0.1)
+        actual = Trace.detectSpikes(x, 0.5, 0.0, 0, 0.1)
         npt.assert_array_almost_equal(expected, actual)
 
     def testColumnsAsTimeAxis(self):
-        x = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]])
+        x = np.array(
+            [
+                [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+            ]
+        )
         expected = [[0.3, 0.5], [0.3, 0.6]]
-        actual = Trace.detectSpikes(x, 0.5, 0., 1, 0.1)
+        actual = Trace.detectSpikes(x, 0.5, 0.0, 1, 0.1)
         npt.assert_array_almost_equal(expected, actual)
 
     def testFlattenArrayBeforeDetection(self):
-        x = np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-                      [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]])
+        x = np.array(
+            [
+                [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+            ]
+        )
         expected = [0.3, 0.5, 1.1, 1.4]
-        actual = Trace.detectSpikes(x, 0.5, 0., -1, 0.1)
+        actual = Trace.detectSpikes(x, 0.5, 0.0, -1, 0.1)
         npt.assert_array_almost_equal(expected, actual)
 
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -35,7 +35,9 @@ class ThresholdModel(SpikingModel):
         initialized by value to match `other`.
 
         """
-        Tools.assertHasAttributes(self, ['scalarParameters', 'filterParameters'])
+        Tools.assertHasAttributes(
+            self, ['scalarParameters', 'filterParameters']
+        )
         Tools.assertHasAttributes(other, self.scalarParameters)
         Tools.assertHasAttributes(other, self.filterParameters)
 
@@ -45,7 +47,9 @@ class ThresholdModel(SpikingModel):
         for filterParam in self.filterParameters:
             setattr(self, filterParam, deepcopy(getattr(other, filterParam)))
 
-    def computeRateAndThreshold_vs_I(self, mu, sigma, tau, dt, T, ROI, nbRep=10):
+    def computeRateAndThreshold_vs_I(
+        self, mu, sigma, tau, dt, T, ROI, nbRep=10
+    ):
         """
         Compute standard FI curve using multiple OU processes with means mu (list), standard deviations sigma (list)
         temporal correlation tau (in ms) and of duration T.
@@ -72,15 +76,19 @@ class ThresholdModel(SpikingModel):
 
                 for r in np.arange(nbRep):
 
-                    I_tmp = Tools.generateOUprocess(T=T, tau=tau, mu=m, sigma=s, dt=dt)
+                    I_tmp = Tools.generateOUprocess(
+                        T=T, tau=tau, mu=m, sigma=s, dt=dt
+                    )
 
                     (spks_t, V, V_T) = self.simulateVoltageResponse(I_tmp, dt)
                     spks_i = Tools.timeToIndex(spks_t, dt)
 
-                    spiks_i_sel = np.where(((spks_t > ROI[0]) & (spks_t < ROI[1])))[0]
+                    spiks_i_sel = np.where(
+                        ((spks_t > ROI[0]) & (spks_t < ROI[1]))
+                    )[0]
                     spiks_i_sel = spks_i[spiks_i_sel]
 
-                    rate = 1000.0*len(spiks_i_sel)/(ROI[1]-ROI[0])
+                    rate = 1000.0 * len(spiks_i_sel) / (ROI[1] - ROI[0])
                     FI_all[s_cnt, m_cnt, r] = rate
 
                     theta = np.mean(V[spiks_i_sel])
@@ -97,9 +105,7 @@ def constructMedianModel(modelType, models, nan_behavior='default'):
     if nan_behavior not in ('default', 'ignore'):
         raise ValueError(
             'Expected `default` or `ignore` for argument `nan_behavior`; '
-            'got {} instead.'.format(
-                nan_behavior
-            )
+            'got {} instead.'.format(nan_behavior)
         )
 
     # Ensure all models are of type modelType.
@@ -171,7 +177,7 @@ def modelToRecord(model):
     # Extract model name and type.
     modelIdentifiers = {
         'name': getattr(model, 'name', ''),
-        'type': re.search(r'(\w+)\'', str(type(model))).groups()[-1]
+        'type': re.search(r'(\w+)\'', str(type(model))).groups()[-1],
     }
 
     # Extract scalar parameters.

@@ -8,6 +8,7 @@ import Tools
 
 # SPECIFY TESTS
 
+
 class Test_check_dict_fields(unittest.TestCase):
     """Test behaviour of `check_dict_fields` function."""
 
@@ -20,23 +21,22 @@ class Test_check_dict_fields(unittest.TestCase):
                     'A': 1,
                     '1': 2,
                     'sometimes_missing': 'content',
-                    'field_name': {'key1': None, 'key2': 'str'}
+                    'field_name': {'key1': None, 'key2': 'str'},
                 },
-                template
+                template,
             )
         except:
             self.fail('`check_dict_fields` raised an exception unexpectedly.')
 
         with self.assertRaises(KeyError) as context:
             Tools.check_dict_fields(
-                {'A': 1, 'field_name': {'key1': None, 'key2': 'str'}},
-                template
+                {'A': 1, 'field_name': {'key1': None, 'key2': 'str'}}, template
             )
         self.assertTrue(
             'sometimes_missing' in str(context.exception),
             'Missing key `sometimes_missing` not in exception message {}.'.format(
                 context.exception
-            )
+            ),
         )
 
     def test_recursive(self):
@@ -45,20 +45,20 @@ class Test_check_dict_fields(unittest.TestCase):
             'A': None,
             'outer_field': {
                 'inner_field1': {'innermost_field': None},
-                'inner_field2': None
-            }
+                'inner_field2': None,
+            },
         }
         # Test successful check.
         try:
             Tools.check_dict_fields(
                 {
-                    'A': 1.,
+                    'A': 1.0,
                     'outer_field': {
-                        'inner_field1': {'innermost_field': 2.},
-                        'inner_field2': 'some_content'
-                    }
+                        'inner_field1': {'innermost_field': 2.0},
+                        'inner_field2': 'some_content',
+                    },
                 },
-                template
+                template,
             )
         except:
             self.fail('`check_dict_fields` raised an exception unexpectedly.')
@@ -67,46 +67,47 @@ class Test_check_dict_fields(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             Tools.check_dict_fields(
                 {
-                    'A': 1.,
+                    'A': 1.0,
                     'outer_field': {
-                        'inner_field1': {'wrong_field': 2.},
-                        'inner_field2': 'some_content'
-                    }
+                        'inner_field1': {'wrong_field': 2.0},
+                        'inner_field2': 'some_content',
+                    },
                 },
-                template
+                template,
             )
         self.assertTrue(
-            'outer_field/inner_field1/innermost_field' in str(context.exception),
-            'Missing key name not in exception message.'
+            'outer_field/inner_field1/innermost_field'
+            in str(context.exception),
+            'Missing key name not in exception message.',
         )
 
         # Test unsuccessful check due to non-subscriptable field in x.
         with self.assertRaises(KeyError) as context:
             Tools.check_dict_fields(
                 {
-                    'A': 1.,
+                    'A': 1.0,
                     'outer_field': {
                         'inner_field1': 'non subscriptable',
-                        'inner_field2': 'some_content'
-                    }
+                        'inner_field2': 'some_content',
+                    },
                 },
-                template
+                template,
             )
         self.assertTrue(
-            'outer_field/inner_field1/innermost_field' in str(context.exception),
-            'Missing key name not in exception message.'
+            'outer_field/inner_field1/innermost_field'
+            in str(context.exception),
+            'Missing key name not in exception message.',
         )
 
 
 class Test_validate_array_ndim(unittest.TestCase):
-
     def test_passes_correct_ndim(self):
         for required_ndim in [1, 2, 5]:
             try:
                 Tools.validate_array_ndim(
                     'label',
                     np.empty([5 for i in range(required_ndim)]),
-                    required_ndim
+                    required_ndim,
                 )
             except ValueError as e:
                 self.fail(
@@ -121,17 +122,20 @@ class Test_validate_array_ndim(unittest.TestCase):
                 Tools.validate_array_ndim(
                     'label',
                     np.empty([5 for i in range(passed_ndim)]),
-                    required_ndim
+                    required_ndim,
                 )
 
 
 class Test_validate_matching_axis_lengths(unittest.TestCase):
-
     def test_passes_matching_dimensions(self):
         try:
             Tools.validate_matching_axis_lengths(
-                [np.empty((2, 10, 3)), np.empty((2, 5, 3)), np.empty((2, 3, 3))],
-                [0, 2]
+                [
+                    np.empty((2, 10, 3)),
+                    np.empty((2, 5, 3)),
+                    np.empty((2, 3, 3)),
+                ],
+                [0, 2],
             )
         except ValueError as e:
             self.fail(
@@ -142,12 +146,16 @@ class Test_validate_matching_axis_lengths(unittest.TestCase):
     def test_raises_error_for_non_matching_lengths(self):
         with self.assertRaises(ValueError) as error_catcher:
             Tools.validate_matching_axis_lengths(
-                [np.empty((2, 10, 3)), np.empty((2, 5, 3)), np.empty((2, 3, 3))],
-                [0, 1]  # Note: axis 1 is non-matching.
+                [
+                    np.empty((2, 10, 3)),
+                    np.empty((2, 5, 3)),
+                    np.empty((2, 3, 3)),
+                ],
+                [0, 1],  # Note: axis 1 is non-matching.
             )
         self.assertTrue(
             'along axis 1' in str(error_catcher.exception),
-            'Non-matching axis 1 not stated correctly in error message.'
+            'Non-matching axis 1 not stated correctly in error message.',
         )
 
 
@@ -175,14 +183,14 @@ class Test_getIndexOfClosestValue(unittest.TestCase):
         self.assertEqual(observed, expected)
 
     def test_floatExactMatch(self):
-        x = [0., 2.45, 2.22, 7.3, 9.2]
+        x = [0.0, 2.45, 2.22, 7.3, 9.2]
         value = 2.22
         expected = 2
         observed = Tools.getIndexOfClosestValue(x, value)
         self.assertEqual(observed, expected)
 
     def test_floatNoExactMatch(self):
-        x = [0., 2.45, 2.22, 7.3, 9.2]
+        x = [0.0, 2.45, 2.22, 7.3, 9.2]
         value = 2.23
         expected = 2
         observed = Tools.getIndexOfClosestValue(x, value)
@@ -194,7 +202,6 @@ class Test_getIndexOfClosestValue(unittest.TestCase):
         expected = 1
         observed = Tools.getIndexOfClosestValue(x, value)
         self.assertEqual(observed, expected)
-
 
 
 if __name__ == '__main__':

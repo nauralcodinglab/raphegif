@@ -11,6 +11,7 @@ import weave
 # Check integrity of objects.
 ###########################################################
 
+
 def check_dict_fields(x, template, raise_error=True):
     """Check that fields in a dict match a template.
 
@@ -103,6 +104,7 @@ def validate_matching_axis_lengths(arrs, axes_):
         else:
             pass
 
+
 def raiseExpectedGot(expected, for_, got):
     """Raise an error for an unexpected value.
 
@@ -113,6 +115,7 @@ def raiseExpectedGot(expected, for_, got):
     raise ValueError(
         'Expected {} for {}, got {} instead.'.format(expected, for_, got)
     )
+
 
 def assertAllAlmostSame(values, rtol=1e-5, atol=1e-8, equal_nan=False):
     """Raise a ValueError if not all values are almost the same."""
@@ -165,6 +168,7 @@ def assertHasAttributes(obj, requiredAttributes):
 # Tools for plotting.
 ###########################################################
 
+
 def removeAxis(ax, which_ax=['top', 'right']):
 
     for loc, spine in ax.spines.iteritems():
@@ -216,7 +220,10 @@ class gagProcess(object):
 # Generate Ornstein-Uhlenbeck process
 ###########################################################
 
-def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed=42):
+
+def generateOUprocess(
+    T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed=42
+):
     """
     Generate an Ornstein-Uhlenbeck (stationnary) process with:
     - mean mu
@@ -226,7 +233,7 @@ def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed
     The process is generated in discrete time with temporal resolution dt (in ms)
     """
 
-    T_ind = int(T/dt)
+    T_ind = int(T / dt)
 
     if random_seed is not None:
         np.random.seed(random_seed)
@@ -262,7 +269,9 @@ def generateOUprocess(T=10000.0, tau=3.0, mu=0.0, sigma=1.0, dt=0.1, random_seed
     return OU_process
 
 
-def generateOUprocess_sinSigma(f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, delta_sigma=0.5, dt=0.1):
+def generateOUprocess_sinSigma(
+    f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, delta_sigma=0.5, dt=0.1
+):
     """
     Generate an Ornstein-Uhlenbeck process with time dependent standard deviation:
     - mean mu
@@ -273,16 +282,20 @@ def generateOUprocess_sinSigma(f=1.0, T=10000.0, tau=3.0, mu=0.0, sigma=1.0, del
     """
 
     OU_process = generateOUprocess(T=T, tau=tau, mu=0.0, sigma=1.0, dt=dt)
-    t = np.arange(len(OU_process))*dt
+    t = np.arange(len(OU_process)) * dt
 
-    sin_sigma = sigma*(1+delta_sigma*np.sin(2*np.pi*f*t*10**-3))
+    sin_sigma = sigma * (
+        1 + delta_sigma * np.sin(2 * np.pi * f * t * 10 ** -3)
+    )
 
-    I = OU_process*sin_sigma + mu
+    I = OU_process * sin_sigma + mu
 
     return I
 
 
-def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, sigma=1.0, dt=0.1):
+def generateOUprocess_sinMean(
+    f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, sigma=1.0, dt=0.1
+):
     """
     Generate an Ornstein-Uhlenbeck process with time dependent mean:
     - sigma
@@ -293,9 +306,9 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
     """
 
     OU_process = generateOUprocess(T=T, tau=tau, mu=0.0, sigma=sigma, dt=dt)
-    t = np.arange(len(OU_process))*dt
+    t = np.arange(len(OU_process)) * dt
 
-    sin_mu = mu*(1+delta_mu*np.sin(2*np.pi*f*t*10**-3))
+    sin_mu = mu * (1 + delta_mu * np.sin(2 * np.pi * f * t * 10 ** -3))
 
     I = OU_process + sin_mu
 
@@ -308,7 +321,7 @@ def generateOUprocess_sinMean(f=1.0, T=10000.0, tau=3.0, mu=0.2, delta_mu=0.5, s
 def timeToIndex(time_, dt):
 
     time_ = np.atleast_1d(time_)
-    x_i = np.array([int(np.round(s/dt)) for s in time_])
+    x_i = np.array([int(np.round(s / dt)) for s in time_])
     x_i = x_i.astype('int')
 
     return x_i
@@ -334,22 +347,23 @@ def timeToIntVec(x_t, T, dt):
 # Functions to perform exponential fit
 ###########################################################
 
+
 def multiExpEval(x, bs, taus):
 
     result = np.zeros(len(x))
     L = len(bs)
 
     for i in range(L):
-        result = result + bs[i] * np.exp(-x/taus[i])
+        result = result + bs[i] * np.exp(-x / taus[i])
 
     return result
 
 
 def multiExpResiduals(p, x, y, d):
     bs = p[0:d]
-    taus = p[d:2*d]
+    taus = p[d : 2 * d]
 
-    return (y - multiExpEval(x, bs, taus))
+    return y - multiExpEval(x, bs, taus)
 
 
 def fitMultiExpResiduals(bs, taus, x, y):
@@ -357,10 +371,12 @@ def fitMultiExpResiduals(bs, taus, x, y):
     y = np.array(y)
     d = len(bs)
     p0 = np.concatenate((bs, taus))
-    plsq = leastsq(multiExpResiduals, p0, args=(x, y, d), maxfev=100000, ftol=0.00000001)
+    plsq = leastsq(
+        multiExpResiduals, p0, args=(x, y, d), maxfev=100000, ftol=0.00000001
+    )
     p_opt = plsq[0]
     bs_opt = p_opt[0:d]
-    taus_opt = p_opt[d:2*d]
+    taus_opt = p_opt[d : 2 * d]
 
     fitted_data = multiExpEval(x, bs_opt, taus_opt)
 
@@ -457,9 +473,11 @@ def getIndexOfClosestValue(vector, value):
 # Misc utilities for handling arrays.
 ###########################################################
 
+
 def stripNan(x):
     """Return copy of x with NaN values removed."""
     if np.ndim(x) > 1:
-        raiseExpectedGot('vector-like', '`arr`', '{}d array'.format(np.ndim(x)))
+        raiseExpectedGot(
+            'vector-like', '`arr`', '{}d array'.format(np.ndim(x))
+        )
     return np.array(x, copy=True).flatten()[~np.isnan(np.asarray(x).flatten())]
-

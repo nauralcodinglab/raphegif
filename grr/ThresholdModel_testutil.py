@@ -8,11 +8,10 @@ from ezephys import stimtools
 
 
 class TestSimulateDoesNotCrash_VectorInput(object):
-
     def setUp(self):
         self.dt = 0.1
-        self.V0 = -70.
-        self.spkTimes = [50., 700.]
+        self.V0 = -70.0
+        self.spkTimes = [50.0, 700.0]
 
         self.stimulusDuration = 1e3  # Duration in ms.
         self.vectorStimulus = stimtools.SinStimulus(
@@ -25,9 +24,7 @@ class TestSimulateDoesNotCrash_VectorInput(object):
     def test_simulateDeterministic(self):
         """Test whether simulateDeterministic raises an error for valid vector input."""
         self.mod.simulateDeterministic_forceSpikes(
-            self.vectorStimulus.command,
-            self.V0,
-            self.spkTimes
+            self.vectorStimulus.command, self.V0, self.spkTimes
         )
 
     def test_simulate(self):
@@ -36,11 +33,10 @@ class TestSimulateDoesNotCrash_VectorInput(object):
 
 
 class TestSimulateDoesNotCrash_ModelStimInput(object):
-
     def setUp(self):
         self.dt = 0.1
-        self.V0 = -70.
-        self.spkTimes = [50., 700.]
+        self.V0 = -70.0
+        self.spkTimes = [50.0, 700.0]
 
         self.stimulusDuration = 1e3  # Duration in ms.
         self.vectorStimulus = stimtools.SinStimulus(
@@ -57,7 +53,7 @@ class TestSimulateDoesNotCrash_ModelStimInput(object):
         self.assertTrue(
             isinstance(I, ModelStimulus),
             'Expected result of _coerceInputToModelStimulus to be instance of '
-            'type ModelStimulus, got {} instead.'.format(type(I))
+            'type ModelStimulus, got {} instead.'.format(type(I)),
         )
         self.assertEqual(I.timesteps, self.modelStimulus.timesteps)
 
@@ -65,7 +61,7 @@ class TestSimulateDoesNotCrash_ModelStimInput(object):
         self.assertTrue(
             isinstance(I, ModelStimulus),
             'Expected result of _coerceInputToModelStimulus to be instance of '
-            'type ModelStimulus, got {} instead.'.format(type(I))
+            'type ModelStimulus, got {} instead.'.format(type(I)),
         )
         self.assertEqual(I.timesteps, self.vectorStimulus.no_timesteps)
 
@@ -73,35 +69,29 @@ class TestSimulateDoesNotCrash_ModelStimInput(object):
         """Test whether simulateDeterministic raises an error for valid current only input."""
         self.modelStimulus.appendCurrents(self.vectorStimulus.command)
         self.mod.simulateDeterministic_forceSpikes(
-            self.modelStimulus,
-            self.V0,
-            self.spkTimes
+            self.modelStimulus, self.V0, self.spkTimes
         )
 
     def test_simulate_currentInput(self):
         """Ensure no error raised for valid current only input."""
         self.modelStimulus.appendCurrents(self.vectorStimulus.command)
-        self.mod.simulate(
-            self.modelStimulus,
-            self.V0
-        )
+        self.mod.simulate(self.modelStimulus, self.V0)
 
     def test_simulateDeterministic_conductanceInput(self):
         """Ensure no error raised for valid conductance only input."""
-        self.modelStimulus.appendConductances(self.vectorStimulus.command, [-70.])
+        self.modelStimulus.appendConductances(
+            self.vectorStimulus.command, [-70.0]
+        )
         self.mod.simulateDeterministic_forceSpikes(
-            self.modelStimulus,
-            self.V0,
-            self.spkTimes
+            self.modelStimulus, self.V0, self.spkTimes
         )
 
     def test_simulate_conductanceInput(self):
         """Ensure no error raised for valid conductance only input."""
-        self.modelStimulus.appendConductances(self.vectorStimulus.command, [-70.])
-        self.mod.simulate(
-            self.modelStimulus,
-            self.V0
+        self.modelStimulus.appendConductances(
+            self.vectorStimulus.command, [-70.0]
         )
+        self.mod.simulate(self.modelStimulus, self.V0)
 
 
 class TestSimulate_StimulusResponse(unittest.TestCase):
@@ -111,12 +101,12 @@ class TestSimulate_StimulusResponse(unittest.TestCase):
 
     def setUp(self):
         self.dt = 0.1
-        self.V0 = -70.
+        self.V0 = -70.0
         self.spkTimes = []
 
         self.stimulusDuration = 1e3  # Duration in ms.
         self.vectorStimulus = stimtools.SinStimulus(
-            0., 0.01, 10, self.stimulusDuration, self.dt
+            0.0, 0.01, 10, self.stimulusDuration, self.dt
         )
         self.modelStimulus = ModelStimulus(self.dt)
 
@@ -133,7 +123,7 @@ class TestSimulate_StimulusResponse(unittest.TestCase):
         )
         self.assertTrue(
             np.allclose(self.V0, V, self.rtol, self.atol),
-            'Voltage drifts with zero current input.'
+            'Voltage drifts with zero current input.',
         )
 
     def test_currentInputChangesVoltage(self):
@@ -143,19 +133,19 @@ class TestSimulate_StimulusResponse(unittest.TestCase):
         )
         self.assertFalse(
             np.allclose(self.V0, V, self.rtol, self.atol),
-            'Current input does not affect subthreshold voltage.'
+            'Current input does not affect subthreshold voltage.',
         )
 
     def test_stableWithZeroConductance(self):
         self.modelStimulus.appendConductances(
-            np.zeros_like(self.vectorStimulus.command), [self.V0 - 10.]
+            np.zeros_like(self.vectorStimulus.command), [self.V0 - 10.0]
         )
         t, V, _ = self.mod.simulateDeterministic_forceSpikes(
             self.modelStimulus, self.V0, self.spkTimes
         )
         self.assertTrue(
             np.allclose(self.V0, V, self.rtol, self.atol),
-            'Voltage drifts with zero conductance input.'
+            'Voltage drifts with zero conductance input.',
         )
 
     def test_stableWithConductanceAtReversal(self):
@@ -167,19 +157,19 @@ class TestSimulate_StimulusResponse(unittest.TestCase):
         )
         self.assertTrue(
             np.allclose(self.V0, V, self.rtol, self.atol),
-            'Voltage drifts with conductance at reversal.'
+            'Voltage drifts with conductance at reversal.',
         )
 
     def test_conductanceInputChangesVoltage(self):
         self.modelStimulus.appendConductances(
-            self.vectorStimulus.command, [self.V0 - 10.]
+            self.vectorStimulus.command, [self.V0 - 10.0]
         )
         t, V, _ = self.mod.simulateDeterministic_forceSpikes(
             self.modelStimulus, self.V0, self.spkTimes
         )
         self.assertFalse(
             np.allclose(self.V0, V, self.rtol, self.atol),
-            'Conductance input does not affect voltage.'
+            'Conductance input does not affect voltage.',
         )
 
 

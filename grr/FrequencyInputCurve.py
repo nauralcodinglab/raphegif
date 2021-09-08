@@ -97,16 +97,16 @@ class FrequencyInputCurve(object):
         self.rheobase = self.I[self._rheobase_ind]
         self.freq_at_rheobase = self.f[self._rheobase_ind]
 
-        self.freq_at_50 = self._get_interpolated_f_at_I(50.)
+        self.freq_at_50 = self._get_interpolated_f_at_I(50.0)
 
         self.is_monotonic = self.is_monotonic_function(self.f)
         self._linear_fit_coeffs = np.polyfit(
-            self.I[self._rheobase_ind:], self.f[self._rheobase_ind:], 1
+            self.I[self._rheobase_ind :], self.f[self._rheobase_ind :], 1
         )
         self.gain = self._linear_fit_coeffs[0]
 
         self.spearman_rho, self.spearman_p = spearmanr(
-            self.I[self._rheobase_ind:], self.f[self._rheobase_ind:]
+            self.I[self._rheobase_ind :], self.f[self._rheobase_ind :]
         )
 
     @staticmethod
@@ -158,7 +158,7 @@ class FrequencyInputCurve(object):
             ax.plot(*self._get_fitted_curve(), **pltargs)
 
     def _get_fitted_curve(self):
-        x_fitted = self.I[self._rheobase_ind:]
+        x_fitted = self.I[self._rheobase_ind :]
         y_fitted = np.polyval(self._linear_fit_coeffs, x_fitted)
         return (x_fitted, y_fitted)
 

@@ -1,4 +1,4 @@
-#%% IMPORT MODULES
+# IMPORT MODULES
 
 from __future__ import division
 
@@ -6,24 +6,33 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gs
 import scipy.signal as signal
 
 
-#%% CREATE MiniDetector CLASS
+# CREATE MiniDetector CLASS
+
 
 class MiniDetector(object):
     """Class for detecting mEPSCs or mIPSCs in Recording objects or similar arrays.
     """
 
-    def __init__(self, rec, clean_data = True, baseline_range = (4500, 5000),
-        remove_n_sweeps = 0, I_channel = 0, dt = 0.1):
+    def __init__(
+        self,
+        rec,
+        clean_data=True,
+        baseline_range=(4500, 5000),
+        remove_n_sweeps=0,
+        I_channel=0,
+        dt=0.1,
+    ):
 
         self.rec = rec
         self.dt = dt
 
         if clean_data:
-            self.I = self._clean_data(rec, baseline_range, remove_n_sweeps, I_channel)
+            self.I = self._clean_data(
+                rec, baseline_range, remove_n_sweeps, I_channel
+            )
 
     def set_name(self, name):
         self.name = name
@@ -48,13 +57,15 @@ class MiniDetector(object):
 
         baseline_slice = slice(baseline_range[0], baseline_range[1])
 
-        I = rec[I_channel, :, :] - rec[I_channel, baseline_slice, :].mean(axis = 0)
-        I_sub = I[baseline_range[1]:, remove_n_sweeps:]
+        I = rec[I_channel, :, :] - rec[I_channel, baseline_slice, :].mean(
+            axis=0
+        )
+        I_sub = I[baseline_range[1] :, remove_n_sweeps:]
 
         return I_sub
 
     @staticmethod
-    def _multipoint_gradient(x, no_points, axis = 0):
+    def _multipoint_gradient(x, no_points, axis=0):
         """
         Compute a multipoint gradient over a specified axis of a matrix.
 
@@ -99,11 +110,20 @@ class MiniDetector(object):
         Compute the multipoint gradient of I for each sweep.
         Creates an attribute named `grad` containing the gradient.
         """
-        self.grad = self._multipoint_gradient(self.I, no_points, axis = 0)
+        self.grad = self._multipoint_gradient(self.I, no_points, axis=0)
 
     @staticmethod
-    def _find_peaks(x, height = None, threshold = None, distance = None,
-        prominence = None, width = None, wlen = None, rel_height = 0.5, axis = 0):
+    def _find_peaks(
+        x,
+        height=None,
+        threshold=None,
+        distance=None,
+        prominence=None,
+        width=None,
+        wlen=None,
+        rel_height=0.5,
+        axis=0,
+    ):
         """Vectorized wrapper for scipy.signal.find_peaks.
         x must be a 1D or 2D array.
         Vectorized over axis.
@@ -111,7 +131,11 @@ class MiniDetector(object):
         """
 
         if x.ndim > 2:
-            raise ValueError('x has {} dimensions, but a 1D or 2D array is required.'.format(x.ndim))
+            raise ValueError(
+                'x has {} dimensions, but a 1D or 2D array is required.'.format(
+                    x.ndim
+                )
+            )
 
         elif x.ndim == 2:
 
@@ -122,22 +146,33 @@ class MiniDetector(object):
             for i in range(x.shape[1 - axis]):
                 slc[1 - axis] = i
                 peaks_tmp, props_tmp = signal.find_peaks(
-                    x[slc], height, threshold, distance, prominence, width, wlen,
-                    rel_height
+                    x[slc],
+                    height,
+                    threshold,
+                    distance,
+                    prominence,
+                    width,
+                    wlen,
+                    rel_height,
                 )
                 peaks.append(peaks_tmp)
                 properties.append(props_tmp)
 
         else:
             peaks, properties = signal.find_peaks(
-                x.flatten(), height, threshold, distance, prominence, width, wlen,
-                rel_height
+                x.flatten(),
+                height,
+                threshold,
+                distance,
+                prominence,
+                width,
+                wlen,
+                rel_height,
             )
 
         return peaks, properties
 
-
-    def find_grad_peaks(self, height_SD = 3.5, distance = 50, width = 5):
+    def find_grad_peaks(self, height_SD=3.5, distance=50, width=5):
         """Find peaks in the gradient.
         Creates attributes named `peak_threshold` (in mV/ms) and `peaks` (ms).
         Ensures that `peaks` is a list of arrays.
@@ -145,7 +180,10 @@ class MiniDetector(object):
 
         self.peak_threshold = np.float64(self.grad.std()) * height_SD
         peaks, _ = self._find_peaks(
-            self.grad, height = self.peak_threshold, distance = distance, width = width
+            self.grad,
+            height=self.peak_threshold,
+            distance=distance,
+            width=width,
         )
 
         # Convert peaks to time from indices.
@@ -157,7 +195,7 @@ class MiniDetector(object):
             peaks = [peaks]
         except AttributeError:
             # If peaks is a list of arrays, multiply each array by dt.
-            assert peaks[0].ndim > 0 # Check that the first entry is an array.
+            assert peaks[0].ndim > 0  # Check that the first entry is an array.
             peaks = [self.ind_to_t(p) for p in peaks]
 
         # Check output type.
@@ -167,7 +205,14 @@ class MiniDetector(object):
         self.peaks = peaks
 
     @staticmethod
-    def _extract_sections(x, list_of_locs, window = (-50, 200), axis = 0, locs_are_timestamps = True, dt = None):
+    def _extract_sections(
+        x,
+        list_of_locs,
+        window=(-50, 200),
+        axis=0,
+        locs_are_timestamps=True,
+        dt=None,
+    ):
         """Pull sections from `x` based on `list_of_inds`.
 
         Inputs:
@@ -185,15 +230,20 @@ class MiniDetector(object):
 
         # Input checks.
         if x.ndim != 2:
-            raise TypeError('x must be 2D, but is {} dimensional instead.'.format(x.ndim))
-        elif x.shape[1-axis] != len(list_of_locs):
+            raise TypeError(
+                'x must be 2D, but is {} dimensional instead.'.format(x.ndim)
+            )
+        elif x.shape[1 - axis] != len(list_of_locs):
             raise ValueError(
                 'shape of x along axis {} ({}) and no. of entries in `list_of_locs`'
                 ' ({}) do not match.'.format(
-                1-axis, x.shape[1-axis], len(list_of_locs)
-            ))
+                    1 - axis, x.shape[1 - axis], len(list_of_locs)
+                )
+            )
         if locs_are_timestamps and dt is None:
-            raise ValueError('If `locs_are_timestamps` is True, `dt` must be specified.')
+            raise ValueError(
+                'If `locs_are_timestamps` is True, `dt` must be specified.'
+            )
 
         # Extract sections.
         sections = []
@@ -206,7 +256,7 @@ class MiniDetector(object):
             else:
                 inds = list_of_locs[i]
 
-            slc[1-axis] = i
+            slc[1 - axis] = i
 
             for ind in inds:
                 slc[axis] = slice(ind + window[0], ind + window[1])
@@ -214,27 +264,35 @@ class MiniDetector(object):
                 tmp_nan[:] = np.nan
 
                 tmp_sec = x[slc]
-                tmp_nan[:len(tmp_sec)] = tmp_sec
+                tmp_nan[: len(tmp_sec)] = tmp_sec
 
                 sections.append(tmp_nan)
 
-        assert len(sections) > 1, 'sections list has length {}'.format(len(sections))
+        assert len(sections) > 1, 'sections list has length {}'.format(
+            len(sections)
+        )
 
         sections = np.array(sections)
-        assert sections.ndim > 1, 'sections has shape {}'.format(sections.shape)
+        assert sections.ndim > 1, 'sections has shape {}'.format(
+            sections.shape
+        )
         if axis == 0:
             sections = sections.T
 
         return sections
 
-    def extract_minis(self, window = (-50, 200)):
+    def extract_minis(self, window=(-50, 200)):
         self.minis = self._extract_sections(
-            self.I, self.peaks, window = window, axis = 0,
-            locs_are_timestamps = True, dt = self.dt
+            self.I,
+            self.peaks,
+            window=window,
+            axis=0,
+            locs_are_timestamps=True,
+            dt=self.dt,
         )
 
     ### Extract mini parameters
-    def inter_mini_intervals(self, sort = False):
+    def inter_mini_intervals(self, sort=False):
         IMIs = []
         for x in self.peaks:
             IMIs.extend(np.diff(x))
@@ -244,17 +302,18 @@ class MiniDetector(object):
 
         return np.array(IMIs)
 
-    def amplitudes(self, baseline_width = None, extract_max = True, sort = False):
+    def amplitudes(self, baseline_width=None, extract_max=True, sort=False):
         if baseline_width is not None and baseline_width > 1:
-            minis_ = (np.copy(self.minis)
-                - self.minis[:baseline_width, :].mean(axis = 0))
+            minis_ = np.copy(self.minis) - self.minis[:baseline_width, :].mean(
+                axis=0
+            )
         else:
             minis_ = np.copy(self.minis)
 
         if extract_max:
-            amplis = np.nanmax(minis_, axis = 0)
+            amplis = np.nanmax(minis_, axis=0)
         else:
-            amplis = np.nanmin(minis_, axis = 0)
+            amplis = np.nanmin(minis_, axis=0)
 
         if sort:
             amplis = np.sort(amplis)
@@ -292,13 +351,12 @@ class MiniDetector(object):
     def ind_to_t(self, ind):
         return np.copy(ind) * self.dt
 
-
     ### Plotting methods
 
     def plot_rec(self):
-        self.rec.plot(downsample = 1)
+        self.rec.plot(downsample=1)
 
-    def plot_signal(self, sweeps = 'all', show_grad = True, show_grad_peaks = True):
+    def plot_signal(self, sweeps='all', show_grad=True, show_grad_peaks=True):
 
         if sweeps == 'all':
             sweeps = slice(None)
@@ -317,42 +375,66 @@ class MiniDetector(object):
         plt.figure()
 
         ax = plt.subplot(111)
-        plt.plot(self.t_mat[:, sweeps], self.I[:, sweeps], 'k-', alpha = min(1, 3/no_sweeps_plt))
+        plt.plot(
+            self.t_mat[:, sweeps],
+            self.I[:, sweeps],
+            'k-',
+            alpha=min(1, 3 / no_sweeps_plt),
+        )
 
         if show_grad:
             ax2 = ax.twinx()
-            ax2.plot(self.t_mat[:, sweeps], self.grad[:, sweeps], 'r-', alpha = min(0.9, 5/no_sweeps_plt))
+            ax2.plot(
+                self.t_mat[:, sweeps],
+                self.grad[:, sweeps],
+                'r-',
+                alpha=min(0.9, 5 / no_sweeps_plt),
+            )
         if show_grad_peaks:
-            ax2.axhline(self.peak_threshold, color = 'k', lw = 0.5, ls = '--', dashes = (5, 5))
+            ax2.axhline(
+                self.peak_threshold, color='k', lw=0.5, ls='--', dashes=(5, 5)
+            )
 
             if no_sweeps_plt > 1:
                 tmp_grad = np.copy(self.grad[:, sweeps])
                 for i, sw in enumerate(self.peaks[sweeps]):
-                    ax2.plot(sw, tmp_grad[(sw / self.dt).round().astype(np.int32), i], 'go')
+                    ax2.plot(
+                        sw,
+                        tmp_grad[(sw / self.dt).round().astype(np.int32), i],
+                        'go',
+                    )
 
             else:
-                ax2.plot(self.peaks[sweeps], self.grad[(self.peaks[sweeps] / self.dt).round().astype(np.int32), sweeps], 'go')
-
-
+                ax2.plot(
+                    self.peaks[sweeps],
+                    self.grad[
+                        (self.peaks[sweeps] / self.dt)
+                        .round()
+                        .astype(np.int32),
+                        sweeps,
+                    ],
+                    'go',
+                )
 
         plt.xlabel('Time (ms)')
         plt.ylabel('I')
         plt.show()
 
-    def plot_minis(self, bl_subtract = None):
+    def plot_minis(self, bl_subtract=None):
         plt.figure()
         plt.subplot(111)
         t_vec = np.arange(0, (self.minis.shape[0] - 0.5) * self.dt, self.dt)
         y = np.copy(self.minis)
         if bl_subtract is not None:
-            y -= y[:bl_subtract, :].mean(axis = 0)
+            y -= y[:bl_subtract, :].mean(axis=0)
         plt.plot(
-            np.tile(t_vec[:, np.newaxis], (1, self.no_minis)), y,
-            'k-', lw = 0.5, alpha = 0.7
+            np.tile(t_vec[:, np.newaxis], (1, self.no_minis)),
+            y,
+            'k-',
+            lw=0.5,
+            alpha=0.7,
         )
-        plt.plot(
-            t_vec, np.nanmean(y, axis = 1), 'r-'
-        )
+        plt.plot(t_vec, np.nanmean(y, axis=1), 'r-')
         plt.show()
 
     ### Methods for saving stuff.

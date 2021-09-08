@@ -45,13 +45,17 @@ class SpikingModel:
 
                 for r in np.arange(nbRep):
 
-                    I_tmp = Tools.generateOUprocess(T=T, tau=tau, mu=m, sigma=s, dt=dt)
+                    I_tmp = Tools.generateOUprocess(
+                        T=T, tau=tau, mu=m, sigma=s, dt=dt
+                    )
 
                     spks = self.simulateSpikingResponse(I_tmp, dt)
 
-                    nb_spks = len(np.where(((spks > ROI[0]) & (spks < ROI[1])))[0])
+                    nb_spks = len(
+                        np.where(((spks > ROI[0]) & (spks < ROI[1])))[0]
+                    )
 
-                    rate = 1000.0*float(nb_spks)/(ROI[1]-ROI[0])
+                    rate = 1000.0 * float(nb_spks) / (ROI[1] - ROI[0])
 
                     FI_all[s_cnt, m_cnt, r] = rate
 

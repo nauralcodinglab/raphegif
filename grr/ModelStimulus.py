@@ -48,7 +48,9 @@ class ModelStimulus(object):
 
     @property
     def numberOfConductances(self):
-        assert self._conductanceArray.numberOfInputVectors == len(self._conductanceReversals)
+        assert self._conductanceArray.numberOfInputVectors == len(
+            self._conductanceReversals
+        )
         return self._conductanceArray.numberOfInputVectors
 
     def getNetCurrentVector(self, dtype=np.float64):
@@ -90,10 +92,15 @@ class ModelStimulus(object):
                 )
             )
 
-        if currentArray.numberOfInputVectors >= 1:  # May be zero if currentArray is empty or None.
+        if (
+            currentArray.numberOfInputVectors >= 1
+        ):  # May be zero if currentArray is empty or None.
             self._currentArray.append(currentArray)
         else:
-            warnings.warn('currentArray is empty and will not be appended', RuntimeWarning)
+            warnings.warn(
+                'currentArray is empty and will not be appended',
+                RuntimeWarning,
+            )
 
     def appendConductances(self, conductanceArray, reversalPotentials):
         """Add an array of conductances.
@@ -107,20 +114,30 @@ class ModelStimulus(object):
         """
         conductanceArray = self._coerceToInputArray(conductanceArray)
 
-        if conductanceArray.numberOfInputVectors >= 1:  # May be zero if conductanceArray is None or empty.
-            if len(np.atleast_1d(reversalPotentials)) != conductanceArray.numberOfInputVectors:
+        if (
+            conductanceArray.numberOfInputVectors >= 1
+        ):  # May be zero if conductanceArray is None or empty.
+            if (
+                len(np.atleast_1d(reversalPotentials))
+                != conductanceArray.numberOfInputVectors
+            ):
                 raise ValueError(
                     'Expected same number of reversalPotentials and '
                     'conductanceVectors; got {} and {}'.format(
                         len(np.atleast_1d(reversalPotentials)),
-                        conductanceArray.numberOfInputVectors
+                        conductanceArray.numberOfInputVectors,
                     )
                 )
 
             self._conductanceArray.append(conductanceArray)
-            self._conductanceReversals.extend(np.atleast_1d(reversalPotentials).tolist())
+            self._conductanceReversals.extend(
+                np.atleast_1d(reversalPotentials).tolist()
+            )
         else:
-            warnings.warn('conductanceArray is empty and will not be appended', RuntimeWarning)
+            warnings.warn(
+                'conductanceArray is empty and will not be appended',
+                RuntimeWarning,
+            )
 
     def _coerceToInputArray(self, arr):
         if not issubclass(type(arr), InputArray):
@@ -130,6 +147,7 @@ class ModelStimulus(object):
                 arr = InputArray(arr, self.dt)
 
         return arr
+
 
 class InputArray(object):
     """An array to be provided as input to a model."""
@@ -183,7 +201,9 @@ class InputArray(object):
 
     def getInputVectors(self):
         """Return InputArray as a list of 1D InputArrays."""
-        return [self.getInputVector(i) for i in range(self.numberOfInputVectors)]
+        return [
+            self.getInputVector(i) for i in range(self.numberOfInputVectors)
+        ]
 
     def getInputVector(self, idx):
         return InputArray(self._array[idx, :], self.dt)
@@ -204,8 +224,12 @@ class InputArray(object):
 
         if self.timesteps == 0 and self.numberOfInputVectors < 2:
             self._array = arr_to_append._array
-        elif self.timesteps == arr_to_append.timesteps and np.isclose(self.dt, arr_to_append.dt):
-            self._array = np.concatenate([self._array, arr_to_append._array], axis=0)
+        elif self.timesteps == arr_to_append.timesteps and np.isclose(
+            self.dt, arr_to_append.dt
+        ):
+            self._array = np.concatenate(
+                [self._array, arr_to_append._array], axis=0
+            )
         elif self.timesteps != arr_to_append.timesteps:
             raise ValueError(
                 'Array to cannot be appended with {} timesteps. '

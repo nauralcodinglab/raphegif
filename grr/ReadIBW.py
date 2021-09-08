@@ -58,93 +58,111 @@ def read(filename):
     #######################  CHECK VERSION
 
     f.seek(0)
-    version = struct.unpack(format+'h', f.read(2))[0]
+    version = struct.unpack(format + 'h', f.read(2))[0]
 
     #######################  READ DATA AND ACCOMPANYING INFO
     if version == 2 or version == 3:
 
         # pre header
-        wfmSize = struct.unpack(format+'i', f.read(4))[0]  # The size of the WaveHeader2 data structure plus the wave data plus 16 bytes of padding.
-        noteSize = struct.unpack(format+'i', f.read(4))[0]  # The size of the note text.
+        wfmSize = struct.unpack(format + 'i', f.read(4))[
+            0
+        ]  # The size of the WaveHeader2 data structure plus the wave data plus 16 bytes of padding.
+        noteSize = struct.unpack(format + 'i', f.read(4))[
+            0
+        ]  # The size of the note text.
         if version == 3:
-            formulaSize = struct.unpack(format+'i', f.read(4))[0]
-        pictSize = struct.unpack(format+'i', f.read(4))[0]  # Reserved. Write zero. Ignore on read.
-        checksum = struct.unpack(format+'H', f.read(2))[0]  # Checksum over this header and the wave header.
+            formulaSize = struct.unpack(format + 'i', f.read(4))[0]
+        pictSize = struct.unpack(format + 'i', f.read(4))[
+            0
+        ]  # Reserved. Write zero. Ignore on read.
+        checksum = struct.unpack(format + 'H', f.read(2))[
+            0
+        ]  # Checksum over this header and the wave header.
 
         # wave header
-        dtype = struct.unpack(format+'h', f.read(2))[0]
+        dtype = struct.unpack(format + 'h', f.read(2))[0]
         if dtype == 2:
-            dtype = numpy.float32(.0).dtype
+            dtype = numpy.float32(0.0).dtype
         elif dtype == 4:
-            dtype = numpy.double(.0).dtype
+            dtype = numpy.double(0.0).dtype
         else:
             assert False, "Wave is of type '%i', not supported" % dtype
         dtype = dtype.newbyteorder(format)
 
         ignore = f.read(4)  # 1 uint32
-        bname = flatten(struct.unpack(format+'20c', f.read(20)))
+        bname = flatten(struct.unpack(format + '20c', f.read(20)))
         ignore = f.read(4)  # 2 int16
         ignore = f.read(4)  # 1 uint32
-        dUnits = flatten(struct.unpack(format+'4c', f.read(4)))
-        xUnits = flatten(struct.unpack(format+'4c', f.read(4)))
-        npnts = struct.unpack(format+'i', f.read(4))[0]
-        amod = struct.unpack(format+'h', f.read(2))[0]
-        dx = struct.unpack(format+'d', f.read(8))[0]
-        x0 = struct.unpack(format+'d', f.read(8))[0]
+        dUnits = flatten(struct.unpack(format + '4c', f.read(4)))
+        xUnits = flatten(struct.unpack(format + '4c', f.read(4)))
+        npnts = struct.unpack(format + 'i', f.read(4))[0]
+        amod = struct.unpack(format + 'h', f.read(2))[0]
+        dx = struct.unpack(format + 'd', f.read(8))[0]
+        x0 = struct.unpack(format + 'd', f.read(8))[0]
         ignore = f.read(4)  # 2 int16
-        fsValid = struct.unpack(format+'h', f.read(2))[0]
+        fsValid = struct.unpack(format + 'h', f.read(2))[0]
         # RICHARD: why is this here??
-        #x0 = float(x0*fsValid);
-        #dx = float(dx*fsValid);
-        topFullScale = struct.unpack(format+'d', f.read(8))[0]
-        botFullScale = struct.unpack(format+'d', f.read(8))[0]
+        # x0 = float(x0*fsValid);
+        # dx = float(dx*fsValid);
+        topFullScale = struct.unpack(format + 'd', f.read(8))[0]
+        botFullScale = struct.unpack(format + 'd', f.read(8))[0]
         ignore = f.read(16)  # 16 int8
-        modDate = struct.unpack(format+'I', f.read(4))[0]
+        modDate = struct.unpack(format + 'I', f.read(4))[0]
         ignore = f.read(4)  # 1 uint32
         # Numpy algorithm works a lot faster than struct.unpack
         wdata = numpy.fromfile(f, dtype)
 
     elif version == 5:
         # pre header
-        checksum = struct.unpack(format+'H', f.read(2))[0]  # Checksum over this header and the wave header.
-        wfmSize = struct.unpack(format+'i', f.read(4))[0]  # The size of the WaveHeader2 data structure plus the wave data plus 16 bytes of padding.
-        formulaSize = struct.unpack(format+'i', f.read(4))[0]
-        noteSize = struct.unpack(format+'i', f.read(4))[0]  # The size of the note text.
-        dataEUnitsSize = struct.unpack(format+'i', f.read(4))[0]
-        dimEUnitsSize = struct.unpack(format+'4i', f.read(16))
-        dimLabelsSize = struct.unpack(format+'4i', f.read(16))
-        sIndicesSize = struct.unpack(format+'i', f.read(4))[0]
-        optionSize1 = struct.unpack(format+'i', f.read(4))[0]
-        optionSize2 = struct.unpack(format+'i', f.read(4))[0]
+        checksum = struct.unpack(format + 'H', f.read(2))[
+            0
+        ]  # Checksum over this header and the wave header.
+        wfmSize = struct.unpack(format + 'i', f.read(4))[
+            0
+        ]  # The size of the WaveHeader2 data structure plus the wave data plus 16 bytes of padding.
+        formulaSize = struct.unpack(format + 'i', f.read(4))[0]
+        noteSize = struct.unpack(format + 'i', f.read(4))[
+            0
+        ]  # The size of the note text.
+        dataEUnitsSize = struct.unpack(format + 'i', f.read(4))[0]
+        dimEUnitsSize = struct.unpack(format + '4i', f.read(16))
+        dimLabelsSize = struct.unpack(format + '4i', f.read(16))
+        sIndicesSize = struct.unpack(format + 'i', f.read(4))[0]
+        optionSize1 = struct.unpack(format + 'i', f.read(4))[0]
+        optionSize2 = struct.unpack(format + 'i', f.read(4))[0]
 
         # header
         ignore = f.read(4)
-        CreationDate = struct.unpack(format+'I', f.read(4))[0]
-        modData = struct.unpack(format+'I', f.read(4))[0]
-        npnts = struct.unpack(format+'i', f.read(4))[0]
+        CreationDate = struct.unpack(format + 'I', f.read(4))[0]
+        modData = struct.unpack(format + 'I', f.read(4))[0]
+        npnts = struct.unpack(format + 'i', f.read(4))[0]
         # wave header
-        dtype = struct.unpack(format+'h', f.read(2))[0]
+        dtype = struct.unpack(format + 'h', f.read(2))[0]
         if dtype == 2:
-            dtype = numpy.float32(.0).dtype
+            dtype = numpy.float32(0.0).dtype
         elif dtype == 4:
-            dtype = numpy.double(.0).dtype
+            dtype = numpy.double(0.0).dtype
         else:
             assert False, "Wave is of type '%i', not supported" % dtype
         dtype = dtype.newbyteorder(format)
 
         ignore = f.read(2)  # 1 int16
-        ignore = f.read(6)  # 6 schar, SCHAR = SIGNED CHAR?         ignore = fread(fid,6,'schar'); #
+        ignore = f.read(
+            6
+        )  # 6 schar, SCHAR = SIGNED CHAR?         ignore = fread(fid,6,'schar'); #
         ignore = f.read(2)  # 1 int16
-        bname = flatten(struct.unpack(format+'32c', f.read(32)))
+        bname = flatten(struct.unpack(format + '32c', f.read(32)))
         ignore = f.read(4)  # 1 int32
         ignore = f.read(4)  # 1 int32
-        ndims = struct.unpack(format+'4i', f.read(16))  # Number of of items in a dimension -- 0 means no data.
-        sfA = struct.unpack(format+'4d', f.read(32))
-        sfB = struct.unpack(format+'4d', f.read(32))
-        dUnits = flatten(struct.unpack(format+'4c', f.read(4)))
-        xUnits = flatten(struct.unpack(format+'16c', f.read(16)))
-        fsValid = struct.unpack(format+'h', f.read(2))
-        whpad3 = struct.unpack(format+'h', f.read(2))
+        ndims = struct.unpack(
+            format + '4i', f.read(16)
+        )  # Number of of items in a dimension -- 0 means no data.
+        sfA = struct.unpack(format + '4d', f.read(32))
+        sfB = struct.unpack(format + '4d', f.read(32))
+        dUnits = flatten(struct.unpack(format + '4c', f.read(4)))
+        xUnits = flatten(struct.unpack(format + '16c', f.read(16)))
+        fsValid = struct.unpack(format + 'h', f.read(2))
+        whpad3 = struct.unpack(format + 'h', f.read(2))
         ignore = f.read(16)  # 2 double
         ignore = f.read(40)  # 10 int32
         ignore = f.read(64)  # 16 int32

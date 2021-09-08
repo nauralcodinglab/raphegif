@@ -6,6 +6,7 @@ from grr.GIF import GIF
 
 # SIMULATION TESTS
 
+
 class TestGIFSimulateDoesNotCrash_VectorInput(
     tmt.TestSimulateDoesNotCrash_VectorInput, unittest.TestCase
 ):
@@ -32,6 +33,7 @@ class TestGIFSimulate_StimulusResponse(
 
 
 # MEDIANMODEL TESTS
+
 
 class TestConstructMedianModel_GIF(
     tmt.TestConstructMedianModel, unittest.TestCase

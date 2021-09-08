@@ -31,9 +31,11 @@ class Filter_Rect(Filter):
 
         # Auxiliary variables that can be computed using the parameters above
 
-        self.bins = []     # ms, vector defining the rectangular basis functions for f(t)
+        self.bins = (
+            []
+        )  # ms, vector defining the rectangular basis functions for f(t)
 
-        self.support = []     # ms, centers of bins used to define the filter
+        self.support = []  # ms, centers of bins used to define the filter
 
     ############################################################################
     # IMPLEMENT SOME OF THE ABSTRACT METHODS OF FILTER
@@ -71,10 +73,10 @@ class Filter_Rect(Filter):
             for i in range(len(self.filter_coeff)):
 
                 lb = int(bins_i[i])
-                ub = int(bins_i[i+1])
+                ub = int(bins_i[i + 1])
                 filter_interpol[lb:ub] = self.filter_coeff[i]
 
-            filter_interpol_support = np.arange(len(filter_interpol))*dt
+            filter_interpol_support = np.arange(len(filter_interpol)) * dt
 
             self.filtersupport = filter_interpol_support
             self.filter = filter_interpol
@@ -93,7 +95,12 @@ class Filter_Rect(Filter):
         (ie, the centers of rectangular basis functions).
         """
 
-        self.support = np.array([(self.bins[i]+self.bins[i+1])/2 for i in range(len(self.bins)-1)])
+        self.support = np.array(
+            [
+                (self.bins[i] + self.bins[i + 1]) / 2
+                for i in range(len(self.bins) - 1)
+            ]
+        )
 
     @abc.abstractmethod
     def computeBins(self):
@@ -108,43 +115,47 @@ class Filter_Rect_LogSpaced(Filter_Rect):
     This class defines a temporal filter defined as a linear combination of log-spaced rectangular basis functions.
     """
 
-    def __init__(self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0):
+    def __init__(
+        self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0
+    ):
 
         Filter_Rect.__init__(self)
 
         # Metaparamters
 
-        self.p_length = length           # ms, filter length
+        self.p_length = length  # ms, filter length
 
-        self.p_binsize_lb = binsize_lb       # ms, min size for bin
+        self.p_binsize_lb = binsize_lb  # ms, min size for bin
 
-        self.p_binsize_ub = binsize_ub       # ms, max size for bin
+        self.p_binsize_ub = binsize_ub  # ms, max size for bin
 
-        self.p_slope = slope            # exponent for log-scaling
+        self.p_slope = slope  # exponent for log-scaling
 
         # Initialize
 
-        self.computeBins()                   # using meta parameters self.metaparam_subthreshold define bins and support.
+        self.computeBins()  # using meta parameters self.metaparam_subthreshold define bins and support.
 
-        self.setFilter_toZero()              # initialize filter to 0
+        self.setFilter_toZero()  # initialize filter to 0
 
-    def setMetaParameters(self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0):
+    def setMetaParameters(
+        self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0
+    ):
         """
         Set the parameters defining the rectangular basis functions.
         Each time meta parameters are changeD, the value of the filer is reset to 0.
         """
 
-        self.p_length = length                  # ms, filter length
+        self.p_length = length  # ms, filter length
 
-        self.p_binsize_lb = binsize_lb              # ms, min size for bin
+        self.p_binsize_lb = binsize_lb  # ms, min size for bin
 
-        self.p_binsize_ub = binsize_ub              # ms, max size for bin
+        self.p_binsize_ub = binsize_ub  # ms, max size for bin
 
-        self.p_slope = slope                   # exponent for log-scale binning
+        self.p_slope = slope  # exponent for log-scale binning
 
         self.computeBins()
 
-        self.setFilter_toZero()                     # initialize filter to 0
+        self.setFilter_toZero()  # initialize filter to 0
 
     ################################################################
     # IMPLEMENT ABSTRACT METHODS OF Filter_Rect
@@ -161,8 +172,11 @@ class Filter_Rect_LogSpaced(Filter_Rect):
         cnt = 1
         total_length = 0
 
-        while (total_length <= self.p_length):
-            tmp = min(self.p_binsize_lb*np.exp(cnt/self.p_slope), self.p_binsize_ub)
+        while total_length <= self.p_length:
+            tmp = min(
+                self.p_binsize_lb * np.exp(cnt / self.p_slope),
+                self.p_binsize_ub,
+            )
             total_length = total_length + tmp
             self.bins.append(total_length)
 
@@ -172,7 +186,7 @@ class Filter_Rect_LogSpaced(Filter_Rect):
 
         self.computeSupport()
 
-        self.filter_coeffNb = len(self.bins)-1
+        self.filter_coeffNb = len(self.bins) - 1
 
     ################################################################
     # IMPLEMENT ABSTRACT METHODS OF Filter
@@ -183,7 +197,7 @@ class Filter_Rect_LogSpaced(Filter_Rect):
         Filter spike train spks with the set of rectangular basis functions defining the Filter.
         """
 
-        T_i = int(T/dt)
+        T_i = int(T / dt)
 
         bins_i = Tools.timeToIndex(self.bins, dt)
         spks_i = Tools.timeToIndex(spks, dt)
@@ -199,7 +213,7 @@ class Filter_Rect_LogSpaced(Filter_Rect):
 
             for s in spks_i:
                 lb = s + bins_i[l]
-                ub = s + bins_i[l+1]
+                ub = s + bins_i[l + 1]
                 tmp[lb:ub] += 1
 
             X[:, l] = tmp[:T_i]
@@ -222,13 +236,15 @@ class Filter_Rect_LogSpaced(Filter_Rect):
         # Fill matrix
         for l in np.arange(bins_l):
 
-            window = np.ones(bins_i[l+1] - bins_i[l])
+            window = np.ones(bins_i[l + 1] - bins_i[l])
             window = np.array(window, dtype='float64')
 
-            F_star_I = fftconvolve(window, I_tmp, mode='full')*dt
+            F_star_I = fftconvolve(window, I_tmp, mode='full') * dt
             F_star_I = F_star_I[: int(len(I))]
 
-            F_star_I_shifted = np.concatenate((np.zeros(int(bins_i[l])), F_star_I))
+            F_star_I_shifted = np.concatenate(
+                (np.zeros(int(bins_i[l])), F_star_I)
+            )
 
             X[:, l] = np.array(F_star_I_shifted[:T_i], dtype='double')
 
@@ -244,29 +260,54 @@ class Filter_Rect_LogSpaced_AEC(Filter_Rect_LogSpaced):
     Log-spacing only starts after p_clamp_period.
     """
 
-    def __init__(self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0, clamp_period=1.0):
+    def __init__(
+        self,
+        length=1000.0,
+        binsize_lb=2.0,
+        binsize_ub=1000.0,
+        slope=7.0,
+        clamp_period=1.0,
+    ):
 
         # Metaparameters
 
         self.p_clamp_period = clamp_period
 
-        Filter_Rect_LogSpaced.__init__(self, length=length, binsize_lb=binsize_lb, binsize_ub=binsize_ub, slope=slope)
+        Filter_Rect_LogSpaced.__init__(
+            self,
+            length=length,
+            binsize_lb=binsize_lb,
+            binsize_ub=binsize_ub,
+            slope=slope,
+        )
 
         # Initialize
 
-        self.computeBins()                   # using meta parameters self.metaparam_subthreshold define bins and support.
+        self.computeBins()  # using meta parameters self.metaparam_subthreshold define bins and support.
 
-        self.setFilter_toZero()              # initialize filter to 0
+        self.setFilter_toZero()  # initialize filter to 0
 
     ################################################################
     # OVERVRITE METHODS OF Filter_Rect_LogSpaced
     ################################################################
 
-    def setMetaParameters(self, length=1000.0, binsize_lb=2.0, binsize_ub=1000.0, slope=7.0, clamp_period=10.0):
+    def setMetaParameters(
+        self,
+        length=1000.0,
+        binsize_lb=2.0,
+        binsize_ub=1000.0,
+        slope=7.0,
+        clamp_period=10.0,
+    ):
 
         # Set metaparameters inherited from  Filter_Rect_LogSpaced
 
-        super(Filter_Rect_LogSpaced_AEC, self).setMetaParameters(length=length, binsize_lb=binsize_lb, binsize_ub=binsize_ub, slope=slope)
+        super(Filter_Rect_LogSpaced_AEC, self).setMetaParameters(
+            length=length,
+            binsize_lb=binsize_lb,
+            binsize_ub=binsize_ub,
+            slope=slope,
+        )
 
         # Set paramters which are specific to this class
 
@@ -286,14 +327,17 @@ class Filter_Rect_LogSpaced_AEC(Filter_Rect_LogSpaced):
 
         total_length = 0
 
-        for i in np.arange(int(self.p_clamp_period/self.p_binsize_lb)):
+        for i in np.arange(int(self.p_clamp_period / self.p_binsize_lb)):
             total_length = total_length + self.p_binsize_lb
             self.bins.append(total_length)
 
         cnt = 1
 
-        while (total_length <= self.p_length):
-            tmp = min(self.p_binsize_lb*np.exp(cnt/self.p_slope), self.p_binsize_ub)
+        while total_length <= self.p_length:
+            tmp = min(
+                self.p_binsize_lb * np.exp(cnt / self.p_slope),
+                self.p_binsize_ub,
+            )
             total_length = total_length + tmp
             self.bins.append(total_length)
 
@@ -303,7 +347,7 @@ class Filter_Rect_LogSpaced_AEC(Filter_Rect_LogSpaced):
 
         self.computeSupport()
 
-        self.filter_coeffNb = len(self.bins)-1
+        self.filter_coeffNb = len(self.bins) - 1
 
 
 class Filter_Rect_LinSpaced(Filter_Rect):
@@ -324,15 +368,15 @@ class Filter_Rect_LinSpaced(Filter_Rect):
 
         # Metaparameters
 
-        self.p_length = length         # ms, filter length
+        self.p_length = length  # ms, filter length
 
-        self.filter_coeffNb = nbBins         # integer, define the number of rectangular basis functions being used
+        self.filter_coeffNb = nbBins  # integer, define the number of rectangular basis functions being used
 
         # Initialize
 
-        self.computeBins()                   # using meta parameters self.metaparam_subthreshold define bins and support.
+        self.computeBins()  # using meta parameters self.metaparam_subthreshold define bins and support.
 
-        self.setFilter_toZero()              # initialize filter to 0
+        self.setFilter_toZero()  # initialize filter to 0
 
     def setMetaParameters(self, length=1000.0, nbBins=10):
         """
@@ -357,11 +401,11 @@ class Filter_Rect_LinSpaced(Filter_Rect):
         This function compute self.bins and self.support given the metaparameters.
         """
 
-        self.bins = np.linspace(0.0, self.p_length, self.filter_coeffNb+1)
+        self.bins = np.linspace(0.0, self.p_length, self.filter_coeffNb + 1)
 
         self.computeSupport()
 
-        self.filter_coeffNb = len(self.bins)-1
+        self.filter_coeffNb = len(self.bins) - 1
 
     ################################################################
     # IMPLEMENT ABSTRACT METHODS OF Filter
@@ -373,7 +417,7 @@ class Filter_Rect_LinSpaced(Filter_Rect):
         Since all the basis functions have the same width calculation can be made efficient by filter just ones and shifting.
         """
 
-        T_i = int(T/dt)
+        T_i = int(T / dt)
 
         bins_i = Tools.timeToIndex(self.bins, dt)
         spks_i = Tools.timeToIndex(spks, dt)
@@ -415,12 +459,14 @@ class Filter_Rect_LinSpaced(Filter_Rect):
         window = np.ones(bins_i[1] - bins_i[0])
         window = np.array(window, dtype='float64')
 
-        F_star_I = fftconvolve(window, I_tmp, mode='full')*dt
+        F_star_I = fftconvolve(window, I_tmp, mode='full') * dt
         F_star_I = np.array(F_star_I[:T_i], dtype='double')
 
         for l in np.arange(bins_l):
 
-            F_star_I_shifted = np.concatenate((np.zeros(int(bins_i[l])), F_star_I))
+            F_star_I_shifted = np.concatenate(
+                (np.zeros(int(bins_i[l])), F_star_I)
+            )
             X[:, l] = np.array(F_star_I_shifted[:T_i], dtype='double')
 
         return X
@@ -446,11 +492,11 @@ class Filter_Rect_ArbitrarilySpaced(Filter_Rect):
 
         self.bins = bins
 
-        self.filter_coeffNb = len(bins)-1
+        self.filter_coeffNb = len(bins) - 1
 
         self.computeSupport()
 
-        self.setFilter_toZero()              # initialize filter to 0
+        self.setFilter_toZero()  # initialize filter to 0
 
     def setBasisFunctions(self, bins):
         """
@@ -462,7 +508,7 @@ class Filter_Rect_ArbitrarilySpaced(Filter_Rect):
 
         self.computeSupport()
 
-        self.filter_coeffNb = len(bins)-1
+        self.filter_coeffNb = len(bins) - 1
 
         self.setFilter_toZero()
 
@@ -483,7 +529,7 @@ class Filter_Rect_ArbitrarilySpaced(Filter_Rect):
 
     def convolution_Spiketrain_basisfunctions(self, spks, T, dt):
 
-        T_i = int(T/dt)
+        T_i = int(T / dt)
 
         bins_i = Tools.timeToIndex(self.bins, dt)
         spks_i = Tools.timeToIndex(spks, dt)
@@ -521,12 +567,14 @@ class Filter_Rect_ArbitrarilySpaced(Filter_Rect):
         window = np.ones(bins_i[1] - bins_i[0])
         window = np.array(window, dtype='float64')
 
-        F_star_I = fftconvolve(window, I_tmp, mode='full')*dt
+        F_star_I = fftconvolve(window, I_tmp, mode='full') * dt
         F_star_I = np.array(F_star_I[:T_i], dtype='double')
 
         for l in np.arange(bins_l):
 
-            F_star_I_shifted = np.concatenate((np.zeros(int(bins_i[l])), F_star_I))
+            F_star_I_shifted = np.concatenate(
+                (np.zeros(int(bins_i[l])), F_star_I)
+            )
             X[:, l] = np.array(F_star_I_shifted[:T_i], dtype='double')
 
         return X
