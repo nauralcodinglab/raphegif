@@ -7,6 +7,7 @@ from numpy.linalg import LinAlgError
 
 from grr.Filter_Exps import Filter_Exps
 from grr.Tools import gagProcess
+
 # Model to be fitted is imported lower down.
 
 
@@ -18,12 +19,17 @@ parser.add_argument('experiments', help='Path to pickled experiments.')
 parser.add_argument('output', help='File to save fitted models.')
 parser.add_argument('opts', help='JSON file with fitting options.')
 parser.add_argument(
-    '-m', '--model', type=str, default='GIF',
-    help='Kind of model to fit to data (case-insensitive). Default GIF.'
+    '-m',
+    '--model',
+    type=str,
+    default='GIF',
+    help='Kind of model to fit to data (case-insensitive). Default GIF.',
 )
 parser.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='Print information about progress.'
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Print information about progress.',
 )
 
 # Parse commandline args.
@@ -45,8 +51,13 @@ with open(args.opts, 'r') as f:
 
 # Check that JSON opts file has correct fields.
 # Fields required for all models.
-required_json_fields = ['T_ref', 'eta_timescales', 'gamma_timescales',
-                        'DT_beforeSpike', 'dt']
+required_json_fields = [
+    'T_ref',
+    'eta_timescales',
+    'gamma_timescales',
+    'DT_beforeSpike',
+    'dt',
+]
 # Add model-specific fields.
 if args.model.lower() == 'gif':
     pass
@@ -86,15 +97,19 @@ if args.verbose:
 # Load specified model.
 if args.model.lower() == 'gif':
     from grr.GIF import GIF
+
     model_type = GIF
 elif args.model.lower() == 'augmentedgif':
     from grr.AugmentedGIF import AugmentedGIF
+
     model_type = AugmentedGIF
 elif args.model.lower() == 'igif_np':
     from grr.iGIF import iGIF_NP
+
     model_type = iGIF_NP
 elif args.model.lower() == 'igif_vr':
     from grr.iGIF import iGIF_VR
+
     model_type = iGIF_VR
 else:
     raise RuntimeError('Could not load model {}'.format(args.model))
@@ -107,9 +122,7 @@ for i, expt in enumerate(experiments):
     if args.verbose:
         print(
             '\nFitting {} to {} ({:.1f}%)'.format(
-                args.model,
-                expt.name,
-                100 * (i + 1) / len(experiments)
+                args.model, expt.name, 100 * (i + 1) / len(experiments)
             )
         )
 
@@ -127,10 +140,7 @@ for i, expt in enumerate(experiments):
         # Fit model silently.
         with gagProcess():
             if args.model.lower() == 'gif':
-                tmp_mod.fit(
-                    expt,
-                    DT_beforeSpike=opts['DT_beforeSpike']
-                )
+                tmp_mod.fit(expt, DT_beforeSpike=opts['DT_beforeSpike'])
             elif args.model.lower() == 'augmentedgif':
                 tmp_mod.fit(
                     expt,
@@ -166,9 +176,7 @@ for i, expt in enumerate(experiments):
 if len(linalg_err_mods) > 0:
     warnings.warn(
         "{} models could not be fitted due to numpy LinAlgErrors (usually "
-        "singular matrices):\n{}".format(
-            len(linalg_err_mods), linalg_err_mods
-        )
+        "singular matrices):\n{}".format(len(linalg_err_mods), linalg_err_mods)
     )
 
 if args.verbose:

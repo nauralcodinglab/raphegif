@@ -44,29 +44,27 @@ parser = argparse.ArgumentParser()
 
 # Paths to inputs and outputs.
 parser.add_argument(
-    'indexfile',
-    help='Path to CSV spreadsheet with data file names.'
+    'indexfile', help='Path to CSV spreadsheet with data file names.'
 )
 parser.add_argument(
-    'goodcells',
-    help='Path to save preprocessed QC-passing recordings.'
+    'goodcells', help='Path to save preprocessed QC-passing recordings.'
+)
+parser.add_argument('opts', help='Path to options JSON file.')
+parser.add_argument(
+    '--badcells',
+    default=None,
+    help='Path to save preprocessed QC-failing recordings. ' 'Omit to skip.',
 )
 parser.add_argument(
-    'opts',
-    help='Path to options JSON file.'
+    '--datafiles',
+    default=None,
+    help='Path to raw data files, if different from path to index file.',
 )
 parser.add_argument(
-    '--badcells', default=None,
-    help='Path to save preprocessed QC-failing recordings. '
-    'Omit to skip.'
-)
-parser.add_argument(
-    '--datafiles', default=None,
-    help='Path to raw data files, if different from path to index file.'
-)
-parser.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='Print information about progress.'
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Print information about progress.',
 )
 
 # Parse commandline args.
@@ -81,9 +79,17 @@ with open(args.opts, 'r') as f:
     opts = json.load(f)
     f.close()
 
-required_json_fields = ['AEC_col', 'train_cols', 'test_cols', 'no_test_traces',
-                        'train_ROIs', 'test_ROIs', 'drift_cutoff',
-                        'reliability_cutoff', 'dt']
+required_json_fields = [
+    'AEC_col',
+    'train_cols',
+    'test_cols',
+    'no_test_traces',
+    'train_ROIs',
+    'test_ROIs',
+    'drift_cutoff',
+    'reliability_cutoff',
+    'dt',
+]
 for field in required_json_fields:
     if field not in opts:
         raise AttributeError(
@@ -99,7 +105,10 @@ file_index = pd.read_csv(args.indexfile)
 experiments = []
 for i in range(file_index.shape[0]):
     if args.verbose:
-        print('Loading traces {:.1f}%'.format(100 * i / file_index.shape[0]), end='\r')
+        print(
+            'Loading traces {:.1f}%'.format(100 * i / file_index.shape[0]),
+            end='\r',
+        )
         sys.stdout.flush()
 
     try:
@@ -114,7 +123,7 @@ for i in range(file_index.shape[0]):
                     args.datafiles, file_index.loc[i, opts['AEC_col']]
                 ),
                 V_channel=0,
-                I_channel=1
+                I_channel=1,
             )
             for traincol in opts['train_cols']:
                 tmp_experiment.addTrainingSetTrace(
@@ -123,7 +132,7 @@ for i in range(file_index.shape[0]):
                         args.datafiles, file_index.loc[i, traincol]
                     ),
                     V_channel=0,
-                    I_channel=1
+                    I_channel=1,
                 )
             for testcol in opts['test_cols']:
                 tmp_experiment.addTestSetTrace(
@@ -132,7 +141,7 @@ for i in range(file_index.shape[0]):
                         args.datafiles, file_index.loc[i, testcol]
                     ),
                     V_channel=0,
-                    I_channel=1
+                    I_channel=1,
                 )
 
             # Set trace ROIs.
@@ -161,7 +170,9 @@ if args.verbose:
 
 for i, expt in enumerate(experiments):
     if args.verbose:
-        print('Running AEC {:.1f}%'.format(100 * i / len(experiments)), end='\r')
+        print(
+            'Running AEC {:.1f}%'.format(100 * i / len(experiments)), end='\r'
+        )
         sys.stdout.flush()
 
     with gagProcess():
@@ -169,8 +180,11 @@ for i, expt in enumerate(experiments):
         tmp_AEC = AEC_Badel(expt.dt)
 
         tmp_AEC.K_opt.setMetaParameters(
-            length=150.0, binsize_lb=expt.dt, binsize_ub=2.0,
-            slope=30.0, clamp_period=1.0
+            length=150.0,
+            binsize_lb=expt.dt,
+            binsize_ub=2.0,
+            slope=30.0,
+            clamp_period=1.0,
         )
         tmp_AEC.p_expFitRange = [3.0, 150.0]
         tmp_AEC.p_nbRep = 15
@@ -187,7 +201,10 @@ if args.verbose:
 
 for i, expt in enumerate(experiments):
     if args.verbose:
-        print('Detecting spikes {:.1f}%'.format(100 * i / len(experiments)), end='\r')
+        print(
+            'Detecting spikes {:.1f}%'.format(100 * i / len(experiments)),
+            end='\r',
+        )
         sys.stdout.flush()
     for tr in expt.trainingset_traces:
         tr.detectSpikes()
@@ -217,8 +234,7 @@ for i, expt in enumerate(experiments):
     no_spks_per_sweep = [len(s_) for s_ in spks]
 
     r, p = stats.pearsonr(
-        no_spks_per_sweep,
-        np.arange(0, opts['no_test_traces'])
+        no_spks_per_sweep, np.arange(0, opts['no_test_traces'])
     )
 
     if np.abs(r) > opts['drift_cutoff']:
@@ -236,13 +252,21 @@ for i, expt in enumerate(experiments):
         else:
             stars = '***'
 
-        print('{:>2}    {}    R = {:>6.3f}, p = {:>5.3f}   {}'.format(i, expt.name, r, p, stars))
+        print(
+            '{:>2}    {}    R = {:>6.3f}, p = {:>5.3f}   {}'.format(
+                i, expt.name, r, p, stars
+            )
+        )
 
 
 # %% EXCLUDE BASED ON INTRINSIC RELIABILITY
 
 if args.verbose:
-    print('Excluding cells with intrinsic reliability < {}'.format(opts['reliability_cutoff']))
+    print(
+        'Excluding cells with intrinsic reliability < {}'.format(
+            opts['reliability_cutoff']
+        )
+    )
 
 unreliable_cells = []
 reliability_ls = []
@@ -259,14 +283,20 @@ for i, expt in enumerate(experiments):
             stars = ''
 
         if args.verbose:
-            print('{:>2}    {} IR = {:.3f} {}'.format(
-                i, expt.name, reliability_tmp, stars)
+            print(
+                '{:>2}    {} IR = {:.3f} {}'.format(
+                    i, expt.name, reliability_tmp, stars
+                )
             )
     except ValueError:
         warnings.warn('Problem with experiment {}, {}'.format(i, expt.name))
 
 if args.verbose:
-    print('Excluded {} cells due to low reliability.\n'.format(len(unreliable_cells)))
+    print(
+        'Excluded {} cells due to low reliability.\n'.format(
+            len(unreliable_cells)
+        )
+    )
 
 
 # %% REMOVE EXCLUDED CELLS FROM DATASET AND PICKLE RESULT
@@ -281,17 +311,25 @@ bad_cells = []
 for i in np.flip(np.sort(bad_cell_inds), -1):
     bad_cells.append(experiments.pop(i))
 
-print('Excluding {}/{} cells.'.format(len(bad_cells), len(bad_cells) + len(experiments)))
+print(
+    'Excluding {}/{} cells.'.format(
+        len(bad_cells), len(bad_cells) + len(experiments)
+    )
+)
 
 if args.verbose:
-    print('Saving {} good cells to {}'.format(len(experiments), args.goodcells))
+    print(
+        'Saving {} good cells to {}'.format(len(experiments), args.goodcells)
+    )
 with open(args.goodcells, 'wb') as f:
     pickle.dump(experiments, f)
     f.close()
 
 if args.badcells is not None:
     if args.verbose:
-        print('Saving {} bad cells to {}'.format(len(bad_cells), args.badcells))
+        print(
+            'Saving {} bad cells to {}'.format(len(bad_cells), args.badcells)
+        )
     with open(args.badcells, 'wb') as f:
         pickle.dump(bad_cells, f)
         f.close()

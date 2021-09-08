@@ -59,4 +59,3 @@ paramTable = pd.DataFrame(records)
 paramTable.to_csv(args.output, index=False)
 if args.verbose:
     print('Finished! Exiting.')
-

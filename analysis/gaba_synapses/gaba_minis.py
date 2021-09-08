@@ -14,7 +14,9 @@ from grr import MiniDetector
 DATA_PATH = os.path.join('data', 'raw', '5HT', 'GABA_synapses')
 mIPSC_fnames = ['18o23003.abf', '18o23004.abf', '18o23005.abf']
 
-mini_recs = Cell().read_ABF([os.path.join(DATA_PATH, fname) for fname in mIPSC_fnames])
+mini_recs = Cell().read_ABF(
+    [os.path.join(DATA_PATH, fname) for fname in mIPSC_fnames]
+)
 
 
 #%% DETECT & INSPECT MINIS

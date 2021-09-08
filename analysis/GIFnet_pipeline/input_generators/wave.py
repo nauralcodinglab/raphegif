@@ -16,7 +16,9 @@ parser.add_argument(
 )
 
 parser.add_argument('--dt', type=float, default=0.1, help='Timestep of input.')
-parser.add_argument('--baseline', type=float, default=0.0, help="Baseline (constant) input.")
+parser.add_argument(
+    '--baseline', type=float, default=0.0, help="Baseline (constant) input."
+)
 parser.add_argument(
     '-v',
     '--verbose',
@@ -31,7 +33,7 @@ args = parser.parse_args()
 
 stimulus_parameters = {
     'amplitude': 0.1,
-    'pad_duration': 2000.  # Time to leave between stimuli.
+    'pad_duration': 2000.0,  # Time to leave between stimuli.
 }
 
 pad_stimulus = stimtools.StepStimulus(
@@ -39,8 +41,8 @@ pad_stimulus = stimtools.StepStimulus(
 )
 
 cos_wave = stimtools.CosStimulus(
-    stimulus_parameters['amplitude'] / 2.,
-    -stimulus_parameters['amplitude'] / 2.,
+    stimulus_parameters['amplitude'] / 2.0,
+    -stimulus_parameters['amplitude'] / 2.0,
     1.0 / 4.0,
     4000.0,
     args.dt,
@@ -54,20 +56,24 @@ step = stimtools.StepStimulus(
     [2000.0], [stimulus_parameters['amplitude']], args.dt
 )
 
-full_stimulus = stimtools.concatenate([
-    pad_stimulus,
-    cos_wave,
-    pad_stimulus,
-    short_step,
-    pad_stimulus,
-    step,
-    pad_stimulus
-])
+full_stimulus = stimtools.concatenate(
+    [
+        pad_stimulus,
+        cos_wave,
+        pad_stimulus,
+        short_step,
+        pad_stimulus,
+        step,
+        pad_stimulus,
+    ]
+)
 
 wave_stimulus = {
-    'ser_input': full_stimulus.command[np.newaxis, np.newaxis, :] + args.baseline,
-    'gaba_input': full_stimulus.command[np.newaxis, np.newaxis, :] + args.baseline,
-    'metaparams': {}
+    'ser_input': full_stimulus.command[np.newaxis, np.newaxis, :]
+    + args.baseline,
+    'gaba_input': full_stimulus.command[np.newaxis, np.newaxis, :]
+    + args.baseline,
+    'metaparams': {},
 }
 
 if args.verbose:

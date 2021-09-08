@@ -13,7 +13,7 @@ setuptools.setup(
     version=version,
     description='Tools for constructing constrained models of neural circuits.',
     author='Emerson Harkin',
-    author_email='emerson.f.harkin at gmail dot com',
+    author_email='emerson@efharkin.com',
     keywords='neuroscience,electrophysiology',
     packages=['grr']
 )

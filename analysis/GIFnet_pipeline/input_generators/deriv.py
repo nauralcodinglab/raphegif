@@ -15,7 +15,9 @@ parser.add_argument(
 )
 
 parser.add_argument('--dt', type=float, default=0.1, help='Timestep of input.')
-parser.add_argument('--baseline', type=float, default=0.0, help="Baseline (constant) input.")
+parser.add_argument(
+    '--baseline', type=float, default=0.0, help="Baseline (constant) input."
+)
 parser.add_argument(
     '-v',
     '--verbose',
@@ -32,7 +34,9 @@ MAX_RAMP_DURATION = 1e4
 NUM_SWEEPS = 20
 stimulus_parameters = {
     'amplitude': 0.1,
-    'ramp_durations': np.logspace(np.log10(100), np.log10(MAX_RAMP_DURATION), NUM_SWEEPS),
+    'ramp_durations': np.logspace(
+        np.log10(100), np.log10(MAX_RAMP_DURATION), NUM_SWEEPS
+    ),
 }
 
 sweeps = []
@@ -40,11 +44,15 @@ for duration in stimulus_parameters['ramp_durations']:
     sweeps.append(
         st.concatenate(
             [
-                st.StepStimulus([2e3], [0], args.dt), 
-                np.linspace(0, stimulus_parameters['amplitude'], duration / args.dt), 
-                st.StepStimulus([MAX_RAMP_DURATION - duration + 500], [0], args.dt)
-            ], 
-            args.dt
+                st.StepStimulus([2e3], [0], args.dt),
+                np.linspace(
+                    0, stimulus_parameters['amplitude'], duration / args.dt
+                ),
+                st.StepStimulus(
+                    [MAX_RAMP_DURATION - duration + 500], [0], args.dt
+                ),
+            ],
+            args.dt,
         ).command[np.newaxis, :124990]
     )
 
@@ -56,13 +64,13 @@ ramp_stimulus = {
     'gaba_input': sweeps + args.baseline,
     'metaparams': {
         'deriv_in_nA_s': (
-            stimulus_parameters['amplitude'] 
+            stimulus_parameters['amplitude']
             / (stimulus_parameters['ramp_durations'] * 1e-3)
         ),
         'dt': args.dt,
         'baseline': args.baseline,
         'amplitude': stimulus_parameters['amplitude'],
-    }
+    },
 }
 
 if args.verbose:

@@ -12,30 +12,40 @@ from grr.Tools import gagProcess
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    'experiments', type=str,
-    help='Pickled list of Experiment objects'
+    'experiments', type=str, help='Pickled list of Experiment objects'
 )
 parser.add_argument(
-    'models', type=str, nargs='+',
+    'models',
+    type=str,
+    nargs='+',
     help='Pickled lists of GIF or GIF-like models to use to compute '
-    'spiketrain predictions.'
+    'spiketrain predictions.',
 )
 parser.add_argument(
-    '-o', '--output', type=str, required=True,
+    '-o',
+    '--output',
+    type=str,
+    required=True,
     help='Directory in which to save output. Filenames are generated '
-    'automatically.'
+    'automatically.',
 )
 parser.add_argument(
-    '-v', '--verbose', help='Print information about progress.',
-    action='store_true'
+    '-v',
+    '--verbose',
+    help='Print information about progress.',
+    action='store_true',
 )
 parser.add_argument(
-    '--precision', help='Width of window to consider coincidence (ms).',
-    default=4., type=float
+    '--precision',
+    help='Width of window to consider coincidence (ms).',
+    default=4.0,
+    type=float,
 )
 parser.add_argument(
-    '--repeats', help='Number of spiketrains to realize from model.',
-    default=500, type=int
+    '--repeats',
+    help='Number of spiketrains to realize from model.',
+    default=500,
+    type=int,
 )
 args = parser.parse_args()
 
@@ -43,7 +53,11 @@ args = parser.parse_args()
 if not all([os.path.exists(modfname) for modfname in args.models]):
     raise ValueError(
         'In argument `models`: file(s) {} not found.'.format(
-            [modfname for modfname in args.models if not os.path.exists(modfname)]
+            [
+                modfname
+                for modfname in args.models
+                if not os.path.exists(modfname)
+            ]
         )
     )
 if not os.path.isdir(args.output):
@@ -73,9 +87,15 @@ for modfname in args.models:
 
 # Check that there are at least as many expts as each kind of model.
 if any([len(experiments) > len(models[label]) for label in models]):
-    warnings.warn('More experiments than {} models.'.format(
-        [label for label in models if len(experiments) > len(models[label])]
-    ))
+    warnings.warn(
+        'More experiments than {} models.'.format(
+            [
+                label
+                for label in models
+                if len(experiments) > len(models[label])
+            ]
+        )
+    )
 # If there are fewer experiments than models, something is very wrong.
 if any([len(experiments) < len(models[label]) for label in models]):
     raise RuntimeError(
@@ -105,27 +125,37 @@ metadata_dframe.to_csv(
 benchmarks = {}
 for benchmark in ['sample_traces', 'Md_vals', 'R2_V_vals', 'R2_dV_vals']:
     benchmarks[benchmark] = {label: [] for label in models}
-    benchmarks[benchmark]['Cell'] = [expt.name for expt in experiments]  # Column for cell identifier.
-benchmarks['sample_traces']['Time'] = []  # Extra column to hold time support vectors.
-benchmarks['sample_traces']['Input'] = []  # Extra column for model/neuron input.
+    benchmarks[benchmark]['Cell'] = [
+        expt.name for expt in experiments
+    ]  # Column for cell identifier.
+benchmarks['sample_traces'][
+    'Time'
+] = []  # Extra column to hold time support vectors.
+benchmarks['sample_traces'][
+    'Input'
+] = []  # Extra column for model/neuron input.
 benchmarks['sample_traces']['Data'] = []  # Extra column for recorded V/spikes.
 
 # For each experiment and model type compute benchmarks.
 for i, expt in enumerate(experiments):
     if args.verbose:
-        print('\nRunning benchmarks for cell {} ({}%)'.format(
-            expt.name, 100. * i / len(experiments)
-        ))
+        print(
+            '\nRunning benchmarks for cell {} ({}%)'.format(
+                expt.name, 100.0 * i / len(experiments)
+            )
+        )
 
     # Store sample trace from raw data.
     benchmarks['sample_traces']['Time'].append(
         expt.testset_traces[0].getTime()
     )
     benchmarks['sample_traces']['Input'].append(expt.testset_traces[0].I)
-    benchmarks['sample_traces']['Data'].append({
-        'V': expt.testset_traces[0].V,
-        'spks': [tr.getSpikeTimes() for tr in expt.testset_traces]
-    })
+    benchmarks['sample_traces']['Data'].append(
+        {
+            'V': expt.testset_traces[0].V,
+            'spks': [tr.getSpikeTimes() for tr in expt.testset_traces],
+        }
+    )
 
     # Benchmark each model.
     for label in models:
@@ -148,7 +178,11 @@ for i, expt in enumerate(experiments):
                 benchmarks[benchmark][label].append(None)
             continue
 
-        assert mod.name == expt.name, '{} model {} does not match experiment {}.'.format(label, mod.name, expt.name)
+        assert (
+            mod.name == expt.name
+        ), '{} model {} does not match experiment {}.'.format(
+            label, mod.name, expt.name
+        )
 
         # Benchmark 1: sample trace
         if args.verbose:
@@ -158,14 +192,10 @@ for i, expt in enumerate(experiments):
         tmp_spks = []
         for j in range(len(expt.testset_traces)):
             time, V, _, _, spks = mod.simulate(
-                expt.testset_traces[0].I,
-                expt.testset_traces[0].V[0]
+                expt.testset_traces[0].I, expt.testset_traces[0].V[0]
             )
             tmp_spks.append(spks)
-        benchmarks['sample_traces'][label].append({
-            'V': V,
-            'spks': tmp_spks
-        })
+        benchmarks['sample_traces'][label].append({'V': V, 'spks': tmp_spks})
         del time, V, _, tmp_spks
 
         # Benchmark 2: Md*
@@ -215,9 +245,11 @@ print('\nDone benchmarks!')
 # Save sample traces.
 sample_tr_fname = fname_prefix + 'benchmark_sample_traces.pkl'
 if args.verbose:
-    print('Saving sample traces to {}'.format(
-        os.path.join(args.output, sample_tr_fname)
-    ))
+    print(
+        'Saving sample traces to {}'.format(
+            os.path.join(args.output, sample_tr_fname)
+        )
+    )
 with open(os.path.join(args.output, sample_tr_fname), 'wb') as f:
     pickle.dump(benchmarks['sample_traces'], f)
     f.close()

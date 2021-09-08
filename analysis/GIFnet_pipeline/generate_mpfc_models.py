@@ -13,28 +13,32 @@ from grr.Tools import check_dict_fields
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--mods', type=str, required=True,
-    help='Pickled neuron models.'
+    '--mods', type=str, required=True, help='Pickled neuron models.'
 )
 parser.add_argument(
-    '--prefix', type=str, required=True,
-    help='Path to save GIF_network models.'
+    '--prefix',
+    type=str,
+    required=True,
+    help='Path to save GIF_network models.',
 )
 parser.add_argument(
-    '--opts', type=str, required=True,
-    help='Path to opts JSON file.'
+    '--opts', type=str, required=True, help='Path to opts JSON file.'
 )
 parser.add_argument(
-    '-r', '--replicates', default=1, type=int,
-    help='No. of randomized models to generate.'
+    '-r',
+    '--replicates',
+    default=1,
+    type=int,
+    help='No. of randomized models to generate.',
 )
 parser.add_argument(
-    '--seed', type=int, default=42,
-    help='Random seed (default 42).'
+    '--seed', type=int, default=42, help='Random seed (default 42).'
 )
 parser.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='Print information about progress.'
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Print information about progress.',
 )
 
 args = parser.parse_args()
@@ -47,7 +51,7 @@ with open(args.opts, 'r') as f:
 required_fields = {
     'dt': None,
     'no_principal_neurons': None,
-    'output_model_suffixes': {'base': None, 'noIA': None, 'fixedIA': None}
+    'output_model_suffixes': {'base': None, 'noIA': None, 'fixedIA': None},
 }
 check_dict_fields(opts, required_fields)
 
@@ -67,6 +71,7 @@ np.random.seed(args.seed)
 
 
 # GENERATE MODELS
+
 
 def save_model(model, type, number):
     """Save GIFnet model to a pickle file.
@@ -97,19 +102,23 @@ def save_model(model, type, number):
 
 for i in range(args.replicates):
     if args.verbose:
-        print('Assembling GIFnet model set {} of {}.'.format(
-            i+1, args.replicates
-        ))
+        print(
+            'Assembling GIFnet model set {} of {}.'.format(
+                i + 1, args.replicates
+            )
+        )
 
     subsample_gifnet = gfn.GIFnet(
         name='Subsample GIFs',
-        ser_mod=np.random.choice(deepcopy(principal_cell_gifs), opts['no_principal_neurons']),
+        ser_mod=np.random.choice(
+            deepcopy(principal_cell_gifs), opts['no_principal_neurons']
+        ),
         gaba_mod=None,
         propagation_delay=None,
         gaba_kernel=None,
         gaba_reversal=None,
         connectivity_matrix=[],
-        dt=opts['dt']
+        dt=opts['dt'],
     )
 
     # Clear cached interpolated filters to save disk space.

@@ -18,36 +18,41 @@ from ezephys.stimtools import BiexponentialSynapticKernel
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--sermods', type=str, required=True,
-    help='Pickled serotonin neuron models.'
+    '--sermods',
+    type=str,
+    required=True,
+    help='Pickled serotonin neuron models.',
 )
 parser.add_argument(
-    '--gabamods', type=str, required=True,
-    help='Pickled GABA neuron models.'
+    '--gabamods', type=str, required=True, help='Pickled GABA neuron models.'
 )
 parser.add_argument(
-    '--prefix', type=str, required=True,
-    help='Path to save GIF_network models.'
+    '--prefix',
+    type=str,
+    required=True,
+    help='Path to save GIF_network models.',
 )
 parser.add_argument(
-    '--opts', type=str, required=True,
-    help='Path to opts JSON file.'
+    '--opts', type=str, required=True, help='Path to opts JSON file.'
 )
 parser.add_argument(
-    '-r', '--replicates', default=1, type=int,
-    help='No. of randomized models to generate.'
+    '-r',
+    '--replicates',
+    default=1,
+    type=int,
+    help='No. of randomized models to generate.',
 )
 parser.add_argument(
-    '--seed', type=int, default=42,
-    help='Random seed (default 42).'
+    '--seed', type=int, default=42, help='Random seed (default 42).'
 )
 parser.add_argument(
-    '--overwrite', action='store_true',
-    help='Overwrite existing models.'
+    '--overwrite', action='store_true', help='Overwrite existing models.'
 )
 parser.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='Print information about progress.'
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Print information about progress.',
 )
 
 args = parser.parse_args()
@@ -65,7 +70,7 @@ required_fields = {
         'tau_decay': None,
         'amplitude': None,
         'reversal': None,
-        'duration': None
+        'duration': None,
     },
     'no_ser_neurons': None,
     'no_gaba_neurons': None,
@@ -78,8 +83,8 @@ required_fields = {
         'adaptation_swap': None,
         'homogenous_adaptation_swap': None,
         'homogenous': None,
-        'homogenous_GABA_only': None
-    }
+        'homogenous_GABA_only': None,
+    },
 }
 check_dict_fields(opts, required_fields)
 
@@ -107,6 +112,7 @@ np.random.seed(args.seed)
 
 
 # HELPER FUNCTION
+
 
 def construct_file_name(number, kind):
     """Get file name for saving gifnet.
@@ -153,7 +159,7 @@ gaba_kernel = BiexponentialSynapticKernel(
     size_method='amplitude',
     duration=opts['gaba_input']['duration'],
     dt=opts['dt'],
-    front_padded=True
+    front_padded=True,
 )
 
 subsample_builder = gfn.SubsampleGIFnetBuilder(
@@ -184,54 +190,74 @@ homogenous_builder = gfn.HomogenousGIFnetBuilder(
 
 for i in range(args.replicates):
     if args.verbose:
-        print('Assembling GIFnet model set {} of {}.'.format(
-            i+1, args.replicates
-        ))
+        print(
+            'Assembling GIFnet model set {} of {}.'.format(
+                i + 1, args.replicates
+            )
+        )
 
     # Vanilla model.
     subsample_builder.random_build()
     safe_export(subsample_builder, i, 'base')
 
     # Model with 5HT DV replaced by GABA value
-    swapped_dv_builder = gfn.SwappedDVGIFnetBuilder(subsample_builder, opts['dt'], 'dv_swap_ser_only')
+    swapped_dv_builder = gfn.SwappedDVGIFnetBuilder(
+        subsample_builder, opts['dt'], 'dv_swap_ser_only'
+    )
     swapped_dv_builder.graft_gaba_dv_onto_ser()
     safe_export(swapped_dv_builder, i, 'dv_swap_ser_only')
 
     # Fixed IA.
-    fixedIA_builder = gfn.FixedIAGIFnetBuilder(subsample_builder, opts['dt'], 'fixedIA')
+    fixedIA_builder = gfn.FixedIAGIFnetBuilder(
+        subsample_builder, opts['dt'], 'fixedIA'
+    )
     fixedIA_builder.fix_IA(opts['fixed_IA_conductance'], None)
     safe_export(fixedIA_builder, i, 'fixedIA')
 
     # IA knockout.
     fixedIA_builder.label = 'noIA'
-    fixedIA_builder.fix_IA(0., None)
+    fixedIA_builder.fix_IA(0.0, None)
     safe_export(fixedIA_builder, i, 'noIA')
 
     # Model with 5HT adaptation replaced by GABA adaptation.
-    swapped_adaptation_builder = gfn.SwappedAdaptationGIFnetBuilder(subsample_builder, opts['dt'], 'adaptation_swap_ser_only')
-    swapped_adaptation_builder.swap_adaptation(gaba_onto_ser=True, ser_onto_gaba=False)
+    swapped_adaptation_builder = gfn.SwappedAdaptationGIFnetBuilder(
+        subsample_builder, opts['dt'], 'adaptation_swap_ser_only'
+    )
+    swapped_adaptation_builder.swap_adaptation(
+        gaba_onto_ser=True, ser_onto_gaba=False
+    )
     safe_export(swapped_adaptation_builder, i, 'adaptation_swap_ser_only')
 
     # Model with 5HT adaptation AND DV replaced by GABA values
-    swapped_dv_adaptation_builder = gfn.SwappedDVGIFnetBuilder(swapped_adaptation_builder, opts['dt'], 'dv_adaptation_swap_ser_only')
+    swapped_dv_adaptation_builder = gfn.SwappedDVGIFnetBuilder(
+        swapped_adaptation_builder, opts['dt'], 'dv_adaptation_swap_ser_only'
+    )
     swapped_dv_adaptation_builder.graft_gaba_dv_onto_ser()
-    safe_export(swapped_dv_adaptation_builder, i, 'dv_adaptation_swap_ser_only')
+    safe_export(
+        swapped_dv_adaptation_builder, i, 'dv_adaptation_swap_ser_only'
+    )
 
     # Model with 5HT adaptation replaced by GABA AND VICE VERSA
     swapped_adaptation_builder.swap_adaptation()
     safe_export(swapped_adaptation_builder, i, 'adaptation_swap')
 
     # Model with homogenous 5HT and GABA.
-    homogenous_builder.homogenous_build(homogenous_5HT=True, homogenous_GABA=True)
+    homogenous_builder.homogenous_build(
+        homogenous_5HT=True, homogenous_GABA=True
+    )
     safe_export(homogenous_builder, i, 'homogenous')
 
     # Model with homogenous 5HT and GABA and swapped adaptation.
-    homogenous_swapped_builder = gfn.SwappedAdaptationGIFnetBuilder(homogenous_builder, opts['dt'], 'homogenous_adaptation_swap')
+    homogenous_swapped_builder = gfn.SwappedAdaptationGIFnetBuilder(
+        homogenous_builder, opts['dt'], 'homogenous_adaptation_swap'
+    )
     homogenous_swapped_builder.swap_adaptation()
     safe_export(homogenous_builder, i, 'homogenous_adaptation_swap')
 
     # Model with homogenous GABA and heterogenous 5HT.
-    homogenous_builder.homogenous_build(homogenous_5HT=False, homogenous_GABA=True)
+    homogenous_builder.homogenous_build(
+        homogenous_5HT=False, homogenous_GABA=True
+    )
     safe_export(homogenous_builder, i, 'homogenous_GABA_only')
 
 
