@@ -8,7 +8,7 @@ REPEATS=20
 PROCESSES=10
 
 oscillation_input=../../data/simulations/GIF_network/oscillation_input/oscillation_input.dat
-python ../GIF_network/input_generators/oscillation.py $oscillation_input -v --baseline 0.040 || exit 999
+python ./input_generators/oscillation.py $oscillation_input -v --baseline 0.040 || exit 999
 
 # DRN WITH GABA
 echo "Starting DRN GABA control simulations."

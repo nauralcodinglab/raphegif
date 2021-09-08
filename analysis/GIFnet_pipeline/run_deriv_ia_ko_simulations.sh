@@ -11,7 +11,7 @@ for baseline_ in "-0.080" "-0.060" "-0.040" "-0.020" "0.000" "0.020" "0.040" "0.
 	mkdir -p $(dirname "$deriv_input")  # Create dir to hold output if it doesn't exist
 	rm -f $(dirname "$deriv_input")/*.hdf5  # Clear any data from previous runs
 	# Generate network input
-	python ../GIF_network/input_generators/deriv.py $deriv_input -v --baseline "$baseline_" || exit 999
+	python ./input_generators/deriv.py $deriv_input -v --baseline "$baseline_" || exit 999
 
 	# Run simulations for several networks in parallel
 	echo "Starting derivative simulations with $deriv_input baseline"

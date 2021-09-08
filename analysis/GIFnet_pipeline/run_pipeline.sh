@@ -15,11 +15,11 @@ python ./generate_models.py --sermods $SERMODS --gabamods $GABAMODS --prefix ../
 # Generate input.
 full_network_input=../../data/simulations/GIF_network/step_input/square_step_full.dat
 endocannabinoid_like_input=../../data/simulations/GIF_network/step_input/square_step_endocannabinoid_like.dat
-python ../GIF_network/input_generators/current_step.py $full_network_input \
+python ./input_generators/current_step.py $full_network_input \
 	--baseline-ser 0. --min-ser 0.005 --max-ser 0.150 \
 	--baseline-gaba 0. --min-gaba 0.005 --max-gaba 0.150 \
 	|| exit 999
-python ../GIF_network/input_generators/current_step.py $endocannabinoid_like_input \
+python ./input_generators/current_step.py $endocannabinoid_like_input \
 	--baseline-ser 0. --min-ser 0.005 --max-ser 0.150 \
 	--baseline-gaba 0. --min-gaba 0.0035 --max-gaba 0.105 \
 	|| exit 999

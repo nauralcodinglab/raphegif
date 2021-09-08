@@ -12,7 +12,7 @@ for baseline_ in "-0.080" "-0.060" "-0.040" "-0.020" "0.000" "0.020" "0.040" "0.
     deriv_input=../../data/simulations/GIF_network/deriv_input_dv_swap_ser_only/"$baseline_"_baseline/input.dat
     mkdir -p $(dirname "$deriv_input")
     rm -f $(dirname "$deriv_input")/*.hdf5
-    python ../GIF_network/input_generators/deriv.py $deriv_input -v --baseline "$baseline_" || exit 999
+    python ./input_generators/deriv.py $deriv_input -v --baseline "$baseline_" || exit 999
 
     echo "Starting derivative simulations with $deriv_input baseline"
 	for i in $(seq 0 $[$REPEATS - 1]); do
