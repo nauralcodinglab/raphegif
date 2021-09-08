@@ -5,7 +5,7 @@ import numpy as np
 import numba as nb
 from scipy import signal
 
-from .Tools import timeToIndex
+from .Tools import timeToIndex, raiseExpectedGot
 
 
 class Trace:
