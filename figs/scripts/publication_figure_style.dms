@@ -89,7 +89,7 @@ legend.handletextpad : 0.5    # the space between the legend line and legend tex
 #figure.titlesize : medium     # size of the figure title
 #figure.titleweight : normal   # weight of the figure title
 figure.figsize   : 3,2    # figure size in inches
-figure.dpi       : 120      # figure dots per inch
+figure.dpi       : 240      # figure dots per inch
 
 
 

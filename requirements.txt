@@ -1,6 +1,7 @@
 h5py ~= 2.9
 ipython ~= 5.8
 jupyter ~= 1.0
+tqdm
 matplotlib ~= 2.2
 numpy ~= 1.15
 pandas ~= 0.22
@@ -11,3 +12,4 @@ quantities == 0.12.*
 numba ~= 0.43.1
 weave ~= 0.17
 llvmlite == 0.31.*  # Pinned at v0.31 because v0.32 is not compatible with Python 2.7
+ezephys == 0.4.3  # Pinned at v0.4.3 because other versions not compatible with Python 2.7
