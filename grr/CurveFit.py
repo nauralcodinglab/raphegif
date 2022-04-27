@@ -100,7 +100,7 @@ def fit_gating_curve(pdata, p0, max_norm=True):
     X = pdata[1, :, :].flatten()
 
     if max_norm:
-        y = max_normalize(pdata[0, :, :]).flatten()
+        y = _max_normalize(pdata[0, :, :]).flatten()
     else:
         y = pdata[0, :, :].flatten()
 
@@ -117,6 +117,10 @@ def fit_gating_curve(pdata, p0, max_norm=True):
     fitted_points[0, :] = sigmoid_curve(p, fitted_points[1, :])
 
     return p, fitted_points
+
+
+def _max_normalize(x, axis=0):
+    return x / x.max(axis=axis)
 
 
 def plot_linear_fit(x, y, ax=None, **pltargs):
