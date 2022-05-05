@@ -1,3 +1,5 @@
+.env
+.envrc
 .ropeproject
 *.DS_Store
 *.pyc

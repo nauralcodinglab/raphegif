@@ -466,6 +466,26 @@ def max_normalize_channel(cell_channel):
     return cell_channel / cell_channel.max(axis=0)
 
 
+def preprocess_recording(
+    cell, baseline_range, test_range, voltage_channel=1, current_channel=0
+):
+    """Subtract baseline and leak from a Cell-like np.ndarray.
+
+    See Also
+    --------
+    subtract_baseline()
+    subtract_leak()
+
+    """
+    return subtract_leak(
+        subtract_baseline(cell, baseline_range, current_channel),
+        baseline_range,
+        test_range,
+        voltage_channel,
+        current_channel,
+    )
+
+
 def subtract_baseline(cell, baseline_range, channel):
     """Subtract baseline from the selected channel of a Cell-like np.ndarray.
 
