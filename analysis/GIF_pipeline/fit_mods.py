@@ -1,3 +1,4 @@
+import os
 import argparse
 import json
 import pickle
@@ -144,7 +145,7 @@ for i, expt in enumerate(experiments):
             if args.model.lower() == 'gif':
                 tmp_mod.fit(expt, DT_beforeSpike=opts['DT_beforeSpike'])
             elif args.model.lower() == 'augmentedgif':
-                if opts['AugmentedGIF_gating_params'].lower() != 'default':
+                if opts['AugmentedGIF_gating_params'] != 'default':
                     for gate in ['m', 'h', 'n']:
                         for param in ['A', 'k', 'Vhalf']:
                             if hasattr(tmp_mod, '{}_{}'.format(gate, param)):
@@ -205,6 +206,8 @@ if args.verbose:
 
 if args.verbose:
     print('Saving fitted models to {}'.format(args.output))
+if not os.path.isdir(os.path.dirname(args.output)):
+    os.mkdir(os.path.dirname(args.output))
 with open(args.output, 'wb') as f:
     pickle.dump(models, f)
 if args.verbose:

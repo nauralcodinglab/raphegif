@@ -31,6 +31,7 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy import stats
+from tqdm import trange, tqdm
 
 from grr.Experiment import Experiment
 from grr.AEC import AEC_Badel
@@ -103,14 +104,13 @@ for field in required_json_fields:
 file_index = pd.read_csv(args.indexfile)
 
 experiments = []
-for i in range(file_index.shape[0]):
-    if args.verbose:
-        print(
-            'Loading traces {:.1f}%'.format(100 * i / file_index.shape[0]),
-            end='\r',
-        )
-        sys.stdout.flush()
-
+if args.verbose:
+    range_ = trange
+    print('Loading traces...')
+    sys.stdout.flush()
+else:
+    range_ = range
+for i in range_(file_index.shape[0]):
     try:
         with gagProcess():  # Silence verbose load methods.
 
@@ -170,7 +170,12 @@ if args.verbose:
 
 # PERFORM AEC
 
-for i, expt in enumerate(experiments):
+if args.verbose:
+    enumerate_ = lambda x: tqdm(enumerate(x))
+    print('Running AEC...')
+else:
+    enumerate_ = enumerate
+for i, expt in enumerate_(experiments):
     if args.verbose:
         print(
             'Running AEC {:.1f}%'.format(100 * i / len(experiments)), end='\r'
@@ -323,6 +328,8 @@ if args.verbose:
     print(
         'Saving {} good cells to {}'.format(len(experiments), args.goodcells)
     )
+if not os.path.isdir(os.path.dirname(args.goodcells)):
+    os.mkdir(os.path.dirname(args.goodcells))
 with open(args.goodcells, 'wb') as f:
     pickle.dump(experiments, f)
     f.close()
@@ -332,6 +339,8 @@ if args.badcells is not None:
         print(
             'Saving {} bad cells to {}'.format(len(bad_cells), args.badcells)
         )
+    if not os.path.isdir(os.path.dirname(args.badcells)):
+        os.mkdir(os.path.dirname(args.badcells))
     with open(args.badcells, 'wb') as f:
         pickle.dump(bad_cells, f)
         f.close()
