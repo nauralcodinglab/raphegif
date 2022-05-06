@@ -114,7 +114,9 @@ for i in range(file_index.shape[0]):
     try:
         with gagProcess():  # Silence verbose load methods.
 
-            tmp_experiment = Experiment(file_index.loc[i, 'Cell'], opts['dt'])
+            tmp_experiment = Experiment(
+                file_index.loc[i, 'cell_id'], opts['dt']
+            )
 
             # Add AEC, training, and test traces.
             tmp_experiment.setAECTrace(
@@ -158,7 +160,7 @@ for i in range(file_index.shape[0]):
         # Probably a data problem rather than code problem.
         warnings.warn(
             'Problem with {} import. Skipping.'.format(
-                file_index.loc[i, 'Cell']
+                file_index.loc[i, 'cell_id']
             )
         )
 

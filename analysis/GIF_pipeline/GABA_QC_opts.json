@@ -1,7 +1,7 @@
 {
-    "AEC_col": "AEC2",
-    "train_cols": ["Train1", "Train2", "Train3"],
-    "test_cols": ["Test1", "Test2", "Test3"],
+    "AEC_col": "active_electrode_compensation_2",
+    "train_cols": ["train_1", "train_2", "train_3"],
+    "test_cols": ["test_1", "test_2", "test_3"],
     "no_test_traces": 9,
     "train_ROIs": [[500, 59500]],
     "test_ROIs": [[500, 9500]],
