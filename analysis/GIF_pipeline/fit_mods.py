@@ -62,7 +62,9 @@ required_json_fields = [
 if args.model.lower() == 'gif':
     pass
 elif args.model.lower() == 'augmentedgif':
-    required_json_fields.append('AugmentedGIF_fit_args')
+    required_json_fields.extend(
+        ['AugmentedGIF_fit_args', 'AugmentedGIF_gating_params']
+    )
 elif args.model.lower() == 'igif_np':
     required_json_fields.append('iGIF_NP_fit_args')
 elif args.model.lower() == 'igif_vr':
@@ -142,6 +144,22 @@ for i, expt in enumerate(experiments):
             if args.model.lower() == 'gif':
                 tmp_mod.fit(expt, DT_beforeSpike=opts['DT_beforeSpike'])
             elif args.model.lower() == 'augmentedgif':
+                if opts['AugmentedGIF_gating_params'].lower() != 'default':
+                    for gate in ['m', 'h', 'n']:
+                        for param in ['A', 'k', 'Vhalf']:
+                            if hasattr(tmp_mod, '{}_{}'.format(gate, param)):
+                                setattr(
+                                    tmp_mod,
+                                    '{}_{}'.format(gate, param),
+                                    opts['AugmentedGIF_gating_params'][gate][
+                                        param
+                                    ],
+                                )
+                            else:
+                                raise RuntimeError(
+                                    'Cannot set missing model attribute '
+                                    '{}_{}'.format(gate, param)
+                                )
                 tmp_mod.fit(
                     expt,
                     DT_beforeSpike=opts['DT_beforeSpike'],

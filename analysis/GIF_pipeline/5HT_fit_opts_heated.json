@@ -7,6 +7,23 @@
     "AugmentedGIF_fit_args": {
         "h_tau_candidates": [10, 13, 18, 25, 33, 45, 61, 82, 111, 150]
     },
+    "AugmentedGIF_gating_params": {
+        "m": {
+            "A": 1849.0,
+            "k": 0.06646,
+            "Vhalf": 92.77
+        },
+        "h": {
+            "A": 1.008,
+            "k": -1.667,
+            "Vhalf": -54.93
+        },
+        "n": {
+            "A": 1.264,
+            "k": 0.2337,
+            "Vhalf": -25.64
+        }
+    },
     "iGIF_NP_fit_args": {
         "theta_tau_all": [1, 2, 5, 10, 22, 46, 100],
         "last_bin_constrained": true,

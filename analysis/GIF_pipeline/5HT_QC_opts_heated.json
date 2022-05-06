@@ -1,0 +1,11 @@
+{
+    "AEC_col": "active_electrode_compensation_1",
+    "train_cols": ["train_1", "train_2", "train_3"],
+    "test_cols": ["test_1", "test_2", "test_3"],
+    "no_test_traces": 9,
+    "train_ROIs": [[500, 59500]],
+    "test_ROIs": [[500, 14500]],
+    "drift_cutoff": 0.9,
+    "reliability_cutoff": 0.1,
+    "dt": 0.1
+}
