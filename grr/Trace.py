@@ -502,15 +502,20 @@ def filterTimesByROI(times, ROI):
         Start and end (ms) of inclusion window for timestamps.
 
     """
-    try:
-        # Case that times is a list of lists.
-        iter(times[0])  # Check that first entry in times is list-like.
-        filteredTimes = []
-        for sweep in times:
-            filteredTimes.append(_unvectorizedFilterTimesByROI(sweep, ROI))
-    except TypeError:
-        # Case that times is a list of spike times.
-        filteredTimes = _unvectorizedFilterTimesByROI(times, ROI)
+    if len(times) == 0:
+        # Edge case that there are no times, in which case there are no
+        # filteredTimes either.
+        filteredTimes = np.array([])
+    else:
+        try:
+            # Case that times is a list of lists.
+            iter(times[0])  # Check that first entry in times is list-like.
+            filteredTimes = []
+            for sweep in times:
+                filteredTimes.append(_unvectorizedFilterTimesByROI(sweep, ROI))
+        except TypeError:
+            # Case that times is a list of spike times.
+            filteredTimes = _unvectorizedFilterTimesByROI(times, ROI)
 
     return filteredTimes
 
