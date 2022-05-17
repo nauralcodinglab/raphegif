@@ -113,7 +113,7 @@ training_metadata = pd.DataFrame(
 )
 test_metadata = pd.DataFrame([expt.getTestSummary() for expt in experiments])
 metadata_dframe = pd.concat([training_metadata, test_metadata], axis=1)
-metadata_dframe["Cell"] = [expt.name for expt in experiments]
+metadata_dframe["cell_id"] = [expt.name for expt in experiments]
 metadata_dframe.to_csv(
     os.path.join(args.output, fname_prefix + "metadata.csv"), index=False
 )
@@ -125,7 +125,7 @@ metadata_dframe.to_csv(
 benchmarks = {}
 for benchmark in ['sample_traces', 'Md_vals', 'R2_V_vals', 'R2_dV_vals']:
     benchmarks[benchmark] = {label: [] for label in models}
-    benchmarks[benchmark]['Cell'] = [
+    benchmarks[benchmark]['cell_id'] = [
         expt.name for expt in experiments
     ]  # Column for cell identifier.
 benchmarks['sample_traces'][
