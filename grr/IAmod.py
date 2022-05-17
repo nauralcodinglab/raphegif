@@ -53,11 +53,11 @@ class IAmod(object):
         # Define functions
         @nb.vectorize(['f8(f8)'], cache=True)
         def m_inf(V):
-            return 1 / (1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
+            return self.m_A / (1 + np.exp(-self.m_k * (V - self.m_Vhalf)))
 
         @nb.vectorize(['f8(f8)'], cache=True)
         def h_inf(V):
-            return 1 / (1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
+            return self.h_A / (1 + np.exp(-self.h_k * (V - self.h_Vhalf)))
 
         # Locally define variables.
         tau_eff = deepcopy(self.tau_eff)
