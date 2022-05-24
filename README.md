@@ -77,8 +77,9 @@ paper](https://www.biorxiv.org/content/10.1101/2021.06.25.449907), and
     └── grr                             # Library for fitting + running models
 
 
-To use the augmented GIF model in your own work, clone or download this repo
-and install `grr` using `pip install .` from inside the project.
+To use the augmented GIF model in your own work, clone or download this repo and
+install `grr` using `pip install . && pip install -r requirements.txt` from
+inside the project.
 
 To reproduce the results from our paper, follow these steps:
 

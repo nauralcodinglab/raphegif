@@ -13,3 +13,4 @@ numba ~= 0.43.1
 weave ~= 0.17
 llvmlite == 0.31.*  # Pinned at v0.31 because v0.32 is not compatible with Python 2.7
 ezephys == 0.4.3  # Pinned at v0.4.3 because other versions not compatible with Python 2.7
+git+https://github.com/efharkin/statannot.git@6176c80498952672e26c6e8937a72acc35efb284  # Patched version of webermarcolivier/statannot that supports Python 2.7
