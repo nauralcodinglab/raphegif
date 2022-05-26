@@ -18,7 +18,7 @@ mkdir -p $DATA_PATH/models/GIF_network/{5HT_room_temp,5HT_heated} \
     --prefix $DATA_PATH/models/GIF_network/5HT_room_temp/GIFnet \
     --opts sernetmod_room_temp_opts.json \
     -r $REPEATS \
-&& python ./generate_mpfc_models.py -v \
+&& python ./generate_sernet_models.py -v \
     --mods $SERMODS_HEATED \
     --prefix $DATA_PATH/models/GIF_network/5HT_heated/GIFnet \
     --opts sernetmod_heated_opts.json \
@@ -41,17 +41,17 @@ mkdir -p $(dirname $_INPUT_PATH) \
 || exit 101
 
 _OUTPUT_PATH_PREFIX=$DATA_PATH/simulations/GIF_network/step_input
-if [ [ $_MODELS_GENERATED -eq 1 ] -a [ -e $_INPUT_PATH ] ]; then
+if [ $_MODELS_GENERATED -eq 1 ] && [ -e $_INPUT_PATH ]; then
     echo "Starting room temperature simulations."
     mkdir -p $_OUTPUT_PATH_PREFIX/5HT_base/GABA_KO
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
-            $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0") \
-            $DATA_PATH/models/GIF_network/5HT/GIFnet_${i}_subsample_base.mod \
+            $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
+            $DATA_PATH/models/GIF_network/5HT_room_temp/GIFnet_${i}_subsample_base.mod \
             $_INPUT_PATH \
             $_OUTPUT_PATH_PREFIX/5HT_base/GABA_KO/rep${i}.hdf5 \
             --seed-background ${i} \
-            --sigma-bacground 0.002 \
+            --sigma-background 0.002 \
             --no-gaba \
             &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
@@ -64,12 +64,12 @@ if [ [ $_MODELS_GENERATED -eq 1 ] -a [ -e $_INPUT_PATH ] ]; then
     mkdir -p $_OUTPUT_PATH_PREFIX/5HT_heated_base/GABA_KO
     for i in $(seq 0 $[$REPEATS - 1]); do
         python ./run_simulation.py \
-            $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0") \
+            $(if [ $i == 0 ]; then echo "-v"; else echo "--num-ser-examples 0 --num-gaba-examples 0"; fi) \
             $DATA_PATH/models/GIF_network/5HT_heated/GIFnet_${i}_subsample_base.mod \
             $_INPUT_PATH \
             $_OUTPUT_PATH_PREFIX/5HT_heated_base/GABA_KO/rep${i}.hdf5 \
             --seed-background ${i} \
-            --sigma-bacground 0.002 \
+            --sigma-background 0.002 \
             --no-gaba \
             &
         if [ $[($i + 1) % $PROCESSES] == 0 ]; then
