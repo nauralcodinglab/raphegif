@@ -13,49 +13,12 @@ import grr.GIF_network as gfn
 from grr.Tools import check_dict_fields
 from ezephys.stimtools import BiexponentialSynapticKernel
 
+from lib import generate_models_argparser
+
 
 #%% PARSE COMMANDLINE ARGUMENTS
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--sermods',
-    type=str,
-    required=True,
-    help='Pickled serotonin neuron models.',
-)
-parser.add_argument(
-    '--gabamods', type=str, required=True, help='Pickled GABA neuron models.'
-)
-parser.add_argument(
-    '--prefix',
-    type=str,
-    required=True,
-    help='Path to save GIF_network models.',
-)
-parser.add_argument(
-    '--opts', type=str, required=True, help='Path to opts JSON file.'
-)
-parser.add_argument(
-    '-r',
-    '--replicates',
-    default=1,
-    type=int,
-    help='No. of randomized models to generate.',
-)
-parser.add_argument(
-    '--seed', type=int, default=42, help='Random seed (default 42).'
-)
-parser.add_argument(
-    '--overwrite', action='store_true', help='Overwrite existing models.'
-)
-parser.add_argument(
-    '-v',
-    '--verbose',
-    action='store_true',
-    help='Print information about progress.',
-)
-
-args = parser.parse_args()
+args = generate_models_argparser.parse_args()
 
 # Parse JSON opts file.
 with open(args.opts, 'r') as f:
@@ -131,7 +94,7 @@ def construct_file_name(number, kind):
 
 def safe_export(builder, number, model_kind):
     """Only export if the model doesn't already exist, or overwrite is set.
-    
+
     Parameters
     ----------
     builder : GIFnetBuilder
