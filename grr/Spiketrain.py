@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 import weave
 
 from .Trace import getRisingEdges
@@ -44,8 +45,8 @@ def getIndicesDuringSpikes(T, spikes_i, dt_after, initial_cutoff, dt):
 def PSTH(spktrain, window_width, no_neurons, dt=0.1):
     """Obtain the population firing rate with a resolution of `window_width`.
 
-    Uses either np.convolve or an accelerated sparse convolution method
-    depending on the sparsity of spktrain.
+    Uses either scipy.signal.fftconvolve or an accelerated sparse convolution
+    method depending on the sparsity of spktrain.
 
     """
     # Based on rough benchmarks, the sparse method is faster when the
@@ -59,8 +60,8 @@ def PSTH(spktrain, window_width, no_neurons, dt=0.1):
 
 
 def _dense_PSTH(spktrain, window_width, no_neurons, dt=0.1):
-    """Obtain the population firing rate with a resolution of 
-    `window_width` using np.convolve.
+    """Obtain the population firing rate with a resolution of
+    `window_width` using scipy.signal.fftconvolve.
 
     Runtime is not affected by sparsity of spktrain.
 
@@ -70,7 +71,7 @@ def _dense_PSTH(spktrain, window_width, no_neurons, dt=0.1):
     dt *= 1e-3
 
     kernel = np.ones(int(window_width / dt)) / (window_width * no_neurons)
-    psth = np.convolve(spktrain, kernel, 'same')
+    psth = signal.fftconvolve(spktrain, kernel, 'same')
     return psth
 
 
