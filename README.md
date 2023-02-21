@@ -18,10 +18,10 @@ src="https://img.shields.io/badge/codestyle-black-black.svg"
 alt="Codestyle: Black"/>
 </a>
 <br/>
-<a href="https://doi.org/10.1101/2021.06.25.449907">
+<a href="https://doi.org/10.7554/eLife.72951">
 <img
-src="https://img.shields.io/badge/preprint%20doi-10.1101%2F2021.06.25.449907-informational.svg"
-alt="Preprint doi: 10.1101/2021.06.25.449907"/>
+src="https://img.shields.io/badge/paper%20doi-10.7554%2FeLife.72951-informational.svg"
+alt="Paper doi: 10.7554/eLife.72951"/>
 </a>
 <a href="https://doi.org/10.5061/dryad.66t1g1k2w">
 <img
