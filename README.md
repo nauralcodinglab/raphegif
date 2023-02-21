@@ -30,9 +30,6 @@ alt="Data doi: 10.5061/dryad.66t1g1k2w"/>
 </a>
 </div>
 
-Code for building experimentally-contstrained spiking neural network models of
-the dorsal raphe nucleus (DRN).
-
 <figure>
     <img src="visual_abstract.png" alt="Visual abstract"/>
     <figcaption>
@@ -45,14 +42,27 @@ the dorsal raphe nucleus (DRN).
     </figcaption>
 </figure>
 
-For more information, see our [paper](https://www.biorxiv.org/content/10.1101/2021.06.25.449907):
+Code for building experimentally-contstrained spiking neural network models of
+the dorsal raphe nucleus (DRN) used in [Harkin et al.,
+2023](https://doi.org/10.7554/eLife.72951).
 
-> Emerson F. Harkin, Alexandre Payeur, Michael B. Lynn, Jean-François Boucher,
+> Emerson F. Harkin, Michael B. Lynn, Alexandre Payeur, Jean-François Boucher,
 > Léa Caya-Bissonnette, Dominic Cyr, Chloe Stewart, André Longtin, Richard
 > Naud, and Jean-Claude Béïque. Temporal derivative computation in the dorsal
 > raphe network revealed by an experimentally-driven augmented
-> integrate-and-fire modeling framework. bioRxiv, 2021. doi:
-> 10.1101/2021.06.25.449907
+> integrate-and-fire modeling framework. eLife, 2023. doi:
+> 10.7554/eLife.72951
+
+Are you an electrophysiologist interested in fitting spiking neuron models with
+a limited set of Hodgkin-Huxley currents to your data? See ["A User's Guide to
+Generalized Integrate-and-Fire
+Models"](https://doi.org/10.1007/978-3-030-89439-9_3) ([open
+access](https://neurodynamic.uottawa.ca/neuralcoding/images/HarkinGIF.pdf)).
+For more detailed information about how the serotonin neuron model used here
+was developed, see *[A Simplified Serotonin Neuron
+Model](http://dx.doi.org/10.20381/ruor-22786)*. ["Patch-clamp recordings from
+dorsal raphe neurons"](https://doi.org/10.5061/dryad.66t1g1k2w) used to contrain
+our models are freely available on the Dryad data repository.
 
 
 ## Overview
@@ -61,7 +71,7 @@ The project is broken up into `grr`, a reusable library for fitting GIF neuron
 models forked from the excellent [GIF Fitting
 Toolbox](https://github.com/pozzorin/GIFFittingToolbox), `analysis` scripts for
 reproducing the models and simulations from [our
-paper](https://www.biorxiv.org/content/10.1101/2021.06.25.449907), and
+paper](https://doi.org/10.7554/eLife.72951), and
 `figs/scripts` for reproducing the figures in our paper from the results of
 `analysis`.
 
@@ -85,11 +95,13 @@ To reproduce the results from our paper, follow these steps:
 
 1. Clone or download this repo and install `grr`.
 2. Get a copy of the [raw data](https://doi.org/10.5061/dryad.66t1g1k2w) and
-   extract it to a new directory called `data/raw`.
-3. Run the scripts in `analysis`. `GIF_pipeline` must be run before
+   extract it.
+3. Set the environment variable `DATA_PATH` to the root directory of the raw
+   data (recommended: `data/raw`) and the variable `IMG_PATH` to the location
+   where you would like figures to be saved (recommended: `figs/ims`).
+4. Run the scripts in `analysis`. `GIF_pipeline` must be run before
    `GIFnet_pipeline`.
-4. Run the notebooks in `figs/scripts`. High resolution figures can be exported
-   to `figs/ims`.
+5. Run the notebooks in `figs/scripts`.
 
 
 ## Contributions
@@ -108,22 +120,21 @@ Payeur](https://github.com/apayeur) prototyped some of the models included in
 
 Science thrives on openness. This work is released under the [MIT
 license](LICENSE.txt) and is free to use for any purpose. If you find our work
-useful, please cite our paper!
+useful, please cite [our paper](https://doi.org/10.7554/eLife.72951)!
 
-    @article{harkin_temporal_2021,
-        title = {
-            Temporal derivative computation in the dorsal raphe network
-            revealed by an experimentally-driven augmented integrate-and-fire
-            modeling framework
-        },
-        doi = {10.1101/2021.06.25.449907},
-        journaltitle = {{bioRxiv}},
-        author = {
-            Harkin, Emerson F and Payeur, Alexandre and Lynn, Michael B
-            and Boucher, Jean-François and Caya-Bissonnette, Léa
-            and Cyr, Dominic and Stewart, Chloe and Longtin, André
-            and Naud, Richard and Béïque, Jean-Claude
-        },
-        date = {2021},
-        langid = {english},
+    @article{harkin2023temporal,
+      title={Temporal derivative computation in the dorsal raphe network
+        revealed by an experimentally-driven augmented integrate-and-fire
+        modeling framework},
+      author={Harkin, Emerson F and Lynn, Michael B and Payeur, Alexandre
+        and Boucher, Jean-Fran{\c{c}}ois and Caya-Bissonnette, L{\'e}a
+        and Cyr, Dominic and Stewart, Chloe and Longtin, Andr{\'e}
+        and Naud, Richard and B{\'e}{\"\i}que, Jean-Claude},
+      journal={eLife},
+      volume={12},
+      pages={e72951},
+      year={2023},
+      publisher={eLife Sciences Publications, Ltd},
+      langid={english},
+      doi={10.7554/eLife.72951},
     }
